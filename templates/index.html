@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DnD 5E AI-Powered Solo Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="app-title">
+                    <i class="fas fa-dice-d20"></i>
+                    DnD 5E Solo Adventure
+                </h1>
+                <div class="header-actions">
+                    <button id="new-campaign-btn" class="btn btn-secondary">
+                        <i class="fas fa-plus"></i> New Campaign
+                    </button>
+                    <button id="start-session-btn" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Start Session
+                    </button>
+                    <button id="end-session-btn" class="btn btn-secondary" disabled>
+                        <i class="fas fa-stop"></i> End Session
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Chat Area -->
+        <main class="chat-container">
+            <div class="chat-messages" id="chat-messages">
+                <!-- Welcome message -->
+                <div class="message ai-message">
+                    <div class="message-avatar">
+                        <i class="fas fa-dragon"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-text">
+                            <p>Welcome to your DnD 5E solo adventure! I'm your AI Dungeon Master, and I'm here to guide you through an epic journey.</p>
+                            <p>To get started, you can:</p>
+                            <ul>
+                                <li><strong>Create a character</strong> by describing yourself naturally: "I'm a half-elf wizard named Gandalf who specializes in fire magic"</li>
+                                <li><strong>Start exploring</strong> by describing what you want to do: "I explore the dark forest" or "I talk to the innkeeper"</li>
+                                <li><strong>Ask questions</strong> about your surroundings: "What do I see around me?"</li>
+                            </ul>
+                            <p>I'll remember everything about your character, the world, and your adventures. What would you like to do?</p>
+                        </div>
+                        <div class="message-timestamp">Just now</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing indicator (hidden by default) -->
+            <div class="message ai-message typing-indicator" id="typing-indicator" style="display: none;">
+                <div class="message-avatar">
+                    <i class="fas fa-dragon"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Input Area -->
+        <div class="input-container">
+            <div class="input-wrapper">
+                <div class="input-box" id="input-box">
+                    <textarea 
+                        id="message-input" 
+                        placeholder="Describe what you want to do..."
+                        rows="1"
+                        maxlength="4000"
+                    ></textarea>
+                    <button id="send-button" class="send-button" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="char-count" id="char-count">0/4000</span>
+                    <span class="input-hint">Press Enter to send, Shift+Enter for new line</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for new campaign -->
+    <div class="modal" id="new-campaign-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Campaign</h3>
+                <button class="modal-close" id="close-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="campaign-name">Campaign Name:</label>
+                    <input type="text" id="campaign-name" placeholder="Enter campaign name..." value="New Campaign">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-campaign">Cancel</button>
+                <button class="btn btn-primary" id="create-campaign">Create Campaign</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Processing...</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html> 
