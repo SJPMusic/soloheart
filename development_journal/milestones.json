@@ -1,0 +1,13 @@
+{
+  "milestone_20250627_140034": {
+    "id": "milestone_20250627_140034",
+    "title": "AI Content Generation",
+    "description": "Implement AI-powered content generation for NPCs, locations, and quests",
+    "target_date": "2025-07-27",
+    "completed_date": null,
+    "entry_ids": [
+      "entry_20250627_140034"
+    ],
+    "status": "planned"
+  }
+}

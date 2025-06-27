@@ -1,0 +1,49 @@
+{
+  "settings": {
+    "project_name": "DnD 5E AI-Powered Campaign Manager",
+    "version": "1.0.0",
+    "created_date": "2025-06-27",
+    "default_assignee": null,
+    "auto_backup": true,
+    "backup_frequency": "daily"
+  },
+  "entries": [
+    {
+      "id": "entry_20250627_140034",
+      "timestamp": "2025-06-27T14:00:34.842369",
+      "entry_type": "design_decision",
+      "title": "JSON vs SQLite for Data Storage",
+      "content": "Decided to use a hybrid approach for data storage:\n- JSON files for human-readable session logs and campaign data\n- SQLite database for AI memory system and complex queries\n\nRationale:\n- JSON provides easy backup/restore and human inspection\n- SQLite enables efficient AI queries and relationship mapping\n- Hybrid approach balances simplicity with performance\n- Allows for future migration to other databases if needed",
+      "priority": "low",
+      "tags": [
+        "architecture",
+        "data-storage",
+        "design"
+      ],
+      "related_files": [
+        "core/memory_system.py",
+        "core/session_logger.py"
+      ],
+      "status": "open",
+      "assignee": "Stephen",
+      "estimated_hours": 0.5,
+      "actual_hours": null,
+      "dependencies": [],
+      "metadata": {}
+    }
+  ],
+  "milestones": [
+    {
+      "id": "milestone_20250627_140034",
+      "title": "AI Content Generation",
+      "description": "Implement AI-powered content generation for NPCs, locations, and quests",
+      "target_date": "2025-07-27",
+      "completed_date": null,
+      "entry_ids": [
+        "entry_20250627_140034"
+      ],
+      "status": "planned"
+    }
+  ],
+  "export_date": "2025-06-27T14:00:34.843284"
+}
