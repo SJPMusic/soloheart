@@ -102,7 +102,17 @@ class SessionLogger:
             session_id=session_id,
             date=datetime.date.today(),
             duration_minutes=0,
-            participants=participants
+            participants=participants,
+            locations_visited=[],
+            npcs_encountered=[],
+            major_events=[],
+            decisions_made=[],
+            combat_encounters=[],
+            items_found=[],
+            quests_progressed=[],
+            quests_completed=[],
+            xp_gained=0,
+            gold_gained=0
         )
         self.session_entries = []
         
@@ -327,8 +337,8 @@ class SessionLogger:
         # Extract entities and add to memory
         for entity_name in entry.entities_mentioned:
             if entity_name and entity_name not in self.current_session.participants:
-                # Check if entity already exists in memory
-                existing = self.memory.search_campaign_memory(entity_name)
+                # Check for existing entity in memory
+                existing = self.memory.search_campaign_memories('current', entity_name)
                 if not existing:
                     # Create new entity
                     entity_data = {
@@ -374,16 +384,17 @@ class SessionLogger:
     def save_session_to_file(self, filename: str):
         """Save session data to JSON file"""
         export_data = self.get_session_export()
-        
-        # Convert datetime objects to strings for JSON serialization
+        from enum import Enum
+        # Convert datetime objects and enums to strings for JSON serialization
         def convert_datetime(obj):
             if isinstance(obj, datetime.datetime):
                 return obj.isoformat()
             elif isinstance(obj, datetime.date):
                 return obj.isoformat()
+            elif isinstance(obj, Enum):
+                return obj.value
             return obj
-        
-        # Recursively convert datetime objects
+        # Recursively convert datetime objects and enums
         def convert_recursive(data):
             if isinstance(data, dict):
                 return {k: convert_recursive(v) for k, v in data.items()}
@@ -391,9 +402,7 @@ class SessionLogger:
                 return [convert_recursive(item) for item in data]
             else:
                 return convert_datetime(data)
-        
         export_data = convert_recursive(export_data)
-        
         with open(filename, 'w') as f:
             json.dump(export_data, f, indent=2)
 

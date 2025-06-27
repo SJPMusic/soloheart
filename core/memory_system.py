@@ -15,7 +15,7 @@ import json
 import sqlite3
 import os
 import re
-from datetime import datetime
+from datetime import datetime, date
 from typing import Dict, List, Set, Optional, Any, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -26,6 +26,7 @@ from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.tag import pos_tag
 from nltk.chunk import ne_chunk
 import spacy
+import random
 
 # Download required NLTK data (run once)
 try:
@@ -105,7 +106,7 @@ class CampaignEntity:
     aliases: List[str]  # Alternative names/descriptions
     core_attributes: Dict[str, Any]  # Essential, unchanging attributes
     variable_attributes: Dict[str, Any]  # Attributes that can change
-    references: List[ContextualReference]  # References to other entities
+    entity_references: List[ContextualReference]  # References to other entities
     
     def __post_init__(self):
         if not self.id:
@@ -118,8 +119,8 @@ class CampaignEntity:
             self.core_attributes = {}
         if self.variable_attributes is None:
             self.variable_attributes = {}
-        if self.references is None:
-            self.references = []
+        if self.entity_references is None:
+            self.entity_references = []
     
     def _generate_id(self) -> str:
         """Generate unique ID based on name and type"""
@@ -211,7 +212,7 @@ class CampaignMemorySystem:
                     aliases TEXT,
                     core_attributes TEXT,
                     variable_attributes TEXT,
-                    references TEXT
+                    entity_references TEXT
                 )
             """)
             
@@ -339,7 +340,7 @@ class CampaignMemorySystem:
             entities = [(ent.text, ent.label_) for ent in doc.ents]
         else:
             # Basic NLTK named entity recognition
-        entities = []
+            entities = []
             ne_tree = ne_chunk(pos_tags)
             for subtree in ne_tree:
                 if hasattr(subtree, 'label'):
@@ -478,7 +479,7 @@ class CampaignMemorySystem:
                     aliases=[],
                     core_attributes={},
                     variable_attributes={},
-                    references=[]
+                    entity_references=[]
                 )
                 entities.append(entity)
         
@@ -587,7 +588,7 @@ class CampaignMemorySystem:
                     aliases=[],
                     core_attributes={},
                     variable_attributes={},
-                    references=[]
+                    entity_references=[]
             )
             entities.append(entity)
         
@@ -619,7 +620,7 @@ class CampaignMemorySystem:
                     aliases=[],
                     core_attributes={},
                     variable_attributes={},
-                    references=[]
+                    entity_references=[]
             )
             entities.append(entity)
         
@@ -724,7 +725,7 @@ class CampaignMemorySystem:
         existing.variable_attributes.update(new.variable_attributes)
         
         # Merge references
-        existing.references.extend(new.references)
+        existing.entity_references.extend(new.entity_references)
     
     def _generate_semantic_analysis(self, text: str, entities: List[CampaignEntity], analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Generate comprehensive semantic analysis of the session"""
@@ -839,7 +840,7 @@ class CampaignMemorySystem:
                 self._merge_entity_information(existing, entity, session_id)
             else:
                 # Add new entity
-            self.entities[entity.id] = entity
+                self.entities[entity.id] = entity
     
                 # Add to semantic index
                 for tag in entity.semantic_tags:
@@ -876,7 +877,7 @@ class CampaignMemorySystem:
                     INSERT OR REPLACE INTO entities 
                     (id, campaign_id, name, entity_type, description, attributes, relationships,
                      first_mentioned, last_updated, confidence, context_snippets, semantic_tags,
-                     context_level, aliases, core_attributes, variable_attributes, references)
+                     context_level, aliases, core_attributes, variable_attributes, entity_references)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     entity.id,
@@ -895,7 +896,7 @@ class CampaignMemorySystem:
                     json.dumps(entity.aliases),
                     json.dumps(entity.core_attributes),
                     json.dumps(entity.variable_attributes),
-                    json.dumps([asdict(ref) for ref in entity.references])
+                    json.dumps([asdict(ref) for ref in entity.entity_references])
                 ))
             
             conn.commit()
@@ -1172,7 +1173,7 @@ class CampaignMemorySystem:
                 
                 # Parse references
                 references = []
-                if row[16]:  # references column
+                if row[16]:  # entity_references column
                     ref_data = json.loads(row[16])
                     for ref_dict in ref_data:
                         references.append(ContextualReference(
@@ -1199,7 +1200,7 @@ class CampaignMemorySystem:
                     aliases=json.loads(row[13]) if row[13] else [],
                     core_attributes=json.loads(row[14]) if row[14] else {},
                     variable_attributes=json.loads(row[15]) if row[15] else {},
-                    references=references
+                    entity_references=references
                 )
                 self.entities[entity.id] = entity
             
@@ -1231,7 +1232,7 @@ class CampaignMemorySystem:
                             aliases=[],
                             core_attributes={},
                             variable_attributes={},
-                            references=[]
+                            entity_references=[]
                         ))
                 
                 session = SessionLog(
@@ -1251,8 +1252,24 @@ class CampaignMemorySystem:
     
     def add_campaign_memory(self, memory_type: str, content: Dict[str, Any], session_id: str):
         """Add a memory entry to the campaign"""
-        # Create a fact entry
-        fact_id = f"fact_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        # Create a fact entry with unique ID
+        fact_id = f"fact_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}"
+        
+        # Convert content to JSON-serializable format
+        def convert_for_json(obj):
+            if isinstance(obj, date):
+                return obj.isoformat()
+            elif isinstance(obj, datetime):
+                return obj.isoformat()
+            elif isinstance(obj, Enum):
+                return obj.value
+            elif isinstance(obj, dict):
+                return {k: convert_for_json(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_for_json(item) for item in obj]
+            return obj
+        
+        serializable_content = convert_for_json(content)
         
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
@@ -1262,7 +1279,7 @@ class CampaignMemorySystem:
             """, (
                 fact_id,
                 self.campaign_id,
-                json.dumps(content),
+                json.dumps(serializable_content),
                 json.dumps([]),  # entity_ids will be extracted later
                 0.8,  # default confidence
                 session_id,

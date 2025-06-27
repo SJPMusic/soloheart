@@ -7,9 +7,24 @@ Generates dynamic content using campaign memory and AI integration
 
 import json
 import random
+import os
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
-from .memory_system import CampaignMemorySystem, CampaignEntity
+from .memory_system import CampaignMemorySystem, CampaignEntity, EntityType, ContextLevel
+
+# Load environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+# OpenAI integration
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
 
 @dataclass
 class ContentRequest:
@@ -29,20 +44,27 @@ class GeneratedContent:
     confidence: float
 
 class AIContentGenerator:
-    """Generates dynamic DnD content using memory system"""
+    """Generates dynamic DnD content using memory system and OpenAI API"""
     
     def __init__(self, memory_system: CampaignMemorySystem):
         self.memory = memory_system
         self.templates = self._load_templates()
         self.name_generators = self._load_name_generators()
+        
+        # Initialize OpenAI client
+        self.openai_client = None
+        if OPENAI_AVAILABLE:
+            api_key = os.getenv('OPENAI_API_KEY')
+            if api_key:
+                self.openai_client = OpenAI(api_key=api_key)
     
     def _load_templates(self) -> Dict[str, List[str]]:
         """Load content templates"""
         return {
             'npc_description': [
-                "{name} is a {race} {class} who {personality_trait}. They {appearance} and {mannerism}.",
-                "You encounter {name}, a {race} {class} with {appearance}. They {personality_trait} and {mannerism}.",
-                "{name} appears before you - a {race} {class} who {appearance}. They {personality_trait}."
+                "{name} is a {race} {character_class} who {personality_trait}. They {appearance} and {mannerism}.",
+                "You encounter {name}, a {race} {character_class} with {appearance}. They {personality_trait} and {mannerism}.",
+                "{name} appears before you - a {race} {character_class} who {appearance}. They {personality_trait}."
             ],
             'location_description': [
                 "You find yourself in {location_name}, a {location_type} where {description}. {atmosphere}.",
@@ -92,7 +114,7 @@ class AIContentGenerator:
         description = template.format(
             name=name,
             race=race,
-            class=character_class,
+            character_class=character_class,
             personality_trait=personality,
             appearance=appearance,
             mannerism=mannerism
@@ -102,11 +124,11 @@ class AIContentGenerator:
         npc_entity = CampaignEntity(
             id="",
             name=name,
-            entity_type="npc",
+            entity_type=EntityType.NPC,
             description=description,
             attributes={
                 'race': race,
-                'class': character_class,
+                'character_class': character_class,
                 'personality': personality,
                 'appearance': appearance,
                 'mannerism': mannerism
@@ -115,7 +137,13 @@ class AIContentGenerator:
             first_mentioned=context.get('session_id', 'current'),
             last_updated=context.get('session_id', 'current'),
             confidence=0.9,
-            context_snippets=[description]
+            context_snippets=[description],
+            semantic_tags=[],
+            context_level=ContextLevel.MODERATE,
+            aliases=[],
+            core_attributes={},
+            variable_attributes={},
+            entity_references=[]
         )
         
         return GeneratedContent(
@@ -181,11 +209,11 @@ class AIContentGenerator:
         
         # Search for relevant entities
         if 'location_name' in context:
-            search_results = self.memory.search_campaign_memory(context['location_name'])
+            search_results = self.memory.search_campaign_memories('current', context['location_name'])
             relevant_entities.extend([r['data'] for r in search_results if r['type'] == 'entity'])
         
         if 'quest_type' in context:
-            search_results = self.memory.search_campaign_memory(context['quest_type'])
+            search_results = self.memory.search_campaign_memories('current', context['quest_type'])
             relevant_entities.extend([r['data'] for r in search_results if r['type'] == 'entity'])
         
         return {
@@ -381,4 +409,178 @@ class AIContentGenerator:
     def _get_recent_events(self) -> List[Dict[str, Any]]:
         """Get recent campaign events"""
         summary = self.memory.get_campaign_summary()
-        return summary.get('recent_activity', []) 
+        return summary.get('recent_activity', [])
+    
+    def generate_conversational_response(self, context: Dict[str, Any]) -> GeneratedContent:
+        """Generate conversational response using OpenAI API"""
+        if self.openai_client:
+            return self._generate_openai_response(context)
+        else:
+            return self._generate_fallback_response(context)
+    
+    def _generate_openai_response(self, context: Dict[str, Any]) -> GeneratedContent:
+        """Generate response using OpenAI API"""
+        try:
+            # Build the prompt with memory context
+            prompt = self._build_dm_prompt(context)
+            
+            # Get response from OpenAI
+            response = self.openai_client.chat.completions.create(
+                model="gpt-4o-mini",  # Using the latest model
+                messages=[
+                    {"role": "system", "content": self._get_system_prompt()},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=1000,
+                temperature=0.8,
+                stream=False
+            )
+            
+            ai_response = response.choices[0].message.content
+            
+            # Extract entities and continuity notes
+            entities = self._extract_entities_from_response(ai_response)
+            continuity_notes = [f"AI response generated for: {context.get('player_message', '')}"]
+            
+            return GeneratedContent(
+                content=ai_response,
+                content_type='conversation',
+                entities_involved=entities,
+                continuity_notes=continuity_notes,
+                confidence=0.9
+            )
+            
+        except Exception as e:
+            print(f"OpenAI API error: {e}")
+            return self._generate_fallback_response(context)
+    
+    def _get_system_prompt(self) -> str:
+        """Get the system prompt for the AI DM"""
+        return """You are an expert Dungeon Master for a DnD 5E solo campaign. Your role is to:
+
+1. **Create immersive, narrative responses** - Write rich, descriptive prose that brings the world to life
+2. **Maintain perfect continuity** - Use the provided memory context to ensure consistency
+3. **Follow DnD 5E rules** - Apply appropriate mechanics while keeping the story flowing
+4. **Engage the player** - Create compelling scenarios that encourage player agency
+5. **Build the world** - Develop NPCs, locations, and story elements that feel real
+
+**Writing Style:**
+- Use vivid, atmospheric descriptions
+- Include character dialogue when appropriate
+- Create tension and drama
+- End responses that invite player action
+- Keep responses engaging but not overwhelming
+
+**Memory Integration:**
+- Reference previous events, characters, and locations
+- Maintain consistency with established facts
+- Build upon existing story elements
+- Acknowledge the player's character and their journey
+
+Respond as if you're a skilled DM narrating a live session, creating an immersive experience for the player."""
+    
+    def _build_dm_prompt(self, context: Dict[str, Any]) -> str:
+        """Build a comprehensive prompt for the AI DM"""
+        player_message = context.get('player_message', '')
+        character = context.get('character', {})
+        campaign_memory = context.get('campaign_memory', {})
+        
+        # Get relevant memory context
+        memory_context = self._get_memory_context(player_message, campaign_memory)
+        
+        # Build character context
+        character_context = ""
+        if character:
+            character_context = f"""
+**Player Character:**
+- Name: {character.get('name', 'Unknown')}
+- Race: {character.get('race', 'Unknown')}
+- Class: {character.get('character_class', 'Unknown')}
+- Level: {character.get('level', 1)}
+- Background: {character.get('background', 'Unknown')}
+- Personality: {', '.join(character.get('personality_traits', []))}
+"""
+        
+        # Build the full prompt
+        prompt = f"""
+**CAMPAIGN MEMORY & CONTEXT:**
+{memory_context}
+
+{character_context}
+
+**CURRENT SITUATION:**
+The player says: "{player_message}"
+
+**YOUR TASK:**
+Respond as the Dungeon Master, creating an immersive narrative response that:
+1. Acknowledges the player's action
+2. Describes what happens in rich, atmospheric detail
+3. Maintains continuity with the established world and story
+4. Moves the narrative forward in an engaging way
+5. Invites the player to continue their adventure
+
+**RESPONSE FORMAT:**
+Write a natural, flowing narrative response as if you're a skilled DM. Include:
+- Vivid descriptions of what the player sees, hears, feels
+- Atmospheric details that set the mood
+- NPC dialogue if relevant
+- Consequences or new developments
+- Clear next steps or choices for the player
+
+Keep your response engaging but focused. End with something that invites the player to continue their adventure.
+"""
+        
+        return prompt
+    
+    def _get_memory_context(self, player_message: str, campaign_memory: Dict[str, Any]) -> str:
+        """Get relevant memory context for the AI"""
+        # Search for relevant memories
+        search_results = self.memory.search_campaign_memories('current', player_message)
+        
+        # Get recent events
+        recent_events = self._get_recent_events()
+        
+        # Get campaign summary
+        campaign_summary = self.memory.get_campaign_summary()
+        
+        # Build context string
+        context_parts = []
+        
+        # Current location and situation
+        if campaign_memory.get('current_location'):
+            context_parts.append(f"Current Location: {campaign_memory['current_location']}")
+        
+        # Recent events
+        if recent_events:
+            context_parts.append("Recent Events:")
+            for event in recent_events[:3]:  # Last 3 events
+                context_parts.append(f"- {event.get('description', 'Unknown event')}")
+        
+        # Relevant entities
+        relevant_entities = [r['data'] for r in search_results if r['type'] == 'entity']
+        if relevant_entities:
+            context_parts.append("Relevant Characters/Locations:")
+            for entity in relevant_entities[:5]:  # Top 5 relevant
+                context_parts.append(f"- {entity.get('name', 'Unknown')}: {entity.get('description', 'No description')}")
+        
+        # Campaign progress
+        if campaign_summary:
+            context_parts.append(f"Campaign Progress: {campaign_summary.get('total_sessions', 0)} sessions completed")
+        
+        return "\n".join(context_parts) if context_parts else "No specific context available."
+    
+    def _extract_entities_from_response(self, response: str) -> List[str]:
+        """Extract entity names from AI response"""
+        import re
+        # Simple entity extraction - can be enhanced
+        potential_entities = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', response)
+        return [entity for entity in potential_entities if len(entity) > 2][:5]  # Top 5 entities
+    
+    def _generate_fallback_response(self, context: Dict[str, Any]) -> GeneratedContent:
+        """Generate fallback response when OpenAI is not available"""
+        # Use the existing template-based system
+        return self._generate_general_response(context.get('player_message', ''), context)
+    
+    def _generate_general_response(self, message: str, context: Dict[str, Any]) -> str:
+        """Generate general response for other actions"""
+        return f"You {message.lower()}. The world responds to your actions..." 

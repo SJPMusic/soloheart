@@ -86,6 +86,10 @@ class Character:
             self.features = []
         if self.custom_flavor is None:
             self.custom_flavor = {}
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert character to dictionary for serialization"""
+        return asdict(self)
 
 class CharacterManager:
     """Manages character creation and customization"""
@@ -135,6 +139,52 @@ class CharacterManager:
         
         # Apply custom flavor
         self._apply_custom_flavor(character, player_preferences)
+        
+        # Calculate derived stats
+        self._calculate_derived_stats(character)
+        
+        return character
+    
+    def create_character_from_info(self, character_info: Dict[str, Any]) -> Character:
+        """
+        Create a character from parsed information
+        """
+        # Extract basic info
+        name = character_info.get('name', 'Adventurer')
+        race_name = character_info.get('race', 'human')
+        class_name = character_info.get('character_class', 'fighter')
+        level = character_info.get('level', 1)
+        background = character_info.get('background', 'folk hero')
+        personality_traits = character_info.get('personality_traits', ['brave'])
+        
+        # Convert string values to enums
+        try:
+            race = Race(race_name)
+        except ValueError:
+            race = Race.HUMAN  # Default fallback
+        
+        try:
+            character_class = CharacterClass(class_name)
+        except ValueError:
+            character_class = CharacterClass.FIGHTER  # Default fallback
+        
+        # Generate ability scores based on class
+        ability_scores = self._generate_ability_scores(character_class, race)
+        
+        # Create character
+        character = Character(
+            name=name,
+            race=race,
+            character_class=character_class,
+            level=level,
+            ability_scores=ability_scores,
+            background=background,
+            personality_traits=personality_traits
+        )
+        
+        # Apply race and class features
+        self._apply_race_features(character)
+        self._apply_class_features(character)
         
         # Calculate derived stats
         self._calculate_derived_stats(character)
@@ -250,9 +300,9 @@ class CharacterManager:
         """Select race based on vibe analysis"""
         race_vibe_mapping = {
             'heroic': [Race.HUMAN, Race.DRAGONBORN, Race.HALF_ORC],
-            'mysterious': [Race.TIEFLING, Race.DROW, Race.HALF_ELF],
+            'mysterious': [Race.TIEFLING, Race.ELF, Race.HALF_ELF],
             'scholarly': [Race.ELF, Race.GNOME, Race.HUMAN],
-            'primal': [Race.DRUID, Race.HALF_ORC, Race.DRAGONBORN],
+            'primal': [Race.HALF_ORC, Race.DRAGONBORN, Race.HUMAN],
             'noble': [Race.ELF, Race.HUMAN, Race.HALF_ELF],
             'balanced': [Race.HUMAN, Race.HALF_ELF, Race.HALFLING]
         }

@@ -111,6 +111,12 @@ class DnDCampaignManager:
         character_data['race'] = character.race.value
         character_data['character_class'] = character.character_class.value
         
+        # Convert ability score enum keys to strings
+        ability_scores = {}
+        for key, value in character_data['ability_scores'].items():
+            ability_scores[key.value] = value
+        character_data['ability_scores'] = ability_scores
+        
         with open(character_file, 'w') as f:
             json.dump(character_data, f, indent=2)
     
@@ -274,7 +280,7 @@ class DnDCampaignManager:
     
     def search_campaign_memory(self, query: str) -> List[Dict[str, Any]]:
         """Search campaign memory"""
-        return self.memory_system.search_campaign_memory(query)
+        return self.memory_system.search_campaign_memories('current', query)
     
     def get_campaign_summary(self) -> Dict[str, Any]:
         """Get campaign summary"""
@@ -318,7 +324,7 @@ class DnDCampaignManager:
             return []
         
         # Search memory for similar situations
-        similar_situations = self.memory_system.search_campaign_memory(situation)
+        similar_situations = self.memory_system.search_campaign_memories('current', situation)
         
         suggestions = []
         
@@ -343,15 +349,28 @@ class DnDCampaignManager:
         if filename is None:
             filename = os.path.join(self.campaign_data_dir, f"{self.campaign_name}_export_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
         
+        # Convert characters to serializable format
+        characters_data = {}
+        for name, char in self.player_characters.items():
+            char_dict = asdict(char)
+            char_dict['race'] = char.race.value
+            char_dict['character_class'] = char.character_class.value
+            
+            # Convert ability score enum keys to strings
+            ability_scores = {}
+            for key, value in char_dict['ability_scores'].items():
+                ability_scores[key.value] = value
+            char_dict['ability_scores'] = ability_scores
+            
+            characters_data[name] = char_dict
+        
         export_data = {
             'campaign_info': {
                 'name': self.campaign_name,
                 'settings': self.campaign_settings,
                 'export_date': datetime.datetime.now().isoformat()
             },
-            'characters': {
-                name: asdict(char) for name, char in self.player_characters.items()
-            },
+            'characters': characters_data,
             'active_quests': self.active_quests,
             'campaign_memory': self.memory_system.get_campaign_summary(),
             'sessions': []
@@ -381,6 +400,167 @@ class DnDCampaignManager:
         backup_path = os.path.join(backup_dir, backup_filename)
         
         return self.export_campaign_data(backup_path)
+    
+    def process_player_action(self, message: str, character: Character = None) -> str:
+        """Process conversational input from player and return AI DM response"""
+        try:
+            # If no character provided, try to extract character info from message
+            if not character:
+                character = self._extract_character_from_message(message)
+            
+            # Add message to memory
+            self.memory_system.add_campaign_memory(
+                memory_type='player_message',
+                content={
+                    'message': message,
+                    'timestamp': datetime.datetime.now().isoformat(),
+                    'character_name': character.name if character else 'Unknown'
+                },
+                session_id=self.current_session.session_id if self.current_session else 'conversation'
+            )
+            
+            # Generate AI response using the content generator
+            context = {
+                'player_message': message,
+                'character': character.to_dict() if character else {},
+                'campaign_memory': self.get_campaign_summary(),
+                'current_session': self.current_session.session_id if self.current_session else None
+            }
+            
+            # Generate response
+            response_content = self.ai_generator.generate_conversational_response(context)
+            
+            # Add AI response to memory
+            self.memory_system.add_campaign_memory(
+                memory_type='ai_response',
+                content={
+                    'response': response_content.content,
+                    'timestamp': datetime.datetime.now().isoformat(),
+                    'context': context
+                },
+                session_id=self.current_session.session_id if self.current_session else 'conversation'
+            )
+            
+            return response_content.content
+            
+        except Exception as e:
+            return f"I'm having trouble processing that. Could you rephrase? (Error: {str(e)})"
+    
+    def _extract_character_from_message(self, message: str) -> Optional[Character]:
+        """Extract or create character information from conversational message"""
+        message_lower = message.lower()
+        
+        # Check if message contains character creation info
+        if any(word in message_lower for word in ['i am', "i'm", 'my name is', 'i am a', "i'm a"]):
+            # Extract character details from message
+            character_info = self._parse_character_info(message)
+            
+            if character_info:
+                # Create character from extracted info
+                character = self.character_manager.create_character_from_info(character_info)
+                
+                # Save character
+                player_name = character_info.get('player_name', 'Player')
+                self.player_characters[player_name] = character
+                self._save_character(player_name, character)
+                
+                # Add to memory
+                self.memory_system.add_campaign_memory(
+                    memory_type='character_creation',
+                    content={
+                        'player_name': player_name,
+                        'character_name': character.name,
+                        'race': character.race.value,
+                        'class': character.character_class.value,
+                        'level': character.level,
+                        'background': character.background,
+                        'personality_traits': character.personality_traits,
+                        'creation_message': message
+                    },
+                    session_id='character_creation'
+                )
+                
+                return character
+        
+        # Return first available character if any exist
+        if self.player_characters:
+            return list(self.player_characters.values())[0]
+        
+        return None
+    
+    def _parse_character_info(self, message: str) -> Dict[str, Any]:
+        """Parse character information from natural language message"""
+        import re
+        
+        character_info = {}
+        
+        # Extract name
+        name_patterns = [
+            r"my name is (\w+)",
+            r"i am (\w+)",
+            r"i'm (\w+)",
+            r"call me (\w+)"
+        ]
+        
+        for pattern in name_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                character_info['name'] = match.group(1)
+                break
+        
+        # Extract race
+        races = ['human', 'elf', 'dwarf', 'halfling', 'gnome', 'half-elf', 'half-orc', 'tiefling', 'dragonborn']
+        for race in races:
+            if race in message.lower():
+                character_info['race'] = race
+                break
+        
+        # Extract class
+        classes = ['fighter', 'wizard', 'cleric', 'rogue', 'ranger', 'paladin', 'barbarian', 'bard', 'druid', 'monk', 'sorcerer', 'warlock']
+        for class_name in classes:
+            if class_name in message.lower():
+                character_info['character_class'] = class_name
+                break
+        
+        # Extract level
+        level_match = re.search(r"level (\d+)", message, re.IGNORECASE)
+        if level_match:
+            character_info['level'] = int(level_match.group(1))
+        
+        # Extract background
+        backgrounds = ['acolyte', 'criminal', 'folk hero', 'noble', 'sage', 'soldier']
+        for background in backgrounds:
+            if background in message.lower():
+                character_info['background'] = background
+                break
+        
+        # Extract personality traits
+        personality_keywords = ['brave', 'cautious', 'curious', 'friendly', 'mysterious', 'serious', 'playful']
+        traits = []
+        for keyword in personality_keywords:
+            if keyword in message.lower():
+                traits.append(keyword)
+        
+        if traits:
+            character_info['personality_traits'] = traits
+        
+        # Set defaults if not found
+        if 'name' not in character_info:
+            character_info['name'] = 'Adventurer'
+        if 'race' not in character_info:
+            character_info['race'] = 'human'
+        if 'character_class' not in character_info:
+            character_info['character_class'] = 'fighter'
+        if 'level' not in character_info:
+            character_info['level'] = 1
+        if 'background' not in character_info:
+            character_info['background'] = 'folk hero'
+        if 'personality_traits' not in character_info:
+            character_info['personality_traits'] = ['brave']
+        
+        character_info['player_name'] = 'Player'
+        
+        return character_info
 
 def main():
     """Main function to demonstrate the campaign manager"""
