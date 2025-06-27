@@ -261,7 +261,7 @@ class CampaignMemorySystem:
                     context_level TEXT
                 )
             """)
-            
+    
             # New semantic index table
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS semantic_index (
@@ -339,7 +339,7 @@ class CampaignMemorySystem:
             entities = [(ent.text, ent.label_) for ent in doc.ents]
         else:
             # Basic NLTK named entity recognition
-            entities = []
+        entities = []
             ne_tree = ne_chunk(pos_tags)
             for subtree in ne_tree:
                 if hasattr(subtree, 'label'):
@@ -571,15 +571,15 @@ class CampaignMemorySystem:
                 name = match.group(1)
                 description = match.group(2) if len(match.groups()) > 1 else "NPC"
                 
-                entity = CampaignEntity(
-                    id="",
+            entity = CampaignEntity(
+                id="",
                     name=name,
                     entity_type=EntityType.NPC,
                     description=description,
-                    attributes={},
-                    relationships={},
-                    first_mentioned=session_id,
-                    last_updated=session_id,
+                attributes={},
+                relationships={},
+                first_mentioned=session_id,
+                last_updated=session_id,
                     confidence=0.6,
                     context_snippets=[match.group(0)],
                     semantic_tags=[],
@@ -588,8 +588,8 @@ class CampaignMemorySystem:
                     core_attributes={},
                     variable_attributes={},
                     references=[]
-                )
-                entities.append(entity)
+            )
+            entities.append(entity)
         
         # Extract locations
         location_patterns = [
@@ -603,15 +603,15 @@ class CampaignMemorySystem:
             for match in matches:
                 name = match.group(1)
                 
-                entity = CampaignEntity(
-                    id="",
+            entity = CampaignEntity(
+                id="",
                     name=name,
                     entity_type=EntityType.LOCATION,
                     description=f"Location: {name}",
-                    attributes={},
-                    relationships={},
-                    first_mentioned=session_id,
-                    last_updated=session_id,
+                attributes={},
+                relationships={},
+                first_mentioned=session_id,
+                last_updated=session_id,
                     confidence=0.6,
                     context_snippets=[match.group(0)],
                     semantic_tags=[],
@@ -620,8 +620,8 @@ class CampaignMemorySystem:
                     core_attributes={},
                     variable_attributes={},
                     references=[]
-                )
-                entities.append(entity)
+            )
+            entities.append(entity)
         
         return entities
     
@@ -839,8 +839,8 @@ class CampaignMemorySystem:
                 self._merge_entity_information(existing, entity, session_id)
             else:
                 # Add new entity
-                self.entities[entity.id] = entity
-                
+            self.entities[entity.id] = entity
+    
                 # Add to semantic index
                 for tag in entity.semantic_tags:
                     self.semantic_index[tag.category].append(entity.id)
@@ -1073,7 +1073,7 @@ class CampaignMemorySystem:
                 'key_events': session.key_events[:3]  # Top 3 events
             })
         
-        return timeline
+        return timeline 
     
     def _find_entity_by_name(self, name: str) -> Optional[CampaignEntity]:
         """Find entity by name"""
