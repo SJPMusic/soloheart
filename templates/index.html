@@ -21,6 +21,12 @@
                     <button id="new-campaign-btn" class="btn btn-secondary">
                         <i class="fas fa-plus"></i> New Campaign
                     </button>
+                    <button id="save-campaign-btn" class="btn btn-secondary">
+                        <i class="fas fa-save"></i> Save Campaign
+                    </button>
+                    <button id="load-campaign-btn" class="btn btn-secondary">
+                        <i class="fas fa-folder-open"></i> Load Campaign
+                    </button>
                     <button id="start-session-btn" class="btn btn-primary">
                         <i class="fas fa-play"></i> Start Session
                     </button>
@@ -116,6 +122,49 @@
         </div>
     </div>
 
+    <!-- Modal for save campaign -->
+    <div class="modal" id="save-campaign-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Save Campaign</h3>
+                <button class="modal-close" id="close-save-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="save-name">Save Name (optional):</label>
+                    <input type="text" id="save-name" placeholder="Enter save name or leave blank for auto-name...">
+                </div>
+                <p class="help-text">This will save your current campaign state including characters, chat history, and world state.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-save">Cancel</button>
+                <button class="btn btn-primary" id="confirm-save">Save Campaign</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for load campaign -->
+    <div class="modal" id="load-campaign-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Load Campaign</h3>
+                <button class="modal-close" id="close-load-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="saved-sessions-list">
+                    <p>Loading saved sessions...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-load">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading overlay -->
     <div class="loading-overlay" id="loading-overlay" style="display: none;">
         <div class="loading-spinner">
@@ -124,6 +173,6 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/enhanced_app.js') }}"></script>
 </body>
 </html> 

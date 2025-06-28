@@ -1,5 +1,9 @@
 # DnD 5E AI-Powered Solo Game
 
+⚠️ **Disclaimer**: This is an early-stage, private development project exploring original narrative AI frameworks. All content is the intellectual property of the creator. Do not reproduce, copy, or commercialize any part of this project without explicit written permission.
+
+---
+
 An AI-powered Dungeon Master for solo DnD 5E campaigns with persistent memory that never forgets or contradicts itself.
 
 ## 🎯 Project Overview

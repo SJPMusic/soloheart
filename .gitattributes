@@ -1,0 +1,42 @@
+# Text files
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.sql text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+
+# Documentation
+*.docx binary
+*.pdf binary
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg text
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+
+# Database files
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+
+# Environment files
+.env text eol=lf
+.env.* text eol=lf
+
+# License and copyright
+LICENSE text eol=lf
+COPYRIGHT text eol=lf 
