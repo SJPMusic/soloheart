@@ -12,32 +12,15 @@ spacy>=3.1.0
 textblob>=0.15.0
 
 # Database and data handling
-sqlite3
 json5>=2.1.0
 
 # AI and machine learning
 openai>=1.0.0
 python-dotenv>=1.0.0
 
-# GUI and interface
-tkinter
-
 # Web framework (for ChatGPT-style interface)
 flask>=2.0.0
 flask-cors>=3.0.0
-
-# Utilities
-datetime
-pathlib
-typing
-dataclasses
-enum
-random
-re
-os
-sys
-threading
-queue
 
 # Database (for future scaling)
 # sqlalchemy>=1.4.0
