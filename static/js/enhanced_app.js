@@ -1,5 +1,5 @@
-// DnD 5E AI-Powered Game - Enhanced Frontend JavaScript
-// ====================================================
+// DnD 5E AI-Powered Game - Enhanced Frontend JavaScript with Memory Integration
+// ===========================================================================
 
 class EnhancedDnDGameApp {
     constructor() {
@@ -7,6 +7,7 @@ class EnhancedDnDGameApp {
         this.messageHistory = [];
         this.isProcessing = false;
         this.savedSessions = [];
+        this.memoryStats = null;
         this.init();
     }
 
@@ -15,6 +16,7 @@ class EnhancedDnDGameApp {
         this.autoResizeTextarea();
         this.updateCharCount();
         this.loadGameStatus();
+        this.loadMemoryStats();
         this.focusInput();
     }
 
@@ -69,6 +71,28 @@ class EnhancedDnDGameApp {
             this.endSession();
         });
 
+        // Memory management buttons
+        const memoryStatsBtn = document.getElementById('memory-stats-btn');
+        if (memoryStatsBtn) {
+            memoryStatsBtn.addEventListener('click', () => {
+                this.showMemoryStats();
+            });
+        }
+
+        const recallMemoriesBtn = document.getElementById('recall-memories-btn');
+        if (recallMemoriesBtn) {
+            recallMemoriesBtn.addEventListener('click', () => {
+                this.showRecallMemoriesModal();
+            });
+        }
+
+        const saveMemoryBtn = document.getElementById('save-memory-btn');
+        if (saveMemoryBtn) {
+            saveMemoryBtn.addEventListener('click', () => {
+                this.saveMemoryState();
+            });
+        }
+
         // Modal events
         document.getElementById('close-modal').addEventListener('click', () => {
             this.hideModal('new-campaign-modal');
@@ -80,6 +104,14 @@ class EnhancedDnDGameApp {
 
         document.getElementById('close-load-modal').addEventListener('click', () => {
             this.hideModal('load-campaign-modal');
+        });
+
+        document.getElementById('close-memory-modal').addEventListener('click', () => {
+            this.hideModal('memory-stats-modal');
+        });
+
+        document.getElementById('close-recall-modal').addEventListener('click', () => {
+            this.hideModal('recall-memories-modal');
         });
 
         document.getElementById('cancel-campaign').addEventListener('click', () => {
@@ -94,12 +126,20 @@ class EnhancedDnDGameApp {
             this.hideModal('load-campaign-modal');
         });
 
+        document.getElementById('cancel-recall').addEventListener('click', () => {
+            this.hideModal('recall-memories-modal');
+        });
+
         document.getElementById('create-campaign').addEventListener('click', () => {
             this.createNewCampaign();
         });
 
         document.getElementById('confirm-save').addEventListener('click', () => {
             this.saveCampaign();
+        });
+
+        document.getElementById('confirm-recall').addEventListener('click', () => {
+            this.recallMemories();
         });
 
         // Close modals when clicking outside
@@ -584,6 +624,209 @@ class EnhancedDnDGameApp {
 
     hideLoading() {
         document.getElementById('loading-overlay').style.display = 'none';
+    }
+
+    async loadMemoryStats() {
+        try {
+            const response = await fetch('/api/memory/stats');
+            if (response.ok) {
+                const data = await response.json();
+                this.memoryStats = data.memory_stats;
+                this.updateMemoryDisplay();
+            }
+        } catch (error) {
+            console.error('Error loading memory stats:', error);
+        }
+    }
+
+    updateMemoryDisplay() {
+        if (!this.memoryStats) return;
+
+        // Update memory stats in header if element exists
+        const memoryStatsElement = document.getElementById('memory-stats-display');
+        if (memoryStatsElement) {
+            const stats = this.memoryStats;
+            memoryStatsElement.innerHTML = `
+                <div class="memory-stats">
+                    <span class="stat">ST: ${stats.short_term || 0}</span>
+                    <span class="stat">MT: ${stats.mid_term || 0}</span>
+                    <span class="stat">LT: ${stats.long_term || 0}</span>
+                    <span class="stat">Total: ${stats.created || 0}</span>
+                </div>
+            `;
+        }
+    }
+
+    showMemoryStats() {
+        if (!this.memoryStats) {
+            this.loadMemoryStats();
+            return;
+        }
+
+        const modal = document.getElementById('memory-stats-modal');
+        const content = document.getElementById('memory-stats-content');
+        
+        const stats = this.memoryStats;
+        content.innerHTML = `
+            <div class="memory-stats-grid">
+                <div class="stat-card">
+                    <h3>Memory Layers</h3>
+                    <div class="stat-item">
+                        <span>Short-term:</span>
+                        <span>${stats.short_term || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Mid-term:</span>
+                        <span>${stats.mid_term || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Long-term:</span>
+                        <span>${stats.long_term || 0}</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>Memory Operations</h3>
+                    <div class="stat-item">
+                        <span>Created:</span>
+                        <span>${stats.created || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Forgotten:</span>
+                        <span>${stats.forgotten || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Reinforced:</span>
+                        <span>${stats.reinforced || 0}</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>System Info</h3>
+                    <div class="stat-item">
+                        <span>Users:</span>
+                        <span>${stats.users || 0}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Forgotten:</span>
+                        <span>${stats.forgotten || 0}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.showModal('memory-stats-modal');
+    }
+
+    showRecallMemoriesModal() {
+        this.showModal('recall-memories-modal');
+    }
+
+    async recallMemories() {
+        const query = document.getElementById('memory-query').value.trim();
+        const memoryType = document.getElementById('memory-type').value;
+        const layer = document.getElementById('memory-layer').value;
+
+        try {
+            const response = await fetch('/api/memory/recall', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: query,
+                    memory_type: memoryType || null,
+                    layer: layer || null
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.displayRecalledMemories(data.memories);
+            } else {
+                this.showError(`Error recalling memories: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error recalling memories:', error);
+            this.showError('Failed to recall memories');
+        }
+    }
+
+    displayRecalledMemories(memories) {
+        const resultsContainer = document.getElementById('memory-results');
+        
+        if (memories.length === 0) {
+            resultsContainer.innerHTML = '<p class="no-memories">No memories found matching your criteria.</p>';
+            return;
+        }
+
+        const memoriesHtml = memories.map(memory => `
+            <div class="memory-item">
+                <div class="memory-header">
+                    <span class="memory-type">${memory.type}</span>
+                    <span class="memory-layer">${memory.layer}</span>
+                    <span class="memory-significance">Significance: ${memory.significance.toFixed(2)}</span>
+                </div>
+                <div class="memory-content">
+                    <strong>Content:</strong> ${this.escapeHtml(JSON.stringify(memory.content, null, 2))}
+                </div>
+                <div class="memory-meta">
+                    <span class="memory-tags">Tags: ${memory.thematic_tags.join(', ') || 'None'}</span>
+                    <span class="memory-emotions">Emotions: ${memory.emotional_context.join(', ') || 'None'}</span>
+                    <span class="memory-time">${new Date(memory.timestamp).toLocaleString()}</span>
+                </div>
+            </div>
+        `).join('');
+
+        resultsContainer.innerHTML = memoriesHtml;
+    }
+
+    async saveMemoryState() {
+        try {
+            const response = await fetch('/api/memory/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showSuccess(`Memory state saved as ${data.filename}`);
+                this.loadMemoryStats(); // Refresh stats
+            } else {
+                this.showError(`Error saving memory: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Error saving memory state:', error);
+            this.showError('Failed to save memory state');
+        }
+    }
+
+    showSuccess(message) {
+        // Create a temporary success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success-message';
+        successDiv.textContent = message;
+        document.body.appendChild(successDiv);
+        
+        setTimeout(() => {
+            successDiv.remove();
+        }, 3000);
+    }
+
+    showError(message) {
+        // Create a temporary error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 5000);
     }
 }
 

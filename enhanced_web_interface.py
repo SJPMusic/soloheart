@@ -1,8 +1,8 @@
 """
-DnD 5E AI-Powered Game - Enhanced Web Interface
-==============================================
+DnD 5E AI-Powered Game - Enhanced Web Interface with Memory Integration
+=====================================================================
 
-Enhanced web interface with database persistence and Redis caching
+Enhanced web interface with database persistence, Redis caching, and memory-aware AI
 """
 
 from flask import Flask, render_template, request, jsonify, session
@@ -22,6 +22,7 @@ from enhanced_campaign_manager import EnhancedCampaignManager
 from models import create_database, get_session, Campaign, CampaignSession
 from cache_manager import cache_manager
 from core.character_manager import Character
+from core.enhanced_ai_dm_engine import EnhancedAIDMEngine
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +34,7 @@ CORS(app)
 
 # Global game state
 game_manager = None
+enhanced_ai_dm = None
 current_campaign = "Default Campaign"
 
 def initialize_database():
@@ -46,8 +48,8 @@ def initialize_database():
         return False
 
 def initialize_game():
-    """Initialize the enhanced game manager"""
-    global game_manager
+    """Initialize the enhanced game manager and AI DM"""
+    global game_manager, enhanced_ai_dm
     if game_manager is None:
         try:
             game_manager = EnhancedCampaignManager(current_campaign)
@@ -55,6 +57,17 @@ def initialize_game():
         except Exception as e:
             logger.error(f"Failed to initialize game manager: {e}")
             return None
+    
+    if enhanced_ai_dm is None:
+        try:
+            # Initialize with API key if available
+            api_key = os.getenv('OPENAI_API_KEY')
+            enhanced_ai_dm = EnhancedAIDMEngine(api_key, current_campaign)
+            logger.info("Enhanced AI DM engine initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize AI DM engine: {e}")
+            return None
+    
     return game_manager
 
 @app.route('/')
@@ -64,7 +77,7 @@ def index():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """Handle chat messages with caching"""
+    """Handle chat messages with memory-aware AI"""
     try:
         data = request.get_json()
         message = data.get('message', '').strip()
@@ -77,14 +90,41 @@ def chat():
         if not manager:
             return jsonify({'error': 'Failed to initialize game manager'}), 500
         
-        # Process the message through the enhanced game manager
-        response = manager.process_player_action(message)
+        # Get current character info
+        character_info = None
+        if manager.player_characters:
+            # Get the first character (or implement character selection)
+            char = list(manager.player_characters.values())[0]
+            character_info = {
+                'name': char.name,
+                'race': char.race.value,
+                'class': char.character_class.value,
+                'level': char.level,
+                'ability_scores': char.ability_scores,
+                'skills': char.skills,
+                'equipment': char.equipment
+            }
         
-        # Return the response
+        # Get current session ID
+        session_id = manager.current_session.session_id if manager.current_session else None
+        
+        # Process with memory-aware AI DM
+        response = enhanced_ai_dm.process_action(
+            player_action=message,
+            character_info=character_info,
+            session_id=session_id,
+            user_id="player"
+        )
+        
+        # Also process through campaign manager for compatibility
+        campaign_response = manager.process_player_action(message)
+        
+        # Return the memory-aware response
         return jsonify({
             'response': response,
             'timestamp': datetime.now().isoformat(),
-            'cached': False  # Enhanced manager handles caching internally
+            'memory_aware': True,
+            'campaign_response': campaign_response  # For compatibility
         })
         
     except Exception as e:
@@ -93,9 +133,148 @@ def chat():
             'error': f'An error occurred while processing your message: {str(e)}'
         }), 500
 
+@app.route('/api/memory/stats')
+def get_memory_stats():
+    """Get memory system statistics"""
+    try:
+        if enhanced_ai_dm is None:
+            return jsonify({'error': 'AI DM engine not initialized'}), 500
+        
+        stats = enhanced_ai_dm.get_memory_stats()
+        return jsonify({
+            'memory_stats': stats,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting memory stats: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/memory/recall', methods=['POST'])
+def recall_memories():
+    """Recall specific memories"""
+    try:
+        data = request.get_json()
+        query = data.get('query', '')
+        memory_type = data.get('memory_type', None)
+        layer = data.get('layer', None)
+        
+        if enhanced_ai_dm is None:
+            return jsonify({'error': 'AI DM engine not initialized'}), 500
+        
+        # Convert string to enum if provided
+        from core.enhanced_memory_system import MemoryType, MemoryLayer
+        mem_type = MemoryType(memory_type) if memory_type else None
+        mem_layer = MemoryLayer(layer) if layer else None
+        
+        memories = enhanced_ai_dm.memory_system.recall(
+            query=query,
+            memory_type=mem_type,
+            layer=mem_layer,
+            user_id="player"
+        )
+        
+        # Format memories for response
+        formatted_memories = []
+        for memory in memories:
+            formatted_memories.append({
+                'id': memory.id,
+                'content': memory.content,
+                'type': memory.memory_type.value,
+                'layer': memory.layer.value,
+                'significance': memory.get_significance(),
+                'emotional_context': [e.value for e in memory.emotional_context],
+                'thematic_tags': memory.thematic_tags,
+                'timestamp': memory.timestamp.isoformat()
+            })
+        
+        return jsonify({
+            'memories': formatted_memories,
+            'count': len(formatted_memories),
+            'query': query,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error recalling memories: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/memory/forget', methods=['POST'])
+def forget_memories():
+    """Forget memories below a threshold"""
+    try:
+        data = request.get_json()
+        threshold = data.get('threshold', 0.1)
+        
+        if enhanced_ai_dm is None:
+            return jsonify({'error': 'AI DM engine not initialized'}), 500
+        
+        enhanced_ai_dm.memory_system.forget(threshold)
+        
+        return jsonify({
+            'message': f'Forgot memories below threshold {threshold}',
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error forgetting memories: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/memory/save', methods=['POST'])
+def save_memory_state():
+    """Save current memory state"""
+    try:
+        if enhanced_ai_dm is None:
+            return jsonify({'error': 'AI DM engine not initialized'}), 500
+        
+        memory_state = enhanced_ai_dm.save_memory_state()
+        
+        # Save to file or database
+        filename = f"memory_state_{current_campaign}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(filename, 'w') as f:
+            json.dump(memory_state, f, indent=2)
+        
+        return jsonify({
+            'message': 'Memory state saved successfully',
+            'filename': filename,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error saving memory state: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/memory/load', methods=['POST'])
+def load_memory_state():
+    """Load memory state from file"""
+    try:
+        data = request.get_json()
+        filename = data.get('filename', '')
+        
+        if not filename or not os.path.exists(filename):
+            return jsonify({'error': 'Memory state file not found'}), 404
+        
+        if enhanced_ai_dm is None:
+            return jsonify({'error': 'AI DM engine not initialized'}), 500
+        
+        with open(filename, 'r') as f:
+            memory_state = json.load(f)
+        
+        enhanced_ai_dm.load_memory_state(memory_state)
+        
+        return jsonify({
+            'message': 'Memory state loaded successfully',
+            'filename': filename,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error loading memory state: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/status')
 def status():
-    """Get current game status with enhanced info"""
+    """Get current game status with memory info"""
     try:
         manager = initialize_game()
         if not manager:
@@ -114,12 +293,18 @@ def status():
         # Get enhanced campaign summary
         campaign_summary = manager.get_campaign_summary()
         
+        # Get memory stats if available
+        memory_stats = None
+        if enhanced_ai_dm:
+            memory_stats = enhanced_ai_dm.get_memory_stats()
+        
         return jsonify({
             'campaign': current_campaign,
             'characters': characters,
             'session_active': manager.current_session is not None,
             'timestamp': datetime.now().isoformat(),
             'campaign_summary': campaign_summary,
+            'memory_stats': memory_stats,
             'cache_status': cache_manager.get_cache_stats()
         })
         

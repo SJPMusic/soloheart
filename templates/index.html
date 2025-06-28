@@ -18,6 +18,20 @@
                     DnD 5E Solo Adventure
                 </h1>
                 <div class="header-actions">
+                    <div class="memory-stats-display" id="memory-stats-display">
+                        <span class="stat">ST: 0</span>
+                        <span class="stat">MT: 0</span>
+                        <span class="stat">LT: 0</span>
+                    </div>
+                    <button id="memory-stats-btn" class="btn btn-secondary" title="Memory Statistics">
+                        <i class="fas fa-brain"></i> Memory
+                    </button>
+                    <button id="recall-memories-btn" class="btn btn-secondary" title="Recall Memories">
+                        <i class="fas fa-search"></i> Recall
+                    </button>
+                    <button id="save-memory-btn" class="btn btn-secondary" title="Save Memory State">
+                        <i class="fas fa-save"></i> Save Memory
+                    </button>
                     <button id="new-campaign-btn" class="btn btn-secondary">
                         <i class="fas fa-plus"></i> New Campaign
                     </button>
@@ -47,14 +61,15 @@
                     </div>
                     <div class="message-content">
                         <div class="message-text">
-                            <p>Welcome to your DnD 5E solo adventure! I'm your AI Dungeon Master, and I'm here to guide you through an epic journey.</p>
+                            <p>Welcome to your DnD 5E solo adventure! I'm your AI Dungeon Master with a sophisticated memory system that remembers everything about your journey.</p>
                             <p>To get started, you can:</p>
                             <ul>
                                 <li><strong>Create a character</strong> by describing yourself naturally: "I'm a half-elf wizard named Gandalf who specializes in fire magic"</li>
                                 <li><strong>Start exploring</strong> by describing what you want to do: "I explore the dark forest" or "I talk to the innkeeper"</li>
                                 <li><strong>Ask questions</strong> about your surroundings: "What do I see around me?"</li>
+                                <li><strong>Check memory</strong> using the Memory button to see what I remember about our adventures</li>
                             </ul>
-                            <p>I'll remember everything about your character, the world, and your adventures. What would you like to do?</p>
+                            <p>I'll remember everything about your character, the world, and your adventures with perfect continuity. What would you like to do?</p>
                         </div>
                         <div class="message-timestamp">Just now</div>
                     </div>
@@ -161,6 +176,76 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="cancel-load">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for memory statistics -->
+    <div class="modal" id="memory-stats-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Memory System Statistics</h3>
+                <button class="modal-close" id="close-memory-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="memory-stats-content">
+                    <p>Loading memory statistics...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="close-memory-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for recall memories -->
+    <div class="modal" id="recall-memories-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Recall Memories</h3>
+                <button class="modal-close" id="close-recall-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="memory-query">Search Query:</label>
+                    <input type="text" id="memory-query" placeholder="Enter keywords to search memories...">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="memory-type">Memory Type:</label>
+                        <select id="memory-type">
+                            <option value="">All Types</option>
+                            <option value="event">Event</option>
+                            <option value="decision">Decision</option>
+                            <option value="emotion">Emotion</option>
+                            <option value="relationship">Relationship</option>
+                            <option value="theme">Theme</option>
+                            <option value="world_state">World State</option>
+                            <option value="callback">Callback</option>
+                            <option value="foreshadow">Foreshadow</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="memory-layer">Memory Layer:</label>
+                        <select id="memory-layer">
+                            <option value="">All Layers</option>
+                            <option value="short_term">Short-term</option>
+                            <option value="mid_term">Mid-term</option>
+                            <option value="long_term">Long-term</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="memory-results" id="memory-results">
+                    <p>Enter a search query to find memories...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-recall">Cancel</button>
+                <button class="btn btn-primary" id="confirm-recall">Search Memories</button>
             </div>
         </div>
     </div>
