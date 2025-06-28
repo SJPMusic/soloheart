@@ -1,176 +1,196 @@
-# DnD 5E AI-Powered Solo Game
+# The Narrative Engine
 
-⚠️ **Disclaimer**: This is an early-stage, private development project exploring original narrative AI frameworks. All content is the intellectual property of the creator. Do not reproduce, copy, or commercialize any part of this project without explicit written permission.
+A domain-agnostic narrative intelligence system that understands, generates, and adapts stories across multiple contexts.
 
----
+## Overview
 
-An AI-powered Dungeon Master for solo DnD 5E campaigns with persistent memory that never forgets or contradicts itself.
+The Narrative Engine is a sophisticated system designed to work with narratives across various domains including gaming, therapy, education, organizational storytelling, creative writing, journalism, and marketing. It provides deep narrative understanding, generation capabilities, and adaptive storytelling.
 
-## 🎯 Project Overview
+## Core Features
 
-This project creates a conversational AI DM that provides ChatGPT-quality storytelling while maintaining perfect continuity across sessions. It solves the memory issues experienced with ChatGPT by implementing a sophisticated memory system that tracks everything about your character, the world, and your adventures.
+### 1. **Layered Memory System**
+- **Short-term memory**: Immediate context and recent interactions
+- **Mid-term memory**: Session-level goals, arcs, and unresolved threads  
+- **Long-term memory**: Campaign/world-level lore, history, and relationships
+- **Memory decay and reinforcement**: Natural forgetting and strengthening mechanisms
+- **Emotional context**: Memory tagging with emotional weights and contexts
+- **Nonlinear recall**: Associative and contextual memory retrieval
 
-## ✨ Key Features
+### 2. **Domain-Agnostic Architecture**
+- **Modular domain adapters**: Specialized handlers for different narrative contexts
+- **Universal narrative analysis**: Story structure, coherence, and thematic analysis
+- **Cross-domain learning**: Knowledge transfer between different narrative types
+- **Extensible framework**: Easy addition of new domains and capabilities
 
-- **ChatGPT-quality storytelling** - Rich, narrative responses powered by OpenAI
-- **Persistent memory** - Remembers everything about your character, locations, NPCs, and story
-- **Natural conversation** - Just type what you want to do, like "light the flame"
-- **DnD 5E compliance** - Proper character creation, rules, and mechanics
-- **Perfect continuity** - No more inconsistencies or forgotten details
+### 3. **Narrative Intelligence**
+- **Story structure analysis**: Understanding narrative arcs, pacing, and structure
+- **Character modeling**: Dynamic character development and relationship tracking
+- **Plot generation**: Contextual plot point creation and adaptation
+- **Thematic analysis**: Identifying and developing themes and motifs
+- **Coherence maintenance**: Ensuring narrative consistency and flow
 
-## 🚀 Quick Start
+### 4. **Adaptive Capabilities**
+- **Real-time adaptation**: Dynamic story adjustment based on user input
+- **Personalization**: Tailored experiences based on user preferences and history
+- **Context awareness**: Situational understanding and appropriate responses
+- **Multi-modal support**: Text, dialogue, and structured narrative formats
 
-### Prerequisites
-- Python 3.8+
-- OpenAI API key (get one at https://platform.openai.com/api-keys)
+## Architecture
 
-### Installation
+```
+The Narrative Engine/
+├── core/
+│   ├── memory_system.py          # Layered memory implementation
+│   ├── narrative_engine.py       # Main engine orchestration
+│   ├── domain_adapters.py        # Domain-specific handlers
+│   ├── story_analyzer.py         # Narrative analysis tools
+│   ├── character_model.py        # Character development system
+│   └── plot_generator.py         # Plot creation and adaptation
+├── domains/
+│   ├── gaming.py                 # Gaming narrative adapter
+│   ├── therapy.py                # Therapeutic narrative adapter
+│   ├── education.py              # Educational narrative adapter
+│   ├── organizational.py         # Business narrative adapter
+│   ├── creative_writing.py       # Creative writing adapter
+│   ├── journalism.py             # Journalistic narrative adapter
+│   └── marketing.py              # Marketing narrative adapter
+├── utils/
+│   ├── text_processing.py        # NLP and text analysis
+│   ├── coherence_checker.py      # Narrative consistency tools
+│   └── export_import.py          # Data serialization
+├── examples/
+│   ├── demo.py                   # Basic usage examples
+│   ├── gaming_example.py         # Gaming narrative demo
+│   ├── therapy_example.py        # Therapeutic narrative demo
+│   └── education_example.py      # Educational narrative demo
+├── tests/
+│   ├── test_memory_system.py     # Memory system tests
+│   ├── test_narrative_engine.py  # Engine functionality tests
+│   └── test_domain_adapters.py   # Domain adapter tests
+├── docs/
+│   ├── API.md                    # API documentation
+│   ├── DOMAINS.md                # Domain-specific guides
+│   └── MEMORY_SYSTEM.md          # Memory system documentation
+├── requirements.txt              # Python dependencies
+└── README.md                     # This file
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd DnD-Project
-   ```
+## Installation
 
-2. **Set up virtual environment**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Set up OpenAI API key**
-   ```bash
-   python3 setup_openai.py
-   ```
-   Or manually create a `.env` file:
-   ```
-   OPENAI_API_KEY=your_api_key_here
-   ```
-
-5. **Run the game**
-   ```bash
-   python3 gui_interface.py
-   ```
-
-## 🎮 How to Play
-
-### Creating Your Character
-Just tell the AI about yourself naturally:
-- "I'm a half-elf wizard named Gandalf who specializes in fire magic"
-- "My name is Thorin, I'm a dwarf fighter with a mysterious past"
-
-### Playing the Game
-Describe what you want to do in natural language:
-- "I explore the dark forest"
-- "I cast fireball at the goblins"
-- "I talk to the innkeeper about rumors"
-- "What do I see around me?"
-
-### The AI Remembers Everything
-- Your character details and progression
-- All locations you've visited
-- NPCs you've met and their relationships
-- Story events and quest progress
-- Your choices and their consequences
-
-## 🏗️ Architecture
-
-### Core Systems
-- **Memory System** (`core/memory_system.py`) - Advanced semantic memory with entity extraction
-- **AI Content Generator** (`core/ai_content_generator.py`) - OpenAI integration for storytelling
-- **Character Manager** (`core/character_manager.py`) - DnD 5E character creation and management
-- **Session Logger** (`core/session_logger.py`) - Session tracking and logging
-- **Campaign Manager** (`main.py`) - Orchestrates all systems
-
-### Memory Features
-- Semantic analysis and entity extraction
-- Context-aware memory storage
-- Relationship mapping between entities
-- Continuity verification
-- Advanced search capabilities
-
-## 🧪 Testing
-
-Test the OpenAI integration:
 ```bash
-python3 test_openai_integration.py
+# Clone or create the project directory
+cd "The Narrative Engine"
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-## 📁 Project Structure
+## Quick Start
 
+```python
+from core.narrative_engine import NarrativeEngine
+from domains.gaming import GamingAdapter
+
+# Initialize the engine
+engine = NarrativeEngine()
+
+# Register a domain adapter
+engine.register_domain('gaming', GamingAdapter())
+
+# Create a narrative
+narrative = engine.create_narrative(
+    domain='gaming',
+    title='Epic Adventure',
+    description='A hero\'s journey through a mystical realm'
+)
+
+# Add characters
+engine.add_character(narrative.id, {
+    'name': 'Aria',
+    'role': 'protagonist',
+    'traits': ['brave', 'curious', 'determined']
+})
+
+# Generate plot points
+plot_point = engine.generate_plot_point(narrative.id, {
+    'context': 'The hero discovers an ancient map',
+    'tension': 'high',
+    'character_focus': 'Aria'
+})
+
+# Analyze narrative
+analysis = engine.analyze_narrative(narrative.id)
+print(f"Coherence: {analysis.coherence_score}")
+print(f"Themes: {analysis.themes}")
 ```
-DnD Project/
-├── core/                    # Core game systems
-│   ├── memory_system.py    # Advanced memory system
-│   ├── ai_content_generator.py  # OpenAI integration
-│   ├── character_manager.py     # Character management
-│   └── session_logger.py        # Session tracking
-├── data/                   # Game data storage
-├── campaigns/              # Campaign data
-├── gui_interface.py        # Main GUI
-├── main.py                 # Campaign manager
-├── setup_openai.py         # API setup script
-├── test_openai_integration.py  # Integration tests
-└── requirements.txt        # Dependencies
-```
 
-## 🔧 Development Status
+## Core Concepts
 
-### ✅ Completed (Phase 1)
-- Advanced memory system with semantic analysis
-- OpenAI API integration
-- DnD 5E character management
-- GUI interface
-- Session tracking
-- Campaign management
+### Memory as Narrative Context
+The engine uses a sophisticated memory system that treats memories as narrative building blocks:
+- **Emotional weighting**: Memories are tagged with emotional significance
+- **Associative linking**: Memories connect through themes, characters, and events
+- **Temporal layering**: Different time scales for different narrative needs
+- **Decay and reinforcement**: Natural memory processes that affect narrative flow
 
-### 🚧 In Progress (Phase 2)
-- Enhanced AI storytelling
-- Improved DnD mechanics
-- Combat system
-- World generation
+### Domain Adaptability
+Each domain has specialized knowledge and capabilities:
+- **Gaming**: Character progression, quest systems, world-building
+- **Therapy**: Emotional processing, personal growth, healing narratives
+- **Education**: Learning objectives, knowledge retention, skill development
+- **Organizational**: Brand storytelling, corporate narratives, change management
+- **Creative Writing**: Literary techniques, genre conventions, artistic expression
+- **Journalism**: Fact-based storytelling, ethical reporting, audience engagement
+- **Marketing**: Brand narratives, customer journeys, conversion optimization
 
-### 📋 Planned
-- Advanced quest systems
-- NPC relationship tracking
-- Multi-character support
-- Performance optimization
+### Narrative Intelligence
+The engine understands narrative at multiple levels:
+- **Structural**: Plot arcs, pacing, scene construction
+- **Character**: Development, relationships, motivations
+- **Thematic**: Symbolism, motifs, deeper meanings
+- **Emotional**: Emotional arcs, tension, catharsis
+- **Contextual**: Cultural, historical, situational awareness
 
-## 💡 Example Interaction
+## API Reference
 
-**Player**: "I'm a half-elf wizard named Gandalf who specializes in fire magic"
+### Core Engine
+- `NarrativeEngine()`: Main engine class
+- `create_narrative()`: Create new narrative
+- `analyze_narrative()`: Analyze narrative structure and themes
+- `generate_plot_point()`: Generate contextual plot points
+- `adapt_narrative()`: Adapt narrative based on new information
 
-**AI**: "Welcome, Gandalf! Your elven heritage grants you keen senses and a natural affinity for magic, while your human blood gives you the adaptability to master the arcane arts. As a wizard specializing in fire magic, you carry the warmth of the forge and the destructive power of the inferno. Your spellbook contains ancient knowledge passed down through generations of mages..."
+### Memory System
+- `add_memory()`: Store new memory
+- `recall()`: Retrieve relevant memories
+- `reinforce()`: Strengthen memory connections
+- `forget()`: Natural memory decay
 
-**Player**: "I cast a light spell to illuminate the dark path"
+### Domain Adapters
+- `register_domain()`: Add new domain support
+- `get_domain_adapter()`: Access domain-specific functionality
+- `cross_domain_analysis()`: Apply insights across domains
 
-**AI**: "The air in the Mystic Forest is thick with a palpable stillness... As you weave the intricate gestures required for your spell, a warm glow begins to emanate from your fingertips, flickering like a new flame desperately seeking breath..."
+## Contributing
 
-## 🤝 Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
 
-This is a personal project, but suggestions and feedback are welcome!
+## License
 
-## 📄 License
+Creative Commons Attribution-NonCommercial 4.0 International License
 
-This project is for personal use and educational purposes.
+## Contact
 
-## 🎯 Roadmap
-
-- **Phase 1**: Foundation ✅
-- **Phase 2**: Enhancement (Current)
-- **Phase 3**: Polish
-- **Phase 4**: Expansion
-
-## 📞 Support
-
-For issues or questions, please refer to the development journal or create an issue in the repository.
+For questions, suggestions, or collaboration opportunities, please contact the development team.
 
 ---
 
-**Status**: Foundation Complete - Ready for Enhancement Phase  
-**Last Updated**: January 2025 
+*The Narrative Engine represents a new paradigm in computational storytelling, bridging the gap between human creativity and artificial intelligence to create truly adaptive, intelligent narrative experiences.* 

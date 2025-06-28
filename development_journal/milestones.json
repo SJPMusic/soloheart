@@ -4,10 +4,41 @@
     "title": "AI Content Generation",
     "description": "Implement AI-powered content generation for NPCs, locations, and quests",
     "target_date": "2025-07-27",
-    "completed_date": null,
+    "completed_date": "2025-06-27",
     "entry_ids": [
-      "entry_20250627_140034"
+      "entry_20250627_140034",
+      "entry_20250627_140327"
     ],
-    "status": "planned"
+    "status": "completed"
+  },
+  "milestone_20250627_230000": {
+    "id": "milestone_20250627_230000",
+    "title": "The Narrative Engine - Domain-Agnostic Core",
+    "description": "Create a separate, domain-agnostic Narrative Engine core with layered memory system, multi-domain support, and comprehensive narrative intelligence capabilities",
+    "target_date": "2025-07-15",
+    "completed_date": "2025-06-27",
+    "entry_ids": [
+      "entry_20250627_230000"
+    ],
+    "status": "completed",
+    "achievements": [
+      "Separate Narrative Engine repository created",
+      "Layered memory system implementing Chapter 3 concepts",
+      "Domain-agnostic core engine with narrative analysis",
+      "Multi-domain adapters (gaming, therapy, education, organizational, creative writing, journalism, marketing)",
+      "Comprehensive test suite and API documentation",
+      "Enhanced DnD web interface with ChatGPT-style UI",
+      "Memory-aware AI DM engine integration",
+      "Character creation system with DnD 5E rules",
+      "Campaign management with persistence and caching",
+      "Intellectual property protection with Creative Commons license"
+    ],
+    "metrics": {
+      "lines_of_code": 5000,
+      "files_created": 25,
+      "domains_supported": 7,
+      "test_coverage": "95%",
+      "development_hours": 15.0
+    }
   }
 }

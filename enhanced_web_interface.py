@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = 'dnd-game-secret-key-2025'  # Change this in production
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dnd-game-secret-key-2025')  # Use environment variable
 CORS(app)
 
 # Global game state

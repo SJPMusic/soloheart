@@ -272,6 +272,37 @@ class LayeredMemorySystem:
             'users': len(self.user_profiles)
         }
 
+    def get_memory_stats(self) -> Dict[str, Any]:
+        """Get memory statistics for web interface compatibility"""
+        stats = self.stats_summary()
+        
+        # Calculate total memories
+        total_memories = stats['short_term'] + stats['mid_term'] + stats['long_term']
+        
+        # Calculate memory types distribution
+        memory_types = {
+            'short_term': stats['short_term'],
+            'mid_term': stats['mid_term'], 
+            'long_term': stats['long_term']
+        }
+        
+        # Calculate average priority (emotional weight)
+        all_memories = list(self.short_term) + list(self.mid_term.values()) + list(self.long_term.values())
+        if all_memories:
+            average_priority = sum(m.emotional_weight for m in all_memories) / len(all_memories)
+        else:
+            average_priority = 0.0
+        
+        return {
+            'total_memories': total_memories,
+            'memory_types': memory_types,
+            'average_priority': average_priority,
+            'users': stats['users'],
+            'created': stats['created'],
+            'forgotten': stats['forgotten'],
+            'reinforced': stats['reinforced']
+        }
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             'campaign_id': self.campaign_id,

@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = 'dnd-ai-game-2025'
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dnd-ai-game-2025')
 CORS(app)
 
 # Global game state

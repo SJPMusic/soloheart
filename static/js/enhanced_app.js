@@ -833,4 +833,261 @@ class EnhancedDnDGameApp {
 // Initialize the app when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.dndApp = new EnhancedDnDGameApp();
+});
+
+// Character Creation Functions
+let characterCreationActive = false;
+let currentCharacter = null;
+
+function showCampaignSelection() {
+    document.getElementById('campaignSelectionModal').style.display = 'block';
+}
+
+function closeCampaignSelection() {
+    document.getElementById('campaignSelectionModal').style.display = 'none';
+}
+
+function startNewCampaign() {
+    closeCampaignSelection();
+    startCharacterCreation();
+}
+
+function loadExistingCampaign() {
+    closeCampaignSelection();
+    // Load existing campaign logic here
+    addMessage('system', 'Loading existing campaign...');
+    // For now, just start character creation
+    startCharacterCreation();
+}
+
+function startCharacterCreation() {
+    characterCreationActive = true;
+    
+    fetch('/api/character/start', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showCharacterCreationStep(data);
+        } else {
+            console.error('Failed to start character creation:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error starting character creation:', error);
+    });
+}
+
+function showCharacterCreationStep(data) {
+    const modal = document.getElementById('characterCreationModal');
+    const instructions = document.getElementById('stepInstructions');
+    const options = document.getElementById('stepOptions');
+    const summary = document.getElementById('characterSummary');
+    
+    // Show instructions
+    instructions.innerHTML = `<p>${data.instructions}</p>`;
+    
+    // Show options
+    options.innerHTML = '';
+    if (data.options) {
+        Object.keys(data.options).forEach(key => {
+            const optionList = data.options[key];
+            optionList.forEach(option => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option-item';
+                optionDiv.onclick = () => {
+                    document.getElementById('characterChoice').value = option.name;
+                };
+                optionDiv.innerHTML = `
+                    <h4>${option.name}</h4>
+                    <p>${option.description}</p>
+                `;
+                options.appendChild(optionDiv);
+            });
+        });
+    }
+    
+    // Show character summary
+    if (data.summary && data.summary.status !== 'No character data yet') {
+        summary.innerHTML = `
+            <h4>Character Summary</h4>
+            <ul>
+                <li><strong>Race:</strong> ${data.summary.race}</li>
+                <li><strong>Class:</strong> ${data.summary.class}</li>
+                <li><strong>Background:</strong> ${data.summary.background}</li>
+                <li><strong>Equipment:</strong> ${data.summary.equipment} items</li>
+                <li><strong>Backstory:</strong> ${data.summary.backstory}</li>
+            </ul>
+        `;
+    } else {
+        summary.innerHTML = '';
+    }
+    
+    modal.style.display = 'block';
+}
+
+function makeCharacterChoice() {
+    const choice = document.getElementById('characterChoice').value.trim();
+    if (!choice) {
+        alert('Please enter a choice');
+        return;
+    }
+    
+    fetch('/api/character/choice', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            choice: choice,
+            details: {}
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Add response to chat
+            addMessage('ai', data.response);
+            
+            if (data.complete) {
+                // Character creation complete
+                closeCharacterCreation();
+                showCharacterNameModal();
+            } else {
+                // Show next step
+                showCharacterCreationStep(data);
+            }
+        } else {
+            console.error('Failed to make choice:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error making character choice:', error);
+    });
+}
+
+function closeCharacterCreation() {
+    document.getElementById('characterCreationModal').style.display = 'none';
+    document.getElementById('characterChoice').value = '';
+}
+
+function showCharacterNameModal() {
+    document.getElementById('characterNameModal').style.display = 'block';
+}
+
+function closeCharacterNameModal() {
+    document.getElementById('characterNameModal').style.display = 'none';
+    document.getElementById('characterName').value = '';
+}
+
+function saveCharacter() {
+    const characterName = document.getElementById('characterName').value.trim();
+    if (!characterName) {
+        alert('Please enter a character name');
+        return;
+    }
+    
+    fetch('/api/character/save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            name: characterName
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeCharacterNameModal();
+            currentCharacter = data.character;
+            
+            // Add character creation complete message
+            addMessage('ai', `Excellent! Your character ${characterName} has been created and saved. You are now ready to begin your adventure!`);
+            
+            // Start the campaign intro
+            startCampaignIntro(characterName, data.character);
+        } else {
+            console.error('Failed to save character:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving character:', error);
+    });
+}
+
+function startCampaignIntro(characterName, characterData) {
+    const race = characterData.race.name;
+    const charClass = characterData.class.name;
+    const background = characterData.background.name;
+    
+    const introMessage = `Welcome to your adventure, ${characterName}! 
+
+You are a ${race} ${charClass.toLowerCase()} with a ${background.toLowerCase()} background. Your journey begins in the bustling town of Neverwinter, where rumors of ancient treasures and dark forces have drawn adventurers from across the Sword Coast.
+
+As you step into the local tavern, The Sleeping Giant, you notice several other travelers gathered around a notice board. A weathered parchment catches your eye - it speaks of a mysterious dungeon discovered in the nearby Neverwinter Wood, said to contain both great treasures and ancient secrets.
+
+What would you like to do? You could:
+- Approach the notice board to read the details
+- Talk to the other adventurers in the tavern
+- Speak with the tavern keeper for local gossip
+- Head directly to the dungeon entrance
+- Or something else entirely?
+
+The choice is yours, brave adventurer!`;
+    
+    addMessage('ai', introMessage);
+}
+
+// Enhanced message handling for character creation
+function addMessage(sender, content) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.textContent = content;
+    
+    messageDiv.appendChild(contentDiv);
+    chatMessages.appendChild(messageDiv);
+    
+    // Auto-scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // If it's an AI message and character creation is active, don't show typing indicator
+    if (sender === 'ai' && !characterCreationActive) {
+        showTypingIndicator();
+        setTimeout(() => {
+            hideTypingIndicator();
+        }, 1000);
+    }
+}
+
+// Initialize the game flow
+document.addEventListener('DOMContentLoaded', function() {
+    // Show welcome screen initially
+    const welcomeDiv = document.createElement('div');
+    welcomeDiv.className = 'welcome-screen';
+    welcomeDiv.innerHTML = `
+        <h1>🎲 DnD 5E Solo Adventure</h1>
+        <p>Embark on an epic journey with AI-powered storytelling</p>
+        <button onclick="showCampaignSelection()">Begin Your Adventure</button>
+    `;
+    
+    // Insert welcome screen before the chat interface
+    const chatContainer = document.querySelector('.chat-container');
+    chatContainer.parentNode.insertBefore(welcomeDiv, chatContainer);
+    
+    // Hide chat interface initially
+    chatContainer.style.display = 'none';
+    
+    // Show chat interface after character creation
+    window.showChatInterface = function() {
+        document.querySelector('.welcome-screen').style.display = 'none';
+        chatContainer.style.display = 'block';
+    };
 }); 

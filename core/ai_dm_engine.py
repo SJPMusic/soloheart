@@ -5,7 +5,7 @@ DnD 5E AI-Powered Game - AI DM Engine
 Flexible AI DM engine that can dynamically interpret DnD 5e rules
 """
 
-import openai
+import os
 import json
 import logging
 from typing import Dict, List, Any, Optional
@@ -17,9 +17,18 @@ class AIDMEngine:
     """AI DM Engine that dynamically interprets DnD 5e rules"""
     
     def __init__(self, api_key: str = None):
-        self.api_key = api_key
-        if api_key:
-            openai.api_key = api_key
+        self.api_key = api_key or os.getenv('OPENAI_API_KEY')
+        if self.api_key:
+            try:
+                from openai import OpenAI
+                self.client = OpenAI(api_key=self.api_key)
+                logger.info("OpenAI client initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize OpenAI client: {e}")
+                self.client = None
+        else:
+            logger.warning("No OpenAI API key provided - using fallback responses")
+            self.client = None
         
         # Core DnD 5e knowledge base for context
         self.dnd_context = """
@@ -205,12 +214,13 @@ Explain your reasoning and provide a clear ruling.
     
     def _get_ai_response(self, prompt: str) -> str:
         """Get response from OpenAI API"""
-        if not self.api_key:
+        if not self.client:
             # Fallback response without API
+            logger.warning("No OpenAI client available - using fallback response")
             return self._fallback_response(prompt)
         
         try:
-            response = openai.ChatCompletion.create(
+            response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "You are an expert DnD 5e Dungeon Master."},
@@ -244,6 +254,37 @@ Explain your reasoning and provide a clear ruling.
             return "You search the area. Roll a d20 and add your Investigation or Perception modifier."
         
         return "I understand your action. As the DM, I'll need to make a ruling on how to handle this according to DnD 5e rules."
+
+    def generate_response(self, message: str, context: str = None) -> str:
+        """Generate a DM response for chat interface"""
+        # Build context for the AI
+        full_context = self.dnd_context
+        
+        if context:
+            full_context += f"\n\nCurrent Context:\n{context}"
+        
+        # Create the prompt
+        prompt = f"""
+{full_context}
+
+Player Message: "{message}"
+
+As the DM, respond to the player's message. Consider:
+1. What they're asking or trying to do
+2. How to guide them through DnD 5e rules if needed
+3. How to maintain narrative flow and engagement
+4. Whether any dice rolls or checks are needed
+
+Respond as the DM, being helpful, engaging, and mechanically accurate.
+"""
+        
+        try:
+            # Get AI response
+            response = self._get_ai_response(prompt)
+            return response
+        except Exception as e:
+            logger.error(f"Error generating response: {e}")
+            return f"I'm having trouble responding right now. Could you try rephrasing your message?"
 
 # Global instance
 ai_dm_engine = AIDMEngine() 

@@ -878,4 +878,194 @@ body {
         transform: translateX(0);
         opacity: 1;
     }
+}
+
+/* Character Creation Styles */
+.step-instructions {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.step-options {
+    margin-bottom: 20px;
+}
+
+.option-item {
+    background: #fff;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.option-item:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+}
+
+.option-item h4 {
+    margin: 0 0 8px 0;
+    color: #333;
+}
+
+.option-item p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.character-summary {
+    background: #e8f4fd;
+    border: 1px solid #bee5eb;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.character-summary h4 {
+    margin: 0 0 10px 0;
+    color: #0c5460;
+}
+
+.character-summary ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.character-summary li {
+    margin-bottom: 5px;
+    color: #0c5460;
+}
+
+.step-input {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.step-input input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.step-input button {
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.step-input button:hover {
+    background: #0056b3;
+}
+
+.character-name-input {
+    text-align: center;
+}
+
+.character-name-input label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #333;
+}
+
+.character-name-input input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.character-name-input button {
+    padding: 12px 30px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.character-name-input button:hover {
+    background: #218838;
+}
+
+.campaign-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.campaign-btn {
+    width: 100%;
+    max-width: 300px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.campaign-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Welcome Screen */
+.welcome-screen {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.welcome-screen h1 {
+    margin: 0 0 20px 0;
+    font-size: 2.5em;
+    font-weight: bold;
+}
+
+.welcome-screen p {
+    margin: 0 0 30px 0;
+    font-size: 1.2em;
+    opacity: 0.9;
+}
+
+.welcome-screen button {
+    padding: 15px 30px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 2px solid white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.welcome-screen button:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
 } 

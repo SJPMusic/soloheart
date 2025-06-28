@@ -1,719 +1,701 @@
 """
-The Narrative Engine - Core Architecture
-=======================================
+Narrative Engine Core - The Narrative Engine
+===========================================
 
-A story-centric framework for narrative intelligence, not just game mechanics.
-Built on the principle that narratives are data structures encoding intentions,
-conflicts, contextual memory, world-state, character arcs, and consequences.
+Main orchestration engine that provides domain-agnostic narrative intelligence.
+Implements story structure analysis, character modeling, plot generation, and
+thematic analysis across multiple domains.
 """
 
 import json
 import datetime
-from typing import Dict, List, Any, Optional, Tuple
+import uuid
+from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
 import logging
-from collections import defaultdict
+
+from .memory_system import LayeredMemorySystem, MemoryNode, MemoryType, MemoryLayer, EmotionalContext
 
 logger = logging.getLogger(__name__)
 
-class MemoryType(Enum):
-    """Types of narrative memory"""
-    EVENT = "event"
-    CHARACTER_ARC = "character_arc"
-    THEME = "theme"
-    CONFLICT = "conflict"
-    DECISION = "decision"
-    CONSEQUENCE = "consequence"
-    WORLD_STATE = "world_state"
+# --- Core Data Structures ---
 
-class NarrativeRole(Enum):
-    """Narrative function roles"""
+class NarrativeDomain(Enum):
+    GAMING = "gaming"
+    THERAPY = "therapy"
+    EDUCATION = "education"
+    ORGANIZATIONAL = "organizational"
+    CREATIVE_WRITING = "creative_writing"
+    JOURNALISM = "journalism"
+    MARKETING = "marketing"
+
+class StoryStructure(Enum):
+    HERO_JOURNEY = "hero_journey"
+    THREE_ACT = "three_act"
+    FIVE_ACT = "five_act"
+    CIRCULAR = "circular"
+    EPISODIC = "episodic"
+    FRAME = "frame"
+    PARALLEL = "parallel"
+    IN_MEDIA_RES = "in_media_res"
+
+class CharacterRole(Enum):
     PROTAGONIST = "protagonist"
     ANTAGONIST = "antagonist"
-    GUIDE = "guide"
-    BETRAYER = "betrayer"
-    REDEEMER = "redeemer"
-    WITNESS = "witness"
+    SUPPORTING = "supporting"
+    MENTOR = "mentor"
+    FOIL = "foil"
+    LOVE_INTEREST = "love_interest"
+    COMIC_RELIEF = "comic_relief"
     CATALYST = "catalyst"
 
-class MemorySlot:
-    """A slot in the narrative memory system"""
+class PlotPointType(Enum):
+    INCITING_INCIDENT = "inciting_incident"
+    FIRST_TURNING_POINT = "first_turning_point"
+    MIDPOINT = "midpoint"
+    SECOND_TURNING_POINT = "second_turning_point"
+    CLIMAX = "climax"
+    RESOLUTION = "resolution"
+    SUBPLOT = "subplot"
+    CHARACTER_DEVELOPMENT = "character_development"
+
+@dataclass
+class Character:
+    """Represents a character in the narrative with development tracking."""
+    id: str
+    name: str
+    role: CharacterRole
+    description: str
+    traits: List[str]
+    goals: List[str]
+    conflicts: List[str]
+    relationships: Dict[str, str]  # character_id -> relationship_type
+    development_arc: List[Dict[str, Any]]
+    current_state: Dict[str, Any]
+    background: Dict[str, Any]
+    personality_matrix: Dict[str, float]  # trait -> strength (0.0 to 1.0)
     
-    def __init__(self, memory_type: MemoryType, content: Dict[str, Any], 
-                 timestamp: datetime.datetime = None, emotional_weight: float = 1.0,
-                 thematic_tags: List[str] = None):
-        self.memory_type = memory_type
-        self.content = content
-        self.timestamp = timestamp or datetime.datetime.utcnow()
-        self.emotional_weight = emotional_weight  # 0.0 to 1.0
-        self.thematic_tags = thematic_tags or []
-        self.associations = []  # Links to other memories
-        self.decay_rate = 0.1  # How quickly this memory fades
-        self.reinforcement_count = 0
-    
-    def reinforce(self):
-        """Reinforce this memory, making it less likely to decay"""
-        self.reinforcement_count += 1
-        self.decay_rate = max(0.01, self.decay_rate * 0.9)
-    
-    def get_significance(self) -> float:
-        """Calculate current significance based on weight, age, and reinforcement"""
-        age_hours = (datetime.datetime.utcnow() - self.timestamp).total_seconds() / 3600
-        decay_factor = max(0.1, 1.0 - (age_hours * self.decay_rate))
-        reinforcement_bonus = min(0.5, self.reinforcement_count * 0.1)
-        return (self.emotional_weight * decay_factor) + reinforcement_bonus
-    
+    def __post_init__(self):
+        if not self.id:
+            self.id = str(uuid.uuid4())
+        if self.traits is None:
+            self.traits = []
+        if self.goals is None:
+            self.goals = []
+        if self.conflicts is None:
+            self.conflicts = []
+        if self.relationships is None:
+            self.relationships = {}
+        if self.development_arc is None:
+            self.development_arc = []
+        if self.current_state is None:
+            self.current_state = {}
+        if self.background is None:
+            self.background = {}
+        if self.personality_matrix is None:
+            self.personality_matrix = {}
+
+    def add_development_moment(self, moment: Dict[str, Any]):
+        """Add a character development moment to the arc."""
+        moment['timestamp'] = datetime.datetime.utcnow().isoformat()
+        self.development_arc.append(moment)
+
+    def update_trait(self, trait: str, strength: float):
+        """Update a personality trait strength."""
+        self.personality_matrix[trait] = max(0.0, min(1.0, strength))
+
     def to_dict(self) -> Dict[str, Any]:
         return {
-            'memory_type': self.memory_type.value,
-            'content': self.content,
-            'timestamp': self.timestamp.isoformat(),
-            'emotional_weight': self.emotional_weight,
-            'thematic_tags': self.thematic_tags,
-            'associations': self.associations,
-            'decay_rate': self.decay_rate,
-            'reinforcement_count': self.reinforcement_count,
-            'significance': self.get_significance()
-        }
-
-class MemoryCore:
-    """Module 1: Persistent structured memory system"""
-    
-    def __init__(self):
-        self.memories: List[MemorySlot] = []
-        self.character_memories: Dict[str, List[MemorySlot]] = defaultdict(list)
-        self.thematic_index: Dict[str, List[MemorySlot]] = defaultdict(list)
-        self.temporal_index: Dict[str, List[MemorySlot]] = defaultdict(list)
-    
-    def add_memory(self, memory: MemorySlot, character_id: str = None):
-        """Add a memory to the core system"""
-        self.memories.append(memory)
-        
-        # Index by character
-        if character_id:
-            self.character_memories[character_id].append(memory)
-        
-        # Index by thematic tags
-        for tag in memory.thematic_tags:
-            self.thematic_index[tag].append(memory)
-        
-        # Index by temporal period (day, week, month)
-        day_key = memory.timestamp.strftime('%Y-%m-%d')
-        self.temporal_index[day_key].append(memory)
-        
-        logger.info(f"Added {memory.memory_type.value} memory with significance {memory.get_significance():.2f}")
-    
-    def search_memories(self, query: str = None, memory_type: MemoryType = None, 
-                       character_id: str = None, thematic_tags: List[str] = None,
-                       min_significance: float = 0.0) -> List[MemorySlot]:
-        """Search memories based on various criteria"""
-        results = []
-        
-        for memory in self.memories:
-            # Filter by significance
-            if memory.get_significance() < min_significance:
-                continue
-            
-            # Filter by type
-            if memory_type and memory.memory_type != memory_type:
-                continue
-            
-            # Filter by character
-            if character_id and memory not in self.character_memories[character_id]:
-                continue
-            
-            # Filter by thematic tags
-            if thematic_tags and not any(tag in memory.thematic_tags for tag in thematic_tags):
-                continue
-            
-            # Text search in content
-            if query:
-                content_str = json.dumps(memory.content).lower()
-                if query.lower() not in content_str:
-                    continue
-            
-            results.append(memory)
-        
-        # Sort by significance
-        results.sort(key=lambda m: m.get_significance(), reverse=True)
-        return results
-    
-    def get_evolving_themes(self) -> Dict[str, float]:
-        """Identify evolving themes based on memory patterns"""
-        theme_strengths = defaultdict(float)
-        
-        for memory in self.memories:
-            for tag in memory.thematic_tags:
-                theme_strengths[tag] += memory.get_significance()
-        
-        return dict(theme_strengths)
-    
-    def get_unresolved_tensions(self) -> List[Dict[str, Any]]:
-        """Identify unresolved narrative tensions"""
-        tensions = []
-        
-        # Look for conflicts without resolutions
-        conflicts = self.search_memories(memory_type=MemoryType.CONFLICT)
-        resolutions = self.search_memories(memory_type=MemoryType.CONSEQUENCE)
-        
-        for conflict in conflicts:
-            # Check if this conflict has been resolved
-            resolved = any(
-                res.content.get('resolves_conflict_id') == conflict.content.get('conflict_id')
-                for res in resolutions
-            )
-            
-            if not resolved and conflict.get_significance() > 0.3:
-                tensions.append({
-                    'conflict': conflict.content,
-                    'significance': conflict.get_significance(),
-                    'age_hours': (datetime.datetime.utcnow() - conflict.timestamp).total_seconds() / 3600
-                })
-        
-        return tensions
-
-class NarrativeInterpreter:
-    """Module 2: Natural language processing and narrative function detection"""
-    
-    def __init__(self, memory_core: MemoryCore):
-        self.memory_core = memory_core
-        self.narrative_functions = {
-            'choice': self._detect_choice,
-            'conflict': self._detect_conflict,
-            'character_development': self._detect_character_development,
-            'world_interaction': self._detect_world_interaction,
-            'thematic_moment': self._detect_thematic_moment
-        }
-    
-    def process_input(self, user_input: str, character_id: str = None) -> Dict[str, Any]:
-        """Process user input and extract narrative functions"""
-        result = {
-            'raw_input': user_input,
-            'narrative_functions': [],
-            'detected_roles': [],
-            'thematic_elements': [],
-            'narrative_weight': 0.0
-        }
-        
-        # Detect narrative functions
-        for function_name, detector in self.narrative_functions.items():
-            detection = detector(user_input, character_id)
-            if detection:
-                result['narrative_functions'].append(detection)
-                result['narrative_weight'] += detection.get('weight', 0.0)
-        
-        # Detect narrative roles
-        result['detected_roles'] = self._detect_narrative_roles(user_input)
-        
-        # Extract thematic elements
-        result['thematic_elements'] = self._extract_themes(user_input)
-        
-        return result
-    
-    def _detect_choice(self, text: str, character_id: str) -> Optional[Dict[str, Any]]:
-        """Detect if input represents a meaningful choice"""
-        choice_indicators = ['choose', 'decide', 'pick', 'select', 'want to', 'try to', 'attempt']
-        
-        if any(indicator in text.lower() for indicator in choice_indicators):
-            return {
-                'type': 'choice',
-                'weight': 0.8,
-                'content': {'choice_text': text}
-            }
-        return None
-    
-    def _detect_conflict(self, text: str, character_id: str) -> Optional[Dict[str, Any]]:
-        """Detect if input represents or creates conflict"""
-        conflict_indicators = ['attack', 'fight', 'argue', 'disagree', 'resist', 'defy', 'challenge']
-        
-        if any(indicator in text.lower() for indicator in conflict_indicators):
-            return {
-                'type': 'conflict',
-                'weight': 0.9,
-                'content': {'conflict_text': text}
-            }
-        return None
-    
-    def _detect_character_development(self, text: str, character_id: str) -> Optional[Dict[str, Any]]:
-        """Detect character development moments"""
-        development_indicators = ['learn', 'grow', 'change', 'realize', 'understand', 'feel']
-        
-        if any(indicator in text.lower() for indicator in development_indicators):
-            return {
-                'type': 'character_development',
-                'weight': 0.7,
-                'content': {'development_text': text}
-            }
-        return None
-    
-    def _detect_world_interaction(self, text: str, character_id: str) -> Optional[Dict[str, Any]]:
-        """Detect world interaction"""
-        world_indicators = ['go to', 'visit', 'explore', 'search', 'examine', 'open', 'use']
-        
-        if any(indicator in text.lower() for indicator in world_indicators):
-            return {
-                'type': 'world_interaction',
-                'weight': 0.5,
-                'content': {'interaction_text': text}
-            }
-        return None
-    
-    def _detect_thematic_moment(self, text: str, character_id: str) -> Optional[Dict[str, Any]]:
-        """Detect thematically significant moments"""
-        # Check against evolving themes
-        themes = self.memory_core.get_evolving_themes()
-        text_lower = text.lower()
-        
-        for theme, strength in themes.items():
-            if theme.lower() in text_lower and strength > 0.5:
-                return {
-                    'type': 'thematic_moment',
-                    'weight': min(1.0, strength),
-                    'content': {'theme': theme, 'thematic_text': text}
-                }
-        return None
-    
-    def _detect_narrative_roles(self, text: str) -> List[str]:
-        """Detect narrative roles in the input"""
-        roles = []
-        text_lower = text.lower()
-        
-        role_indicators = {
-            'protagonist': ['i', 'my', 'me', 'myself'],
-            'antagonist': ['enemy', 'opponent', 'villain', 'threat'],
-            'guide': ['help', 'teach', 'show', 'guide'],
-            'witness': ['see', 'observe', 'watch', 'notice']
-        }
-        
-        for role, indicators in role_indicators.items():
-            if any(indicator in text_lower for indicator in indicators):
-                roles.append(role)
-        
-        return roles
-    
-    def _extract_themes(self, text: str) -> List[str]:
-        """Extract thematic elements from text"""
-        themes = []
-        text_lower = text.lower()
-        
-        # Simple theme detection - could be enhanced with NLP
-        theme_keywords = {
-            'justice': ['justice', 'fair', 'unfair', 'right', 'wrong'],
-            'redemption': ['redemption', 'forgive', 'second chance', 'change'],
-            'power': ['power', 'control', 'authority', 'strength'],
-            'love': ['love', 'care', 'protect', 'relationship'],
-            'fear': ['fear', 'afraid', 'scared', 'terrified'],
-            'hope': ['hope', 'dream', 'believe', 'future']
-        }
-        
-        for theme, keywords in theme_keywords.items():
-            if any(keyword in text_lower for keyword in keywords):
-                themes.append(theme)
-        
-        return themes
-
-class WorldStateSimulator:
-    """Module 3: World logic simulation engine"""
-    
-    def __init__(self):
-        self.world_state = {
-            'political_systems': {},
-            'economies': {},
-            'geography': {},
-            'social_relations': {},
-            'current_events': []
-        }
-        self.simulation_rules = {}
-        self.causality_chains = []
-    
-    def update_world_state(self, action: Dict[str, Any], consequences: List[Dict[str, Any]]):
-        """Update world state based on actions and consequences"""
-        # Apply immediate consequences
-        for consequence in consequences:
-            self._apply_consequence(consequence)
-        
-        # Trigger causal chains
-        self._trigger_causality_chains(action)
-        
-        # Update current events
-        self.world_state['current_events'].append({
-            'action': action,
-            'consequences': consequences,
-            'timestamp': datetime.datetime.utcnow().isoformat()
-        })
-        
-        # Keep only recent events
-        if len(self.world_state['current_events']) > 50:
-            self.world_state['current_events'] = self.world_state['current_events'][-50:]
-    
-    def _apply_consequence(self, consequence: Dict[str, Any]):
-        """Apply a single consequence to world state"""
-        consequence_type = consequence.get('type')
-        
-        if consequence_type == 'political_change':
-            self._apply_political_change(consequence)
-        elif consequence_type == 'economic_change':
-            self._apply_economic_change(consequence)
-        elif consequence_type == 'social_change':
-            self._apply_social_change(consequence)
-        elif consequence_type == 'geographic_change':
-            self._apply_geographic_change(consequence)
-    
-    def _apply_political_change(self, consequence: Dict[str, Any]):
-        """Apply political system changes"""
-        target = consequence.get('target', 'default')
-        if target not in self.world_state['political_systems']:
-            self.world_state['political_systems'][target] = {}
-        
-        self.world_state['political_systems'][target].update(consequence.get('changes', {}))
-    
-    def _apply_economic_change(self, consequence: Dict[str, Any]):
-        """Apply economic system changes"""
-        target = consequence.get('target', 'default')
-        if target not in self.world_state['economies']:
-            self.world_state['economies'][target] = {}
-        
-        self.world_state['economies'][target].update(consequence.get('changes', {}))
-    
-    def _apply_social_change(self, consequence: Dict[str, Any]):
-        """Apply social relation changes"""
-        target = consequence.get('target', 'default')
-        if target not in self.world_state['social_relations']:
-            self.world_state['social_relations'][target] = {}
-        
-        self.world_state['social_relations'][target].update(consequence.get('changes', {}))
-    
-    def _apply_geographic_change(self, consequence: Dict[str, Any]):
-        """Apply geographic changes"""
-        target = consequence.get('target', 'default')
-        if target not in self.world_state['geography']:
-            self.world_state['geography'][target] = {}
-        
-        self.world_state['geography'][target].update(consequence.get('changes', {}))
-    
-    def _trigger_causality_chains(self, action: Dict[str, Any]):
-        """Trigger causal chains based on actions"""
-        # This would implement complex causality logic
-        # For now, a simple implementation
-        pass
-    
-    def get_world_context(self) -> Dict[str, Any]:
-        """Get current world context for narrative generation"""
-        return {
-            'current_state': self.world_state,
-            'active_events': self.world_state['current_events'][-10:],  # Last 10 events
-            'political_climate': self._summarize_political_climate(),
-            'economic_conditions': self._summarize_economic_conditions(),
-            'social_tensions': self._summarize_social_tensions()
-        }
-    
-    def _summarize_political_climate(self) -> str:
-        """Summarize current political climate"""
-        if not self.world_state['political_systems']:
-            return "Political systems are stable and established."
-        
-        # Simple summary - could be much more sophisticated
-        return f"Political landscape involves {len(self.world_state['political_systems'])} major systems."
-    
-    def _summarize_economic_conditions(self) -> str:
-        """Summarize current economic conditions"""
-        if not self.world_state['economies']:
-            return "Economic conditions are stable."
-        
-        return f"Economic activity spans {len(self.world_state['economies'])} regions."
-    
-    def _summarize_social_tensions(self) -> str:
-        """Summarize current social tensions"""
-        if not self.world_state['social_relations']:
-            return "Social relations are harmonious."
-        
-        return f"Social dynamics involve {len(self.world_state['social_relations'])} key relationships."
-
-class AIActor:
-    """Individual AI actor with beliefs, goals, and adaptive memory"""
-    
-    def __init__(self, actor_id: str, name: str, role: NarrativeRole, 
-                 beliefs: Dict[str, Any], goals: List[str]):
-        self.actor_id = actor_id
-        self.name = name
-        self.role = role
-        self.beliefs = beliefs
-        self.goals = goals
-        self.memory = []  # Personal memory
-        self.motivations = self._derive_motivations()
-        self.relationships = {}
-    
-    def _derive_motivations(self) -> List[str]:
-        """Derive motivations from beliefs and goals"""
-        motivations = []
-        
-        # Convert goals to motivations
-        for goal in self.goals:
-            motivations.append(f"achieve_{goal}")
-        
-        # Add role-based motivations
-        if self.role == NarrativeRole.PROTAGONIST:
-            motivations.extend(['grow', 'overcome_challenges', 'find_meaning'])
-        elif self.role == NarrativeRole.ANTAGONIST:
-            motivations.extend(['maintain_control', 'prevent_change', 'assert_dominance'])
-        elif self.role == NarrativeRole.GUIDE:
-            motivations.extend(['help_others', 'share_wisdom', 'facilitate_growth'])
-        
-        return motivations
-    
-    def update_beliefs(self, new_information: Dict[str, Any]):
-        """Update beliefs based on new information"""
-        for key, value in new_information.items():
-            if key in self.beliefs:
-                # Beliefs can change but with resistance
-                self.beliefs[key] = self._blend_beliefs(self.beliefs[key], value)
-            else:
-                self.beliefs[key] = value
-    
-    def _blend_beliefs(self, old_belief: Any, new_belief: Any) -> Any:
-        """Blend old and new beliefs (simplified)"""
-        # Simple blending - could be much more sophisticated
-        if isinstance(old_belief, (int, float)) and isinstance(new_belief, (int, float)):
-            return (old_belief * 0.7) + (new_belief * 0.3)
-        return new_belief
-    
-    def get_response(self, situation: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate actor response to a situation"""
-        response = {
-            'actor_id': self.actor_id,
+            'id': self.id,
             'name': self.name,
             'role': self.role.value,
-            'response_type': self._determine_response_type(situation),
-            'motivation': self._select_primary_motivation(situation),
-            'action': self._generate_action(situation)
+            'description': self.description,
+            'traits': self.traits,
+            'goals': self.goals,
+            'conflicts': self.conflicts,
+            'relationships': self.relationships,
+            'development_arc': self.development_arc,
+            'current_state': self.current_state,
+            'background': self.background,
+            'personality_matrix': self.personality_matrix
         }
-        
-        return response
-    
-    def _determine_response_type(self, situation: Dict[str, Any]) -> str:
-        """Determine type of response based on situation and role"""
-        if self.role == NarrativeRole.PROTAGONIST:
-            return 'proactive'
-        elif self.role == NarrativeRole.ANTAGONIST:
-            return 'oppositional'
-        elif self.role == NarrativeRole.GUIDE:
-            return 'supportive'
-        else:
-            return 'reactive'
-    
-    def _select_primary_motivation(self, situation: Dict[str, Any]) -> str:
-        """Select primary motivation for this situation"""
-        # Simple selection - could be much more sophisticated
-        return self.motivations[0] if self.motivations else 'survive'
-    
-    def _generate_action(self, situation: Dict[str, Any]) -> str:
-        """Generate specific action based on motivation and situation"""
-        motivation = self._select_primary_motivation(situation)
-        
-        action_templates = {
-            'achieve_goal': f"{self.name} works toward their goal.",
-            'grow': f"{self.name} seeks to learn and improve.",
-            'overcome_challenges': f"{self.name} faces the challenge head-on.",
-            'maintain_control': f"{self.name} attempts to maintain their position.",
-            'help_others': f"{self.name} offers assistance and guidance.",
-            'survive': f"{self.name} takes defensive action."
-        }
-        
-        return action_templates.get(motivation, f"{self.name} responds to the situation.")
 
-class AIActorFramework:
-    """Module 4: Framework for managing AI actors"""
+@dataclass
+class PlotPoint:
+    """Represents a plot point in the narrative."""
+    id: str
+    plot_point_type: PlotPointType
+    title: str
+    description: str
+    characters_involved: List[str]
+    emotional_impact: Dict[str, float]  # character_id -> emotional_change
+    narrative_significance: float  # 0.0 to 1.0
+    thematic_elements: List[str]
+    world_state_changes: Dict[str, Any]
+    timestamp: datetime.datetime
+    prerequisites: List[str]  # plot_point_ids
+    consequences: List[str]   # plot_point_ids
     
-    def __init__(self):
-        self.actors: Dict[str, AIActor] = {}
-        self.actor_relationships = defaultdict(dict)
-    
-    def add_actor(self, actor: AIActor):
-        """Add an actor to the framework"""
-        self.actors[actor.actor_id] = actor
-    
-    def get_actor(self, actor_id: str) -> Optional[AIActor]:
-        """Get actor by ID"""
-        return self.actors.get(actor_id)
-    
-    def update_actor_relationships(self, actor1_id: str, actor2_id: str, 
-                                 relationship_type: str, strength: float):
-        """Update relationship between two actors"""
-        self.actor_relationships[actor1_id][actor2_id] = {
-            'type': relationship_type,
-            'strength': strength,
-            'timestamp': datetime.datetime.utcnow().isoformat()
-        }
-    
-    def get_actor_response(self, actor_id: str, situation: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Get response from specific actor"""
-        actor = self.get_actor(actor_id)
-        if actor:
-            return actor.get_response(situation)
-        return None
-    
-    def get_all_actor_responses(self, situation: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Get responses from all actors"""
-        responses = []
-        for actor in self.actors.values():
-            response = actor.get_response(situation)
-            if response:
-                responses.append(response)
-        return responses
+    def __post_init__(self):
+        if not self.id:
+            self.id = str(uuid.uuid4())
+        if self.characters_involved is None:
+            self.characters_involved = []
+        if self.emotional_impact is None:
+            self.emotional_impact = {}
+        if self.thematic_elements is None:
+            self.thematic_elements = []
+        if self.world_state_changes is None:
+            self.world_state_changes = {}
+        if self.prerequisites is None:
+            self.prerequisites = []
+        if self.consequences is None:
+            self.consequences = []
 
-class OutputLayer:
-    """Module 5: Interface layer for narrative presentation"""
-    
-    def __init__(self, memory_core: MemoryCore, world_simulator: WorldStateSimulator, 
-                 actor_framework: AIActorFramework):
-        self.memory_core = memory_core
-        self.world_simulator = world_simulator
-        self.actor_framework = actor_framework
-        self.conversation_history = []
-    
-    def generate_response(self, user_input: str, character_id: str = None) -> str:
-        """Generate narrative response to user input"""
-        # Get world context
-        world_context = self.world_simulator.get_world_context()
-        
-        # Get relevant memories
-        relevant_memories = self.memory_core.search_memories(
-            query=user_input, 
-            character_id=character_id,
-            min_significance=0.3
-        )
-        
-        # Get actor responses
-        situation = {
-            'user_input': user_input,
-            'world_context': world_context,
-            'relevant_memories': [m.to_dict() for m in relevant_memories]
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'plot_point_type': self.plot_point_type.value,
+            'title': self.title,
+            'description': self.description,
+            'characters_involved': self.characters_involved,
+            'emotional_impact': self.emotional_impact,
+            'narrative_significance': self.narrative_significance,
+            'thematic_elements': self.thematic_elements,
+            'world_state_changes': self.world_state_changes,
+            'timestamp': self.timestamp.isoformat(),
+            'prerequisites': self.prerequisites,
+            'consequences': self.consequences
         }
-        
-        actor_responses = self.actor_framework.get_all_actor_responses(situation)
-        
-        # Generate narrative response
-        response = self._compose_narrative_response(
-            user_input, world_context, relevant_memories, actor_responses
-        )
-        
-        # Store in conversation history
-        self.conversation_history.append({
-            'user_input': user_input,
-            'response': response,
-            'timestamp': datetime.datetime.utcnow().isoformat()
-        })
-        
-        return response
+
+@dataclass
+class Narrative:
+    """Represents a complete narrative with all its components."""
+    id: str
+    title: str
+    description: str
+    domain: NarrativeDomain
+    story_structure: StoryStructure
+    characters: Dict[str, Character]
+    plot_points: Dict[str, PlotPoint]
+    themes: List[str]
+    world_state: Dict[str, Any]
+    narrative_arc: List[str]  # plot_point_ids in order
+    metadata: Dict[str, Any]
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
     
-    def _compose_narrative_response(self, user_input: str, world_context: Dict[str, Any],
-                                  memories: List[MemorySlot], 
-                                  actor_responses: List[Dict[str, Any]]) -> str:
-        """Compose the actual narrative response"""
-        
-        # Start with world context
-        response_parts = []
-        
-        # Add world state information
-        if world_context['current_events']:
-            recent_event = world_context['current_events'][-1]
-            response_parts.append(f"The world around you reflects recent changes: {recent_event['action'].get('description', 'Something has shifted.')}")
-        
-        # Add relevant memories
-        if memories:
-            most_significant = max(memories, key=lambda m: m.get_significance())
-            response_parts.append(f"You remember: {most_significant.content.get('description', 'A significant moment.')}")
-        
-        # Add actor responses
-        if actor_responses:
-            for actor_response in actor_responses[:3]:  # Limit to 3 most relevant
-                response_parts.append(f"{actor_response['name']}: {actor_response['action']}")
-        
-        # Compose final response
-        if response_parts:
-            response = " ".join(response_parts)
-        else:
-            response = "The world responds to your actions, though the full consequences are not yet clear."
-        
-        return response
+    def __post_init__(self):
+        if not self.id:
+            self.id = str(uuid.uuid4())
+        if self.characters is None:
+            self.characters = {}
+        if self.plot_points is None:
+            self.plot_points = {}
+        if self.themes is None:
+            self.themes = []
+        if self.world_state is None:
+            self.world_state = {}
+        if self.narrative_arc is None:
+            self.narrative_arc = []
+        if self.metadata is None:
+            self.metadata = {}
+        if self.created_at is None:
+            self.created_at = datetime.datetime.utcnow()
+        if self.updated_at is None:
+            self.updated_at = self.created_at
+
+    def add_character(self, character: Character):
+        """Add a character to the narrative."""
+        self.characters[character.id] = character
+        self.updated_at = datetime.datetime.utcnow()
+
+    def add_plot_point(self, plot_point: PlotPoint):
+        """Add a plot point to the narrative."""
+        self.plot_points[plot_point.id] = plot_point
+        self.narrative_arc.append(plot_point.id)
+        self.updated_at = datetime.datetime.utcnow()
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'domain': self.domain.value,
+            'story_structure': self.story_structure.value,
+            'characters': {k: v.to_dict() for k, v in self.characters.items()},
+            'plot_points': {k: v.to_dict() for k, v in self.plot_points.items()},
+            'themes': self.themes,
+            'world_state': self.world_state,
+            'narrative_arc': self.narrative_arc,
+            'metadata': self.metadata,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+@dataclass
+class NarrativeAnalysis:
+    """Results of narrative analysis."""
+    coherence_score: float
+    thematic_consistency: float
+    character_development: Dict[str, float]
+    plot_complexity: float
+    emotional_arc: Dict[str, List[float]]
+    pacing_analysis: Dict[str, Any]
+    structural_integrity: float
+    themes: List[str]
+    motifs: List[str]
+    conflicts: List[Dict[str, Any]]
+    recommendations: List[str]
+
+# --- Domain Adapters ---
+
+class DomainAdapter:
+    """Base class for domain-specific narrative adapters."""
+    
+    def __init__(self, domain: NarrativeDomain):
+        self.domain = domain
+    
+    def analyze_narrative(self, narrative: Narrative) -> NarrativeAnalysis:
+        """Analyze narrative from domain-specific perspective."""
+        raise NotImplementedError
+    
+    def generate_plot_point(self, narrative: Narrative, context: Dict[str, Any]) -> PlotPoint:
+        """Generate domain-appropriate plot point."""
+        raise NotImplementedError
+    
+    def adapt_narrative(self, narrative: Narrative, new_context: Dict[str, Any]) -> Narrative:
+        """Adapt narrative for domain-specific requirements."""
+        raise NotImplementedError
+
+# --- Main Narrative Engine ---
 
 class NarrativeEngine:
-    """Main Narrative Engine that coordinates all modules"""
+    """
+    Main narrative engine that provides domain-agnostic narrative intelligence.
+    Orchestrates memory, analysis, generation, and adaptation across domains.
+    """
     
     def __init__(self):
-        # Initialize core modules
-        self.memory_core = MemoryCore()
-        self.narrative_interpreter = NarrativeInterpreter(self.memory_core)
-        self.world_simulator = WorldStateSimulator()
-        self.actor_framework = AIActorFramework()
-        self.output_layer = OutputLayer(self.memory_core, self.world_simulator, self.actor_framework)
+        self.memory_system = LayeredMemorySystem()
+        self.domain_adapters: Dict[NarrativeDomain, DomainAdapter] = {}
+        self.narratives: Dict[str, Narrative] = {}
+        self.analysis_cache: Dict[str, NarrativeAnalysis] = {}
         
-        # Initialize default actors
-        self._initialize_default_actors()
+        # Register default domain adapters
+        self._register_default_adapters()
+        
+        logger.info("Narrative Engine initialized successfully")
     
-    def _initialize_default_actors(self):
-        """Initialize default narrative actors"""
-        # Player character (protagonist)
-        player = AIActor(
-            actor_id="player",
-            name="You",
-            role=NarrativeRole.PROTAGONIST,
-            beliefs={"freedom": 0.8, "justice": 0.7, "growth": 0.9},
-            goals=["find_purpose", "overcome_challenges", "help_others"]
-        )
-        self.actor_framework.add_actor(player)
-        
-        # Guide character
-        guide = AIActor(
-            actor_id="guide",
-            name="The Mentor",
-            role=NarrativeRole.GUIDE,
-            beliefs={"wisdom": 0.9, "teaching": 0.8, "patience": 0.7},
-            goals=["guide_player", "share_knowledge", "maintain_balance"]
-        )
-        self.actor_framework.add_actor(guide)
+    def register_domain_adapter(self, domain: NarrativeDomain, adapter: DomainAdapter):
+        """Register a domain-specific adapter."""
+        self.domain_adapters[domain] = adapter
+        logger.info(f"Registered adapter for domain: {domain.value}")
     
-    def process_input(self, user_input: str, character_id: str = "player") -> str:
-        """Process user input and generate narrative response"""
+    def create_narrative(self, title: str, description: str, domain: NarrativeDomain,
+                        story_structure: StoryStructure = StoryStructure.THREE_ACT) -> Narrative:
+        """Create a new narrative."""
+        narrative = Narrative(
+            id=None,
+            title=title,
+            description=description,
+            domain=domain,
+            story_structure=story_structure,
+            characters={},
+            plot_points={},
+            themes=[],
+            world_state={},
+            narrative_arc=[],
+            metadata={},
+            created_at=None,
+            updated_at=None
+        )
         
-        # Step 1: Interpret the input
-        interpretation = self.narrative_interpreter.process_input(user_input, character_id)
+        self.narratives[narrative.id] = narrative
         
-        # Step 2: Create memory of this interaction
-        memory = MemorySlot(
+        # Store in memory
+        self.memory_system.add_memory(
+            content={'action': 'narrative_created', 'narrative_id': narrative.id},
             memory_type=MemoryType.EVENT,
-            content={
-                'user_input': user_input,
-                'interpretation': interpretation,
-                'character_id': character_id
-            },
-            emotional_weight=interpretation['narrative_weight'],
-            thematic_tags=interpretation['thematic_elements']
-        )
-        self.memory_core.add_memory(memory, character_id)
-        
-        # Step 3: Update world state
-        self.world_simulator.update_world_state(
-            action={'type': 'user_action', 'description': user_input},
-            consequences=[{'type': 'narrative_progression', 'description': 'Story advances'}]
+            layer=MemoryLayer.LONG_TERM,
+            user_id='system',
+            session_id='narrative_creation',
+            emotional_weight=0.3,
+            thematic_tags=['narrative_creation', domain.value],
+            narrative_context={'domain': domain.value, 'structure': story_structure.value}
         )
         
-        # Step 4: Generate response
-        response = self.output_layer.generate_response(user_input, character_id)
-        
-        return response
+        logger.info(f"Created narrative: {title} ({domain.value})")
+        return narrative
     
-    def get_narrative_state(self) -> Dict[str, Any]:
-        """Get current state of the narrative engine"""
-        return {
-            'memory_count': len(self.memory_core.memories),
-            'evolving_themes': self.memory_core.get_evolving_themes(),
-            'unresolved_tensions': self.memory_core.get_unresolved_tensions(),
-            'world_context': self.world_simulator.get_world_context(),
-            'actor_count': len(self.actor_framework.actors),
-            'conversation_history_length': len(self.output_layer.conversation_history)
+    def add_character(self, narrative_id: str, character_data: Dict[str, Any]) -> Character:
+        """Add a character to a narrative."""
+        if narrative_id not in self.narratives:
+            raise ValueError(f"Narrative {narrative_id} not found")
+        
+        narrative = self.narratives[narrative_id]
+        
+        character = Character(
+            id=None,
+            name=character_data['name'],
+            role=CharacterRole(character_data['role']),
+            description=character_data.get('description', ''),
+            traits=character_data.get('traits', []),
+            goals=character_data.get('goals', []),
+            conflicts=character_data.get('conflicts', []),
+            relationships=character_data.get('relationships', {}),
+            development_arc=character_data.get('development_arc', []),
+            current_state=character_data.get('current_state', {}),
+            background=character_data.get('background', {}),
+            personality_matrix=character_data.get('personality_matrix', {})
+        )
+        
+        narrative.add_character(character)
+        
+        # Store character in memory
+        self.memory_system.add_memory(
+            content={'action': 'character_added', 'character_id': character.id, 'narrative_id': narrative_id},
+            memory_type=MemoryType.CHARACTER_DEVELOPMENT,
+            layer=MemoryLayer.MID_TERM,
+            user_id='system',
+            session_id='character_creation',
+            emotional_weight=0.5,
+            thematic_tags=['character_creation', character.role.value],
+            narrative_context={'narrative_id': narrative_id, 'character_name': character.name}
+        )
+        
+        logger.info(f"Added character {character.name} to narrative {narrative.title}")
+        return character
+    
+    def generate_plot_point(self, narrative_id: str, context: Dict[str, Any]) -> PlotPoint:
+        """Generate a plot point for a narrative."""
+        if narrative_id not in self.narratives:
+            raise ValueError(f"Narrative {narrative_id} not found")
+        
+        narrative = self.narratives[narrative_id]
+        
+        # Use domain adapter if available
+        if narrative.domain in self.domain_adapters:
+            plot_point = self.domain_adapters[narrative.domain].generate_plot_point(narrative, context)
+        else:
+            # Default plot point generation
+            plot_point = self._generate_default_plot_point(narrative, context)
+        
+        narrative.add_plot_point(plot_point)
+        
+        # Store plot point in memory
+        self.memory_system.add_memory(
+            content={'action': 'plot_point_generated', 'plot_point_id': plot_point.id, 'narrative_id': narrative_id},
+            memory_type=MemoryType.PLOT_POINT,
+            layer=MemoryLayer.MID_TERM,
+            user_id='system',
+            session_id='plot_generation',
+            emotional_weight=plot_point.narrative_significance,
+            thematic_tags=plot_point.thematic_elements,
+            narrative_context={'narrative_id': narrative_id, 'plot_type': plot_point.plot_point_type.value}
+        )
+        
+        logger.info(f"Generated plot point: {plot_point.title}")
+        return plot_point
+    
+    def analyze_narrative(self, narrative_id: str) -> NarrativeAnalysis:
+        """Analyze a narrative for structure, coherence, and themes."""
+        if narrative_id not in self.narratives:
+            raise ValueError(f"Narrative {narrative_id} not found")
+        
+        narrative = self.narratives[narrative_id]
+        
+        # Check cache first
+        if narrative_id in self.analysis_cache:
+            return self.analysis_cache[narrative_id]
+        
+        # Use domain adapter if available
+        if narrative.domain in self.domain_adapters:
+            analysis = self.domain_adapters[narrative.domain].analyze_narrative(narrative)
+        else:
+            # Default analysis
+            analysis = self._analyze_narrative_default(narrative)
+        
+        # Cache the analysis
+        self.analysis_cache[narrative_id] = analysis
+        
+        # Store analysis in memory
+        self.memory_system.add_memory(
+            content={'action': 'narrative_analyzed', 'narrative_id': narrative_id, 'coherence_score': analysis.coherence_score},
+            memory_type=MemoryType.THEME,
+            layer=MemoryLayer.MID_TERM,
+            user_id='system',
+            session_id='narrative_analysis',
+            emotional_weight=0.4,
+            thematic_tags=['analysis', 'coherence', 'themes'],
+            narrative_context={'narrative_id': narrative_id, 'domain': narrative.domain.value}
+        )
+        
+        logger.info(f"Analyzed narrative: {narrative.title}")
+        return analysis
+    
+    def adapt_narrative(self, narrative_id: str, new_context: Dict[str, Any]) -> Narrative:
+        """Adapt a narrative based on new context or requirements."""
+        if narrative_id not in self.narratives:
+            raise ValueError(f"Narrative {narrative_id} not found")
+        
+        narrative = self.narratives[narrative_id]
+        
+        # Use domain adapter if available
+        if narrative.domain in self.domain_adapters:
+            adapted_narrative = self.domain_adapters[narrative.domain].adapt_narrative(narrative, new_context)
+        else:
+            # Default adaptation
+            adapted_narrative = self._adapt_narrative_default(narrative, new_context)
+        
+        # Update the narrative
+        self.narratives[narrative_id] = adapted_narrative
+        
+        # Store adaptation in memory
+        self.memory_system.add_memory(
+            content={'action': 'narrative_adapted', 'narrative_id': narrative_id, 'adaptation_context': new_context},
+            memory_type=MemoryType.DECISION,
+            layer=MemoryLayer.MID_TERM,
+            user_id='system',
+            session_id='narrative_adaptation',
+            emotional_weight=0.6,
+            thematic_tags=['adaptation', 'context_change'],
+            narrative_context={'narrative_id': narrative_id, 'adaptation_type': new_context.get('type', 'general')}
+        )
+        
+        logger.info(f"Adapted narrative: {narrative.title}")
+        return adapted_narrative
+    
+    def recall_narrative_context(self, query: str = None, domain: NarrativeDomain = None, 
+                                limit: int = 10) -> List[MemoryNode]:
+        """Recall narrative-related memories."""
+        thematic_tags = []
+        if domain:
+            thematic_tags.append(domain.value)
+        
+        return self.memory_system.recall(
+            query=query,
+            thematic=thematic_tags,
+            limit=limit
+        )
+    
+    def get_narrative_stats(self) -> Dict[str, Any]:
+        """Get comprehensive statistics about all narratives."""
+        stats = {
+            'total_narratives': len(self.narratives),
+            'narratives_by_domain': {},
+            'total_characters': 0,
+            'total_plot_points': 0,
+            'memory_stats': self.memory_system.get_memory_stats()
         }
+        
+        for narrative in self.narratives.values():
+            domain = narrative.domain.value
+            if domain not in stats['narratives_by_domain']:
+                stats['narratives_by_domain'][domain] = 0
+            stats['narratives_by_domain'][domain] += 1
+            stats['total_characters'] += len(narrative.characters)
+            stats['total_plot_points'] += len(narrative.plot_points)
+        
+        return stats
+    
+    def export_narrative(self, narrative_id: str) -> Dict[str, Any]:
+        """Export a narrative with all its components."""
+        if narrative_id not in self.narratives:
+            raise ValueError(f"Narrative {narrative_id} not found")
+        
+        narrative = self.narratives[narrative_id]
+        analysis = self.analyze_narrative(narrative_id)
+        
+        export_data = {
+            'narrative': narrative.to_dict(),
+            'analysis': asdict(analysis),
+            'memory_context': [m.to_dict() for m in self.recall_narrative_context(narrative_id=narrative_id, limit=20)],
+            'export_metadata': {
+                'exported_at': datetime.datetime.utcnow().isoformat(),
+                'engine_version': '1.0.0',
+                'domain': narrative.domain.value
+            }
+        }
+        
+        return export_data
+    
+    def import_narrative(self, export_data: Dict[str, Any]) -> str:
+        """Import a narrative from export data."""
+        narrative_data = export_data['narrative']
+        
+        # Reconstruct narrative
+        narrative = Narrative(
+            id=narrative_data['id'],
+            title=narrative_data['title'],
+            description=narrative_data['description'],
+            domain=NarrativeDomain(narrative_data['domain']),
+            story_structure=StoryStructure(narrative_data['story_structure']),
+            characters={},
+            plot_points={},
+            themes=narrative_data['themes'],
+            world_state=narrative_data['world_state'],
+            narrative_arc=narrative_data['narrative_arc'],
+            metadata=narrative_data['metadata'],
+            created_at=datetime.datetime.fromisoformat(narrative_data['created_at']),
+            updated_at=datetime.datetime.fromisoformat(narrative_data['updated_at'])
+        )
+        
+        # Reconstruct characters
+        for char_data in narrative_data['characters'].values():
+            character = Character(
+                id=char_data['id'],
+                name=char_data['name'],
+                role=CharacterRole(char_data['role']),
+                description=char_data['description'],
+                traits=char_data['traits'],
+                goals=char_data['goals'],
+                conflicts=char_data['conflicts'],
+                relationships=char_data['relationships'],
+                development_arc=char_data['development_arc'],
+                current_state=char_data['current_state'],
+                background=char_data['background'],
+                personality_matrix=char_data['personality_matrix']
+            )
+            narrative.characters[character.id] = character
+        
+        # Reconstruct plot points
+        for plot_data in narrative_data['plot_points'].values():
+            plot_point = PlotPoint(
+                id=plot_data['id'],
+                plot_point_type=PlotPointType(plot_data['plot_point_type']),
+                title=plot_data['title'],
+                description=plot_data['description'],
+                characters_involved=plot_data['characters_involved'],
+                emotional_impact=plot_data['emotional_impact'],
+                narrative_significance=plot_data['narrative_significance'],
+                thematic_elements=plot_data['thematic_elements'],
+                world_state_changes=plot_data['world_state_changes'],
+                timestamp=datetime.datetime.fromisoformat(plot_data['timestamp']),
+                prerequisites=plot_data['prerequisites'],
+                consequences=plot_data['consequences']
+            )
+            narrative.plot_points[plot_point.id] = plot_point
+        
+        self.narratives[narrative.id] = narrative
+        
+        # Import analysis if available
+        if 'analysis' in export_data:
+            self.analysis_cache[narrative.id] = NarrativeAnalysis(**export_data['analysis'])
+        
+        logger.info(f"Imported narrative: {narrative.title}")
+        return narrative.id
+    
+    def _register_default_adapters(self):
+        """Register default domain adapters."""
+        # This will be implemented when domain adapters are created
+        pass
+    
+    def _generate_default_plot_point(self, narrative: Narrative, context: Dict[str, Any]) -> PlotPoint:
+        """Generate a default plot point when no domain adapter is available."""
+        plot_point_type = PlotPointType(context.get('type', PlotPointType.SUBPLOT))
+        
+        plot_point = PlotPoint(
+            id=None,
+            plot_point_type=plot_point_type,
+            title=context.get('title', f"{plot_point_type.value.replace('_', ' ').title()}"),
+            description=context.get('description', 'A plot point in the narrative'),
+            characters_involved=context.get('characters_involved', []),
+            emotional_impact=context.get('emotional_impact', {}),
+            narrative_significance=context.get('narrative_significance', 0.5),
+            thematic_elements=context.get('thematic_elements', []),
+            world_state_changes=context.get('world_state_changes', {}),
+            timestamp=datetime.datetime.utcnow(),
+            prerequisites=context.get('prerequisites', []),
+            consequences=context.get('consequences', [])
+        )
+        
+        return plot_point
+    
+    def _analyze_narrative_default(self, narrative: Narrative) -> NarrativeAnalysis:
+        """Perform default narrative analysis when no domain adapter is available."""
+        # Calculate coherence based on plot point connections
+        coherence_score = self._calculate_coherence(narrative)
+        
+        # Analyze character development
+        character_development = {}
+        for character in narrative.characters.values():
+            development_score = len(character.development_arc) / max(len(narrative.plot_points), 1)
+            character_development[character.id] = min(development_score, 1.0)
+        
+        # Calculate plot complexity
+        plot_complexity = len(narrative.plot_points) / max(len(narrative.characters), 1)
+        
+        # Analyze emotional arcs
+        emotional_arc = {}
+        for character in narrative.characters.values():
+            emotional_arc[character.id] = [0.5] * len(narrative.plot_points)  # Default emotional state
+        
+        # Extract themes from plot points
+        themes = set()
+        for plot_point in narrative.plot_points.values():
+            themes.update(plot_point.thematic_elements)
+        
+        analysis = NarrativeAnalysis(
+            coherence_score=coherence_score,
+            thematic_consistency=0.7,  # Default value
+            character_development=character_development,
+            plot_complexity=plot_complexity,
+            emotional_arc=emotional_arc,
+            pacing_analysis={'overall_pacing': 'moderate'},
+            structural_integrity=0.8,  # Default value
+            themes=list(themes),
+            motifs=list(themes),  # Simplified for default analysis
+            conflicts=[],  # Would need more sophisticated analysis
+            recommendations=['Consider adding more character development moments']
+        )
+        
+        return analysis
+    
+    def _adapt_narrative_default(self, narrative: Narrative, new_context: Dict[str, Any]) -> Narrative:
+        """Perform default narrative adaptation when no domain adapter is available."""
+        # Create a copy of the narrative
+        adapted_narrative = Narrative(
+            id=narrative.id,
+            title=narrative.title,
+            description=narrative.description,
+            domain=narrative.domain,
+            story_structure=narrative.story_structure,
+            characters=narrative.characters.copy(),
+            plot_points=narrative.plot_points.copy(),
+            themes=narrative.themes.copy(),
+            world_state=narrative.world_state.copy(),
+            narrative_arc=narrative.narrative_arc.copy(),
+            metadata=narrative.metadata.copy(),
+            created_at=narrative.created_at,
+            updated_at=datetime.datetime.utcnow()
+        )
+        
+        # Apply context changes
+        if 'world_state_changes' in new_context:
+            adapted_narrative.world_state.update(new_context['world_state_changes'])
+        
+        if 'new_themes' in new_context:
+            adapted_narrative.themes.extend(new_context['new_themes'])
+        
+        return adapted_narrative
+    
+    def _calculate_coherence(self, narrative: Narrative) -> float:
+        """Calculate narrative coherence based on plot point connections."""
+        if not narrative.plot_points:
+            return 1.0
+        
+        total_connections = 0
+        max_possible_connections = len(narrative.plot_points) * (len(narrative.plot_points) - 1)
+        
+        for plot_point in narrative.plot_points.values():
+            total_connections += len(plot_point.prerequisites) + len(plot_point.consequences)
+        
+        if max_possible_connections == 0:
+            return 1.0
+        
+        return min(total_connections / max_possible_connections, 1.0)
 
 # Global instance
 narrative_engine = NarrativeEngine() 
