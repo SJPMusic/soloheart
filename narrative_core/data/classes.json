@@ -1,0 +1,113 @@
+{
+  "classes": {
+    "Barbarian": {
+      "hit_dice": "1d12",
+      "base_hp": 12,
+      "proficiencies": {
+        "armor": ["light", "medium", "shields"],
+        "weapons": ["simple", "martial"],
+        "saving_throws": ["STR", "CON"]
+      },
+      "features": [
+        {
+          "name": "Rage",
+          "level": 1,
+          "description": "Enter a rage to gain +2 damage and resistance to bludgeoning, piercing, and slashing damage"
+        },
+        {
+          "name": "Unarmored Defense",
+          "level": 1,
+          "description": "AC = 10 + DEX modifier + CON modifier when not wearing armor"
+        },
+        {
+          "name": "Reckless Attack",
+          "level": 2,
+          "description": "Attack with advantage but enemies have advantage against you until your next turn"
+        }
+      ],
+      "spellcasting": false
+    },
+    "Fighter": {
+      "hit_dice": "1d10",
+      "base_hp": 10,
+      "proficiencies": {
+        "armor": ["light", "medium", "heavy", "shields"],
+        "weapons": ["simple", "martial"],
+        "saving_throws": ["STR", "CON"]
+      },
+      "features": [
+        {
+          "name": "Fighting Style",
+          "level": 1,
+          "description": "Choose a fighting style: Archery, Defense, Dueling, Great Weapon Fighting, Protection, or Two-Weapon Fighting"
+        },
+        {
+          "name": "Second Wind",
+          "level": 1,
+          "description": "Use a bonus action to regain 1d10 + fighter level hit points once per short rest"
+        },
+        {
+          "name": "Action Surge",
+          "level": 2,
+          "description": "Take an additional action on your turn once per short rest"
+        }
+      ],
+      "spellcasting": false
+    },
+    "Rogue": {
+      "hit_dice": "1d8",
+      "base_hp": 8,
+      "proficiencies": {
+        "armor": ["light"],
+        "weapons": ["simple", "hand crossbows", "longswords", "rapiers", "shortswords"],
+        "saving_throws": ["DEX", "INT"]
+      },
+      "features": [
+        {
+          "name": "Sneak Attack",
+          "level": 1,
+          "description": "Deal extra damage when you have advantage or when an enemy is within 5 feet of an ally"
+        },
+        {
+          "name": "Cunning Action",
+          "level": 2,
+          "description": "Use a bonus action to take the Dash, Disengage, or Hide action"
+        },
+        {
+          "name": "Expertise",
+          "level": 1,
+          "description": "Choose two skill proficiencies to double your proficiency bonus"
+        }
+      ],
+      "spellcasting": false
+    },
+    "Wizard": {
+      "hit_dice": "1d6",
+      "base_hp": 6,
+      "proficiencies": {
+        "armor": [],
+        "weapons": ["daggers", "quarterstaffs"],
+        "saving_throws": ["INT", "WIS"]
+      },
+      "features": [
+        {
+          "name": "Spellcasting",
+          "level": 1,
+          "description": "Cast spells using Intelligence as your spellcasting ability"
+        },
+        {
+          "name": "Arcane Recovery",
+          "level": 1,
+          "description": "Regain spell slots during a short rest once per day"
+        },
+        {
+          "name": "Arcane Tradition",
+          "level": 2,
+          "description": "Choose a school of magic specialization"
+        }
+      ],
+      "spellcasting": true,
+      "spellcasting_ability": "INT"
+    }
+  }
+} 

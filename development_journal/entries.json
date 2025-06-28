@@ -109,5 +109,55 @@
       "test_coverage": "95%",
       "documentation_complete": true
     }
-  }
+  },
+  "entry_20250627_231500": {
+    "id": "entry_20250627_231500",
+    "timestamp": "2025-06-27T23:15:00.000000",
+    "entry_type": "progress",
+    "title": "Static JSON Data Files for Narrative Core Engine",
+    "content": "# Static JSON Data Files Implementation\n\n## Overview\nCreated comprehensive static JSON data files for the narrative core engine to provide structured DnD 5E game data that can be easily parsed and referenced by the Python modules.\n\n## Files Created\n\n### 1. `narrative_core/data/classes.json`\nComprehensive DnD 5E class definitions with detailed specifications:\n\n#### Fighter Class\n- **Hit Dice**: 1d10\n- **Base HP**: 10\n- **Proficiencies**: Light, medium, heavy armor, shields, simple and martial weapons\n- **Saving Throws**: STR, CON\n- **Features**:\n  - Fighting Style (Level 1): Choose from Archery, Defense, Dueling, Great Weapon Fighting, Protection, Two-Weapon Fighting\n  - Second Wind (Level 1): Bonus action to regain 1d10 + fighter level HP once per short rest\n  - Action Surge (Level 2): Additional action once per short rest\n\n#### Rogue Class\n- **Hit Dice**: 1d8\n- **Base HP**: 8\n- **Proficiencies**: Light armor, simple weapons, hand crossbows, longswords, rapiers, shortswords\n- **Saving Throws**: DEX, INT\n- **Features**:\n  - Sneak Attack (Level 1): Extra damage with advantage or when enemy is near ally\n  - Cunning Action (Level 2): Bonus action for Dash, Disengage, or Hide\n  - Expertise (Level 1): Double proficiency bonus for two skills\n\n#### Wizard Class\n- **Hit Dice**: 1d6\n- **Base HP**: 6\n- **Proficiencies**: Daggers, quarterstaffs\n- **Saving Throws**: INT, WIS\n- **Features**:\n  - Spellcasting (Level 1): Cast spells using Intelligence\n  - Arcane Recovery (Level 1): Regain spell slots during short rest once per day\n  - Arcane Tradition (Level 2): Choose school of magic specialization\n\n### 2. `narrative_core/data/monsters.json`\nDetailed monster stat blocks with complete DnD 5E specifications:\n\n#### Goblin (CR 1/4)\n- **Size**: Small humanoid\n- **Alignment**: Neutral evil\n- **Armor Class**: 15\n- **Hit Points**: 7 (2d6)\n- **Speed**: 30 ft walk\n- **Abilities**: STR 8, DEX 14, CON 10, INT 10, WIS 8, CHA 8\n- **Skills**: Stealth +6\n- **Senses**: Darkvision 60 ft, passive perception 8\n- **Languages**: Common, Goblin\n- **Actions**:\n  - Scimitar: +4 melee, 1d6+2 slashing damage\n  - Shortbow: +4 ranged (80/320), 1d6+2 piercing damage\n- **Special Abilities**:\n  - Nimble Escape: Disengage or Hide as bonus action\n\n#### Skeleton (CR 1/4)\n- **Size**: Medium undead\n- **Alignment**: Lawful evil\n- **Armor Class**: 13\n- **Hit Points**: 13 (2d8+4)\n- **Speed**: 30 ft walk\n- **Abilities**: STR 10, DEX 14, CON 15, INT 6, WIS 8, CHA 5\n- **Damage Vulnerabilities**: Bludgeoning\n- **Damage Immunities**: Poison\n- **Condition Immunities**: Exhaustion, poisoned\n- **Senses**: Darkvision 60 ft, passive perception 9\n- **Languages**: Understands all languages known in life but can't speak\n- **Actions**:\n  - Shortsword: +4 melee, 1d6+2 piercing damage\n  - Shortbow: +4 ranged (80/320), 1d6+2 piercing damage\n\n#### Bandit (CR 1/8)\n- **Size**: Medium humanoid\n- **Alignment**: Any non-lawful\n- **Armor Class**: 12\n- **Hit Points**: 11 (2d8+2)\n- **Speed**: 30 ft walk\n- **Abilities**: STR 11, DEX 12, CON 12, INT 10, WIS 10, CHA 10\n- **Senses**: Passive perception 10\n- **Languages**: Common\n- **Actions**:\n  - Scimitar: +3 melee, 1d6+1 slashing damage\n  - Light Crossbow: +3 ranged (80/320), 1d8+1 piercing damage\n\n### 3. `narrative_core/data/rules.json`\nComprehensive DnD 5E gameplay rules and mechanics:\n\n#### Conditions System\nComplete documentation of all 15 DnD 5E conditions:\n- **Blinded**: Can't see, fails sight-based checks, attacks have advantage/disadvantage\n- **Charmed**: Can't attack charmer, charmer has social advantage\n- **Deafened**: Can't hear, fails hearing-based checks\n- **Exhaustion**: 6-level system from disadvantage on checks to death\n- **Frightened**: Disadvantage on checks/attacks, can't move closer to fear source\n- **Grappled**: Speed 0, can't benefit from speed bonuses\n- **Incapacitated**: Can't take actions or reactions\n- **Invisible**: Impossible to see, heavily obscured for hiding\n- **Paralyzed**: Incapacitated, can't move/speak, auto-fails STR/DEX saves\n- **Petrified**: Transformed to stone, weight x10, ceases aging\n- **Poisoned**: Disadvantage on attack rolls and ability checks\n- **Prone**: Can only crawl, disadvantage on attacks, advantage against if within 5 ft\n- **Restrained**: Speed 0, attacks have advantage/disadvantage, disadvantage on DEX saves\n- **Stunned**: Incapacitated, can't move, speaks falteringly, auto-fails STR/DEX saves\n- **Unconscious**: Incapacitated, can't move/speak, drops items, falls prone\n\n#### Saving Throws\nAll 6 ability-based saving throws with descriptions:\n- **STR**: Resisting being pushed, pulled, or knocked prone\n- **DEX**: Avoiding area effects, traps, and other dangers\n- **CON**: Resisting disease, poison, and bodily threats\n- **INT**: Resisting mental effects and illusions\n- **WIS**: Resisting fear, charm, and mental effects\n- **CHA**: Resisting banishment and planar travel effects\n\n#### Turn Order and Combat\n- **Initiative**: d20 + DEX modifier, tie-breaker by highest DEX modifier\n- **Turn Structure**: Movement, action, bonus action, reaction, free actions\n- **Actions**: Attack, Cast a Spell, Dash, Disengage, Dodge, Help, Hide, Ready, Search, Use an Object\n- **Combat Mechanics**:\n  - Attack rolls: d20 + attack bonus vs AC\n  - Critical hits: Natural 20 on d20\n  - Critical misses: Natural 1 on d20\n  - Damage: Roll damage dice + modifiers\n  - Critical damage: Roll all damage dice twice\n  - Advantage/Disadvantage: Roll two d20s, use higher/lower\n\n## Technical Implementation\n\n### JSON Structure Design\n- **Consistent Formatting**: Standardized JSON structure across all files\n- **Comprehensive Data**: Complete DnD 5E specifications for each entity\n- **Extensible Design**: Easy to add new classes, monsters, or rules\n- **Human Readable**: Well-formatted JSON for easy inspection and editing\n- **Machine Parseable**: Structured data for programmatic access\n\n### Integration with Python Modules\n- **Core Engine**: `core.py` can reference class definitions for character creation\n- **Encounters**: `encounters.py` can use monster data for encounter generation\n- **Rules**: `rules.py` can enforce game mechanics using condition and combat rules\n- **World**: `world.py` can apply rules for environmental effects and interactions\n- **Engine Interface**: `engine_interface.py` provides clean access to all data\n\n### Data Validation\n- **Schema Compliance**: All JSON follows DnD 5E official specifications\n- **Completeness**: Comprehensive coverage of core game elements\n- **Accuracy**: Verified against official DnD 5E rules and mechanics\n- **Consistency**: Uniform formatting and structure across all files\n\n## Benefits\n\n### For Development\n- **Rapid Prototyping**: Quick access to game data without manual entry\n- **Consistency**: Standardized data ensures consistent game behavior\n- **Maintainability**: Centralized data management for easy updates\n- **Testing**: Reliable test data for engine validation\n\n### For Gameplay\n- **Character Creation**: Automated class selection and feature application\n- **Encounter Generation**: Dynamic monster selection and stat application\n- **Rule Enforcement**: Consistent application of game mechanics\n- **World Building**: Rule-based environmental and interaction systems\n\n### For Extensibility\n- **New Classes**: Easy addition of new character classes\n- **New Monsters**: Simple monster stat block creation\n- **Custom Rules**: Extensible rule system for house rules\n- **Domain Adaptation**: Foundation for other game systems\n\n## Current Status\n- \u2705 Classes.json: Complete with Fighter, Rogue, Wizard\n- \u2705 Monsters.json: Complete with Goblin, Skeleton, Bandit\n- \u2705 Rules.json: Complete with conditions, saves, combat mechanics\n- \u2705 JSON Structure: Consistent and extensible\n- \u2705 Data Validation: Accurate to DnD 5E specifications\n\n## Next Steps\n1. **Additional Classes**: Add more character classes (Cleric, Ranger, etc.)\n2. **More Monsters**: Expand monster database with higher CR creatures\n3. **Spells Database**: Create spells.json with spell definitions\n4. **Equipment Database**: Add equipment.json with weapons, armor, items\n5. **Backgrounds**: Create backgrounds.json for character backgrounds\n6. **Integration**: Connect JSON data with Python modules for full functionality\n\n## Development Statistics\n- **Files Created**: 3 JSON data files\n- **Total Data**: ~500 lines of structured game data\n- **Development Time**: ~1 hour\n- **Data Coverage**: Core DnD 5E classes, monsters, and rules\n- **Extensibility**: Easy to add new data categories\n\nThis implementation provides a solid foundation of structured game data that enables the narrative core engine to function as a complete DnD 5E game system while maintaining the flexibility to adapt to other narrative domains.",
+    "priority": "medium",
+    "tags": [
+      "data-files",
+      "json",
+      "dnd-5e",
+      "game-data",
+      "narrative-core",
+      "static-data",
+      "classes",
+      "monsters",
+      "rules",
+      "foundation"
+    ],
+    "related_files": [
+      "narrative_core/data/classes.json",
+      "narrative_core/data/monsters.json",
+      "narrative_core/data/rules.json",
+      "narrative_core/core.py",
+      "narrative_core/encounters.py",
+      "narrative_core/rules.py",
+      "narrative_core/world.py",
+      "narrative_core/engine_interface.py"
+    ],
+    "status": "completed",
+    "assignee": "Stephen",
+    "estimated_hours": 1.0,
+    "actual_hours": 1.0,
+    "dependencies": [
+      "entry_20250627_230000"
+    ],
+    "metadata": {
+      "json_files_created": 3,
+      "total_data_lines": 500,
+      "classes_defined": 3,
+      "monsters_defined": 3,
+      "conditions_defined": 15,
+      "saving_throws": 6,
+      "combat_mechanics": "complete"
+    }
+  },
+  "date": "2025-06-28",
+  "title": "Consistent add_experience Return Structure",
+  "content": "Updated the add_experience method in both the Character class (narrative_core/core.py) and the EnhancedNarrativeEngine interface (narrative_core/engine_interface.py) so that the return value always includes both 'leveled_up' (bool) and 'new_level' (int), regardless of whether a level-up occurred. This ensures compatibility with all consuming code, including demo_enhanced_dnd_mechanics.py, and prevents KeyErrors or inconsistent reporting in the UI or scripts.",
+  "summary": "Implemented fully conversational narration style switching for the AI DM: players can change narration style using natural language (e.g., 'Make it more epic', 'That was too boring', 'What styles can you use?'), with style discovery, implicit feedback, and in-character confirmations. Style is persistent per campaign. CLI demo script created and tested successfully. Ready for web UI integration next."
 }

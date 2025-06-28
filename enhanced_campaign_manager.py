@@ -17,6 +17,7 @@ from cache_manager import cache_manager
 from main import DnDCampaignManager
 from core.character_manager import Character as CoreCharacter
 from core.combat_system import combat_system, skill_check_system, Combatant, SkillCheckResult
+from core.memory_system import MemoryType, MemoryLayer, EmotionalContext
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ class EnhancedCampaignManager(DnDCampaignManager):
         
         # Cache session memory
         if self.cache_enabled:
-            memory_data = self.memory_system.get_campaign_memories()
+            memory_data = self.memory_system.to_dict()
             cache_manager.cache_session_memory(session_summary.session_id, memory_data)
         
         logger.info(f"Started session: {session_summary.session_id}")
@@ -238,14 +239,18 @@ class EnhancedCampaignManager(DnDCampaignManager):
             
             # Restore chat history to memory system
             for message in messages:
-                self.memory_system.add_campaign_memory(
-                    memory_type='chat_message',
+                self.memory_system.add_memory(
                     content={
                         'type': message.message_type,
                         'content': message.content,
                         'timestamp': message.timestamp.isoformat()
                     },
-                    session_id=save_session.session_id
+                    memory_type=MemoryType.EVENT,
+                    layer=MemoryLayer.SHORT_TERM,
+                    user_id='system',
+                    session_id=save_session.session_id,
+                    emotional_weight=0.3,
+                    thematic_tags=['chat_message', 'session_history']
                 )
             
             logger.info(f"Loaded campaign state from: {save_session.name}")
@@ -355,14 +360,18 @@ class EnhancedCampaignManager(DnDCampaignManager):
                 result = skill_check_system.make_skill_check(combatant, skill, dc)
                 
                 # Log the skill check
-                self.memory_system.add_campaign_memory(
-                    memory_type='skill_check',
+                self.memory_system.add_memory(
                     content={
                         'skill': skill,
                         'result': asdict(result),
                         'trigger': message
                     },
-                    session_id=self.current_session.session_id if self.current_session else None
+                    memory_type=MemoryType.EVENT,
+                    layer=MemoryLayer.SHORT_TERM,
+                    user_id=character.name if character else 'unknown',
+                    session_id=self.current_session.session_id if self.current_session else 'skill_check',
+                    emotional_weight=0.6,
+                    thematic_tags=['skill_check', 'gameplay']
                 )
                 
                 return result
@@ -437,13 +446,17 @@ class EnhancedCampaignManager(DnDCampaignManager):
         initiative_order = self.combat_system.roll_initiative()
         
         # Log combat start
-        self.memory_system.add_campaign_memory(
-            memory_type='combat_start',
+        self.memory_system.add_memory(
             content={
                 'initiative_order': [asdict(entry) for entry in initiative_order],
                 'combatants': [combatant.name for combatant in self.combat_system.combatants.values()]
             },
-            session_id=self.current_session.session_id if self.current_session else None
+            memory_type=MemoryType.EVENT,
+            layer=MemoryLayer.SHORT_TERM,
+            user_id='dm',
+            session_id=self.current_session.session_id if self.current_session else 'combat',
+            emotional_weight=0.8,
+            thematic_tags=['combat_start', 'gameplay']
         )
         
         return self.combat_system.get_combat_status()
@@ -454,10 +467,14 @@ class EnhancedCampaignManager(DnDCampaignManager):
             result = self.combat_system.make_attack(attacker_name, target_name)
             
             # Log the attack
-            self.memory_system.add_campaign_memory(
-                memory_type='combat_attack',
+            self.memory_system.add_memory(
                 content=asdict(result),
-                session_id=self.current_session.session_id if self.current_session else None
+                memory_type=MemoryType.EVENT,
+                layer=MemoryLayer.SHORT_TERM,
+                user_id=attacker_name,
+                session_id=self.current_session.session_id if self.current_session else 'combat',
+                emotional_weight=0.7,
+                thematic_tags=['combat_attack', 'gameplay']
             )
             
             return asdict(result)
@@ -477,12 +494,16 @@ class EnhancedCampaignManager(DnDCampaignManager):
         self.combat_system.end_combat()
         
         # Log combat end
-        self.memory_system.add_campaign_memory(
-            memory_type='combat_end',
+        self.memory_system.add_memory(
             content={
                 'survivors': [name for name, combatant in self.combat_system.combatants.items() if combatant.is_alive()]
             },
-            session_id=self.current_session.session_id if self.current_session else None
+            memory_type=MemoryType.EVENT,
+            layer=MemoryLayer.MID_TERM,
+            user_id='dm',
+            session_id=self.current_session.session_id if self.current_session else 'combat',
+            emotional_weight=0.9,
+            thematic_tags=['combat_end', 'gameplay']
         )
         
         return self.combat_system.get_combat_status()
@@ -494,9 +515,9 @@ class EnhancedCampaignManager(DnDCampaignManager):
     def _get_current_location(self) -> str:
         """Get current location from memory system"""
         try:
-            location_memories = self.memory_system.search_campaign_memory("current location")
+            location_memories = self.memory_system.recall(query="current location", limit=1)
             if location_memories:
-                return location_memories[0].get('content', {}).get('location', 'Unknown')
+                return location_memories[0].content.get('location', 'Unknown')
             return 'Unknown'
         except:
             return 'Unknown'

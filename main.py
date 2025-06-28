@@ -10,7 +10,7 @@ import os
 import datetime
 from typing import Dict, List, Any, Optional
 from dataclasses import asdict
-from core.memory_system import CampaignMemorySystem
+from core.memory_system import LayeredMemorySystem, MemoryType, MemoryLayer, EmotionalContext
 from core.ai_content_generator import AIContentGenerator, ContentRequest, GeneratedContent
 from core.character_manager import CharacterManager, Character
 from core.session_logger import SessionLogger, SessionSummary, LogEntryType
@@ -26,7 +26,7 @@ class DnDCampaignManager:
         os.makedirs(self.campaign_data_dir, exist_ok=True)
         
         # Initialize core systems
-        self.memory_system = CampaignMemorySystem(self.campaign_data_dir)
+        self.memory_system = LayeredMemorySystem(self.campaign_name)
         self.ai_generator = AIContentGenerator(self.memory_system)
         self.character_manager = CharacterManager()
         self.session_logger = SessionLogger(self.memory_system)
@@ -83,8 +83,7 @@ class DnDCampaignManager:
         self._save_character(player_name, character)
         
         # Add character to memory system
-        self.memory_system.add_campaign_memory(
-            memory_type='character',
+        self.memory_system.add_memory(
             content={
                 'player_name': player_name,
                 'character_name': character.name,
@@ -94,7 +93,12 @@ class DnDCampaignManager:
                 'background': character.background,
                 'personality_traits': character.personality_traits
             },
-            session_id='character_creation'
+            memory_type=MemoryType.CHARACTER_DEVELOPMENT,
+            layer=MemoryLayer.LONG_TERM,
+            user_id=player_name,
+            session_id='character_creation',
+            emotional_weight=0.7,
+            thematic_tags=['character_creation', 'player_character']
         )
         
         return character
@@ -158,15 +162,19 @@ class DnDCampaignManager:
         self.current_session = self.session_logger.start_session(session_id, player_names)
         
         # Log session start in memory
-        self.memory_system.add_campaign_memory(
-            memory_type='session_start',
+        self.memory_system.add_memory(
             content={
                 'session_id': session_id,
                 'date': datetime.date.today().isoformat(),
                 'participants': player_names,
                 'character_levels': {name: char.level for name, char in self.player_characters.items()}
             },
-            session_id=session_id
+            memory_type=MemoryType.EVENT,
+            layer=MemoryLayer.MID_TERM,
+            user_id='dm',
+            session_id=session_id,
+            emotional_weight=0.5,
+            thematic_tags=['session_start', 'campaign_management']
         )
         
         return self.current_session
@@ -182,10 +190,14 @@ class DnDCampaignManager:
         self._save_session_data(session_summary)
         
         # Update campaign memory with session summary
-        self.memory_system.add_campaign_memory(
-            memory_type='session_summary',
+        self.memory_system.add_memory(
             content=asdict(session_summary),
-            session_id=session_summary.session_id
+            memory_type=MemoryType.EVENT,
+            layer=MemoryLayer.MID_TERM,
+            user_id='dm',
+            session_id=session_summary.session_id,
+            emotional_weight=0.6,
+            thematic_tags=['session_end', 'campaign_management']
         )
         
         self.current_session = None
@@ -280,11 +292,12 @@ class DnDCampaignManager:
     
     def search_campaign_memory(self, query: str) -> List[Dict[str, Any]]:
         """Search campaign memory"""
-        return self.memory_system.search_campaign_memories('current', query)
+        memories = self.memory_system.recall(query=query, limit=10)
+        return [memory.to_dict() for memory in memories]
     
     def get_campaign_summary(self) -> Dict[str, Any]:
         """Get campaign summary"""
-        return self.memory_system.get_campaign_summary()
+        return self.memory_system.get_memory_stats()
     
     def add_quest(self, quest_data: Dict[str, Any]):
         """Add a new quest to the campaign"""
@@ -295,10 +308,14 @@ class DnDCampaignManager:
         self.active_quests.append(quest_data)
         
         # Add to memory system
-        self.memory_system.add_campaign_memory(
-            memory_type='quest',
+        self.memory_system.add_memory(
             content=quest_data,
-            session_id=self.current_session.session_id if self.current_session else 'quest_creation'
+            memory_type=MemoryType.PLOT_POINT,
+            layer=MemoryLayer.MID_TERM,
+            user_id='dm',
+            session_id=self.current_session.session_id if self.current_session else 'quest_creation',
+            emotional_weight=0.7,
+            thematic_tags=['quest', 'plot_point']
         )
     
     def complete_quest(self, quest_id: str, outcome: str):
@@ -311,10 +328,14 @@ class DnDCampaignManager:
                 break
         
         # Update in memory system
-        self.memory_system.add_campaign_memory(
-            memory_type='quest_completion',
+        self.memory_system.add_memory(
             content={'quest_id': quest_id, 'outcome': outcome},
-            session_id=self.current_session.session_id if self.current_session else 'quest_completion'
+            memory_type=MemoryType.PLOT_POINT,
+            layer=MemoryLayer.MID_TERM,
+            user_id='dm',
+            session_id=self.current_session.session_id if self.current_session else 'quest_completion',
+            emotional_weight=0.8,
+            thematic_tags=['quest_completion', 'plot_point']
         )
     
     def get_character_suggestions(self, player_name: str, situation: str) -> List[str]:
@@ -324,7 +345,7 @@ class DnDCampaignManager:
             return []
         
         # Search memory for similar situations
-        similar_situations = self.memory_system.search_campaign_memories('current', situation)
+        similar_memories = self.memory_system.recall(query=situation, limit=5)
         
         suggestions = []
         

@@ -10,7 +10,7 @@ import datetime
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
-from .memory_system import CampaignMemorySystem
+from .memory_system import LayeredMemorySystem, MemoryType, MemoryLayer, EmotionalContext
 
 class LogEntryType(Enum):
     DIALOGUE = "dialogue"
@@ -89,7 +89,7 @@ class SessionSummary:
 class SessionLogger:
     """Logs and processes DnD session data"""
     
-    def __init__(self, memory_system: CampaignMemorySystem):
+    def __init__(self, memory_system: LayeredMemorySystem):
         self.memory = memory_system
         self.current_session: Optional[SessionSummary] = None
         self.session_entries: List[SessionLogEntry] = []
@@ -301,10 +301,14 @@ class SessionLogger:
         }
         
         # Add session to memory
-        self.memory.add_campaign_memory(
-            memory_type='session',
+        self.memory.add_memory(
             content=session_data,
-            session_id=self.current_session.session_id
+            memory_type=MemoryType.EVENT,
+            layer=MemoryLayer.MID_TERM,
+            user_id='dm',
+            session_id=self.current_session.session_id,
+            emotional_weight=0.8,
+            thematic_tags=['session_summary', 'campaign_management']
         )
         
         # Process each entry for entity extraction
@@ -338,7 +342,7 @@ class SessionLogger:
         for entity_name in entry.entities_mentioned:
             if entity_name and entity_name not in self.current_session.participants:
                 # Check for existing entity in memory
-                existing = self.memory.search_campaign_memories('current', entity_name)
+                existing = self.memory.recall(query=entity_name, limit=1)
                 if not existing:
                     # Create new entity
                     entity_data = {
@@ -347,14 +351,15 @@ class SessionLogger:
                         'last_updated': self.current_session.session_id,
                         'context_snippets': [entry.content]
                     }
-                    self.memory.add_campaign_memory(
-                        memory_type='entity',
+                    self.memory.add_memory(
                         content=entity_data,
-                        session_id=self.current_session.session_id
+                        memory_type=MemoryType.CHARACTER_DEVELOPMENT,
+                        layer=MemoryLayer.MID_TERM,
+                        user_id='dm',
+                        session_id=self.current_session.session_id,
+                        emotional_weight=0.6,
+                        thematic_tags=['entity', 'character']
                     )
-                else:
-                    # Update existing entity
-                    self.memory.update_entity_context(entity_name, entry.content, self.current_session.session_id)
         
         # Extract locations and add to memory
         for location_name in entry.locations_mentioned:
@@ -365,10 +370,14 @@ class SessionLogger:
                     'last_updated': self.current_session.session_id,
                     'context_snippets': [entry.content]
                 }
-                self.memory.add_campaign_memory(
-                    memory_type='location',
+                self.memory.add_memory(
                     content=location_data,
-                    session_id=self.current_session.session_id
+                    memory_type=MemoryType.WORLD_STATE,
+                    layer=MemoryLayer.MID_TERM,
+                    user_id='dm',
+                    session_id=self.current_session.session_id,
+                    emotional_weight=0.5,
+                    thematic_tags=['location', 'world_state']
                 )
     
     def get_session_export(self) -> Dict[str, Any]:

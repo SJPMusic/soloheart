@@ -10,7 +10,7 @@ import random
 import os
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
-from .memory_system import CampaignMemorySystem, CampaignEntity, EntityType, ContextLevel
+from .memory_system import LayeredMemorySystem, MemoryType, MemoryLayer, EmotionalContext
 
 # Load environment variables
 try:
@@ -46,7 +46,7 @@ class GeneratedContent:
 class AIContentGenerator:
     """Generates dynamic DnD content using memory system and OpenAI API"""
     
-    def __init__(self, memory_system: CampaignMemorySystem):
+    def __init__(self, memory_system: LayeredMemorySystem):
         self.memory = memory_system
         self.templates = self._load_templates()
         self.name_generators = self._load_name_generators()
@@ -120,30 +120,23 @@ class AIContentGenerator:
             mannerism=mannerism
         )
         
-        # Create NPC entity for memory system
-        npc_entity = CampaignEntity(
-            id="",
-            name=name,
-            entity_type=EntityType.NPC,
-            description=description,
-            attributes={
+        # Add NPC to memory system
+        self.memory.add_memory(
+            content={
+                'name': name,
                 'race': race,
                 'character_class': character_class,
                 'personality': personality,
                 'appearance': appearance,
-                'mannerism': mannerism
+                'mannerism': mannerism,
+                'description': description
             },
-            relationships={},
-            first_mentioned=context.get('session_id', 'current'),
-            last_updated=context.get('session_id', 'current'),
-            confidence=0.9,
-            context_snippets=[description],
-            semantic_tags=[],
-            context_level=ContextLevel.MODERATE,
-            aliases=[],
-            core_attributes={},
-            variable_attributes={},
-            entity_references=[]
+            memory_type=MemoryType.CHARACTER_DEVELOPMENT,
+            layer=MemoryLayer.MID_TERM,
+            user_id='dm',
+            session_id=context.get('session_id', 'npc_generation'),
+            emotional_weight=0.7,
+            thematic_tags=['npc', 'character', race, character_class]
         )
         
         return GeneratedContent(
@@ -209,16 +202,16 @@ class AIContentGenerator:
         
         # Search for relevant entities
         if 'location_name' in context:
-            search_results = self.memory.search_campaign_memories('current', context['location_name'])
-            relevant_entities.extend([r['data'] for r in search_results if r['type'] == 'entity'])
+            search_results = self.memory.recall(query=context['location_name'], limit=5)
+            relevant_entities.extend([r.content for r in search_results if 'name' in r.content])
         
         if 'quest_type' in context:
-            search_results = self.memory.search_campaign_memories('current', context['quest_type'])
-            relevant_entities.extend([r['data'] for r in search_results if r['type'] == 'entity'])
+            search_results = self.memory.recall(query=context['quest_type'], limit=5)
+            relevant_entities.extend([r.content for r in search_results if 'name' in r.content])
         
         return {
             'relevant_entities': relevant_entities,
-            'campaign_summary': self.memory.get_campaign_summary(),
+            'campaign_summary': self.memory.get_memory_stats(),
             'recent_events': self._get_recent_events()
         }
     
@@ -408,7 +401,7 @@ class AIContentGenerator:
     
     def _get_recent_events(self) -> List[Dict[str, Any]]:
         """Get recent campaign events"""
-        summary = self.memory.get_campaign_summary()
+        summary = self.memory.get_memory_stats()
         return summary.get('recent_activity', [])
     
     def generate_conversational_response(self, context: Dict[str, Any]) -> GeneratedContent:
@@ -535,13 +528,13 @@ Keep your response engaging but focused. End with something that invites the pla
     def _get_memory_context(self, player_message: str, campaign_memory: Dict[str, Any]) -> str:
         """Get relevant memory context for the AI"""
         # Search for relevant memories
-        search_results = self.memory.search_campaign_memories('current', player_message)
+        search_results = self.memory.recall(query=player_message, limit=5)
         
         # Get recent events
         recent_events = self._get_recent_events()
         
         # Get campaign summary
-        campaign_summary = self.memory.get_campaign_summary()
+        campaign_summary = self.memory.get_memory_stats()
         
         # Build context string
         context_parts = []
@@ -557,7 +550,7 @@ Keep your response engaging but focused. End with something that invites the pla
                 context_parts.append(f"- {event.get('description', 'Unknown event')}")
         
         # Relevant entities
-        relevant_entities = [r['data'] for r in search_results if r['type'] == 'entity']
+        relevant_entities = [r.content for r in search_results if 'name' in r.content]
         if relevant_entities:
             context_parts.append("Relevant Characters/Locations:")
             for entity in relevant_entities[:5]:  # Top 5 relevant

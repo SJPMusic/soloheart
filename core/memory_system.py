@@ -18,6 +18,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 from collections import defaultdict, deque
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ class MemoryNode:
     content: Dict[str, Any]
     memory_type: MemoryType
     layer: MemoryLayer
-    timestamp: datetime.datetime
+    timestamp: datetime
     emotional_weight: float  # 0.0 to 1.0
     emotional_context: List[EmotionalContext]
     thematic_tags: List[str]
@@ -72,7 +73,7 @@ class MemoryNode:
     session_id: str
     decay_rate: float
     reinforcement_count: int
-    last_accessed: datetime.datetime
+    last_accessed: datetime
     associations: List[str]  # Related memory IDs
     triggers: List[str]      # Keywords for recall
     causal_links: List[str]  # Causal memory IDs
@@ -103,12 +104,12 @@ class MemoryNode:
         content_str = json.dumps(self.content, sort_keys=True)
         return hashlib.md5((content_str + self.layer.value + self.memory_type.value + self.timestamp.isoformat()).encode()).hexdigest()[:16]
 
-    def get_significance(self, now: Optional[datetime.datetime] = None) -> float:
+    def get_significance(self, now: Optional[datetime] = None) -> float:
         """
         Returns a significance score based on emotional weight, decay, and reinforcement.
         Implements the forgetting as function concept from Chapter 3.
         """
-        now = now or datetime.datetime.utcnow()
+        now = now or datetime.utcnow()
         age_hours = (now - self.timestamp).total_seconds() / 3600
         decay = max(0.1, 1.0 - (age_hours * self.decay_rate))
         reinforcement = min(0.5, self.reinforcement_count * 0.1)
@@ -120,7 +121,7 @@ class MemoryNode:
         """Reinforce this memory, reducing decay rate and updating access time."""
         self.reinforcement_count += 1
         self.decay_rate = max(0.01, self.decay_rate * 0.9)
-        self.last_accessed = datetime.datetime.utcnow()
+        self.last_accessed = datetime.utcnow()
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -185,7 +186,7 @@ class LayeredMemorySystem:
         Add a new memory node to the appropriate layer and update indexes.
         Implements the memory as narrative context concept.
         """
-        now = datetime.datetime.utcnow()
+        now = datetime.utcnow()
         decay_rate = self._calculate_decay_rate(layer, emotional_weight)
         
         node = MemoryNode(
@@ -279,7 +280,7 @@ class LayeredMemorySystem:
         Implement forgetting as function from Chapter 3.
         Remove memories below significance threshold.
         """
-        now = datetime.datetime.utcnow()
+        now = datetime.utcnow()
         
         # Check short-term memories
         to_remove = []
@@ -503,7 +504,7 @@ class LayeredMemorySystem:
             content=data['content'],
             memory_type=MemoryType(data['memory_type']),
             layer=MemoryLayer(data['layer']),
-            timestamp=datetime.datetime.fromisoformat(data['timestamp']),
+            timestamp=datetime.fromisoformat(data['timestamp']),
             emotional_weight=data['emotional_weight'],
             emotional_context=[EmotionalContext(e) for e in data['emotional_context']],
             thematic_tags=data['thematic_tags'],
@@ -511,7 +512,7 @@ class LayeredMemorySystem:
             session_id=data['session_id'],
             decay_rate=data['decay_rate'],
             reinforcement_count=data['reinforcement_count'],
-            last_accessed=datetime.datetime.fromisoformat(data['last_accessed']),
+            last_accessed=datetime.fromisoformat(data['last_accessed']),
             associations=data['associations'],
             triggers=data['triggers'],
             causal_links=data['causal_links'],
