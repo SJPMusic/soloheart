@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solo DnD 5E - Vibe Code Character Creation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e8e8e8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .back-btn {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 0, 0, 0.2);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 1rem;
+        }
+
+        .creation-intro {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid #ffd700;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .creation-intro h2 {
+            color: #ffd700;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .creation-intro p {
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .conversation-area {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            overflow-y: auto;
+            max-height: 60vh;
+            min-height: 300px;
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+
+        .user-message {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #ffd700;
+            margin-left: 2rem;
+        }
+
+        .dm-message {
+            background: rgba(0, 100, 0, 0.1);
+            border-left: 4px solid #00ff00;
+            margin-right: 2rem;
+        }
+
+        .dm-message::before {
+            content: "🎲 ";
+            font-size: 1.2em;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .input-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .user-input {
+            width: 100%;
+            min-height: 60px;
+            max-height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #e8e8e8;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            outline: none;
+        }
+
+        .user-input:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .send-btn {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .send-btn:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+            color: #ffd700;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading::after {
+            content: "🎲 The DM is thinking...";
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .completion-area {
+            display: none;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .completion-area.show {
+            display: block;
+        }
+
+        .completion-area h3 {
+            color: #00ff00;
+            margin-bottom: 1rem;
+        }
+
+        .complete-btn {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+
+        .complete-btn:hover {
+            background: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+        }
+
+        .initial-form {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #e8e8e8;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: #ffd700;
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .start-btn {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .start-btn:hover {
+            background: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .input-area {
+                flex-direction: column;
+            }
+
+            .send-btn {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✨ Vibe Code Character Creation</h1>
+        <a href="/character-creation" class="back-btn">← Back to Character Creation</a>
+    </div>
+
+    <div class="main-content">
+        <div class="creation-intro">
+            <h2>🎭 Describe Your Character</h2>
+            <p>Tell me about your character in your own words. Describe their personality, background, appearance, and any special traits or abilities you envision. I'll help translate your vision into a proper DnD character!</p>
+        </div>
+
+        <!-- Initial Form -->
+        <div class="initial-form" id="initialForm">
+            <div class="form-group">
+                <label for="campaignName">Campaign Name (Optional)</label>
+                <input type="text" id="campaignName" placeholder="Enter a name for your campaign">
+            </div>
+            <div class="form-group">
+                <label for="characterDescription">Describe Your Character</label>
+                <textarea id="characterDescription" placeholder="Tell me about your character... What are they like? What's their background? What makes them special?"></textarea>
+            </div>
+            <button class="start-btn" onclick="startCharacterCreation()">🎲 Start Character Creation</button>
+        </div>
+
+        <!-- Conversation Area -->
+        <div class="conversation-area" id="conversationArea" style="display: none;">
+            <div class="message dm-message">
+                Welcome! I'm your Dungeon Master, and I'm here to help you create your character. Let's start by talking about your character concept. What kind of hero do you want to play?
+            </div>
+        </div>
+
+        <div class="loading" id="loadingIndicator"></div>
+
+        <div class="input-area" id="inputArea" style="display: none;">
+            <div class="input-container">
+                <textarea 
+                    class="user-input" 
+                    id="userInput" 
+                    placeholder="Tell me more about your character..."
+                    rows="3"
+                ></textarea>
+            </div>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+
+        <div class="completion-area" id="completionArea">
+            <h3>🎉 Character Creation Complete!</h3>
+            <p>Your character has been created successfully. Ready to start your adventure?</p>
+            <button class="complete-btn" onclick="completeCreation()">🚀 Start Adventure</button>
+        </div>
+    </div>
+
+    <script>
+        let isProcessing = false;
+        let isComplete = false;
+
+        // Initialize the interface
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-resize textarea
+            const textarea = document.getElementById('userInput');
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            });
+
+            // Enter to send (Shift+Enter for new line)
+            textarea.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+
+        async function startCharacterCreation() {
+            const description = document.getElementById('characterDescription').value.trim();
+            const campaignName = document.getElementById('campaignName').value.trim();
+
+            if (!description) {
+                alert('Please provide a character description.');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const response = await fetch('/api/character/vibe-code/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        description: description,
+                        campaign_name: campaignName
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Hide initial form and show conversation
+                    document.getElementById('initialForm').style.display = 'none';
+                    document.getElementById('conversationArea').style.display = 'block';
+                    document.getElementById('inputArea').style.display = 'flex';
+
+                    // Add the DM's response
+                    addMessage(data.message, 'dm');
+
+                    // Check if character is already complete
+                    if (data.is_complete) {
+                        showCompletion();
+                    }
+                } else {
+                    alert('Error starting character creation: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error starting character creation:', error);
+                alert('Error starting character creation. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function sendMessage() {
+            if (isProcessing || isComplete) return;
+
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message to conversation
+            addMessage(message, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Show loading
+            setLoading(true);
+            isProcessing = true;
+
+            try {
+                const response = await fetch('/api/character/vibe-code/continue', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        input: message
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Add DM response
+                    addMessage(data.message, 'dm');
+
+                    // Check if character is complete
+                    if (data.is_complete) {
+                        showCompletion();
+                    }
+                } else {
+                    addMessage("I'm sorry, but I'm having trouble processing that right now. Please try again.", 'dm');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage("I'm experiencing some technical difficulties. Please try again in a moment.", 'dm');
+            } finally {
+                setLoading(false);
+                isProcessing = false;
+            }
+        }
+
+        function addMessage(content, type) {
+            const conversationArea = document.getElementById('conversationArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.textContent = content;
+            conversationArea.appendChild(messageDiv);
+            conversationArea.scrollTop = conversationArea.scrollHeight;
+        }
+
+        function setLoading(loading) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const sendBtn = document.getElementById('sendBtn');
+
+            if (loading) {
+                loadingIndicator.classList.add('show');
+                if (sendBtn) {
+                    sendBtn.disabled = true;
+                    sendBtn.textContent = 'Sending...';
+                }
+            } else {
+                loadingIndicator.classList.remove('show');
+                if (sendBtn) {
+                    sendBtn.disabled = false;
+                    sendBtn.textContent = 'Send';
+                }
+            }
+        }
+
+        function showCompletion() {
+            isComplete = true;
+            document.getElementById('completionArea').classList.add('show');
+            document.getElementById('inputArea').style.display = 'none';
+        }
+
+        async function completeCreation() {
+            setLoading(true);
+
+            try {
+                const response = await fetch('/api/character/vibe-code/complete', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    alert('Error completing character creation: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error completing creation:', error);
+                alert('Error completing character creation. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -1,3 +1,5 @@
+This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License.
+
 # Development Journal System
 
 A comprehensive development journal system for tracking the ongoing development of the DnD 5E AI-Powered Campaign Manager.

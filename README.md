@@ -1,196 +1,136 @@
-# The Narrative Engine
+# 🎲 Solo Narrative Engine Demo
 
-A domain-agnostic narrative intelligence system that understands, generates, and adapts stories across multiple contexts.
+> **Transform solo tabletop gaming with AI-powered storytelling that adapts to your choices and creates truly personalized adventures.**
 
-## Overview
+![Demo Status](https://img.shields.io/badge/status-Demo%20Stage%20%E2%80%93%20Actively%20Developing-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Python](https://img.shields.io/badge/python-3.9+-blue)
 
-The Narrative Engine is a sophisticated system designed to work with narratives across various domains including gaming, therapy, education, organizational storytelling, creative writing, journalism, and marketing. It provides deep narrative understanding, generation capabilities, and adaptive storytelling.
+![Demo Screenshot](demo_screenshot.txt)
 
-## Core Features
+## Project Summary
 
-### 1. **Layered Memory System**
-- **Short-term memory**: Immediate context and recent interactions
-- **Mid-term memory**: Session-level goals, arcs, and unresolved threads  
-- **Long-term memory**: Campaign/world-level lore, history, and relationships
-- **Memory decay and reinforcement**: Natural forgetting and strengthening mechanisms
-- **Emotional context**: Memory tagging with emotional weights and contexts
-- **Nonlinear recall**: Associative and contextual memory retrieval
+This is a proof-of-concept demo for the **Narrative Engine**: an immersive, LLM-powered solo DnD 5E experience. The system enables a single player to create a character using natural language and play through a campaign with an AI Dungeon Master, all in a clean, SRD 5.1-compliant, and legally safe environment.
 
-### 2. **Domain-Agnostic Architecture**
-- **Modular domain adapters**: Specialized handlers for different narrative contexts
-- **Universal narrative analysis**: Story structure, coherence, and thematic analysis
-- **Cross-domain learning**: Knowledge transfer between different narrative types
-- **Extensible framework**: Easy addition of new domains and capabilities
-
-### 3. **Narrative Intelligence**
-- **Story structure analysis**: Understanding narrative arcs, pacing, and structure
-- **Character modeling**: Dynamic character development and relationship tracking
-- **Plot generation**: Contextual plot point creation and adaptation
-- **Thematic analysis**: Identifying and developing themes and motifs
-- **Coherence maintenance**: Ensuring narrative consistency and flow
-
-### 4. **Adaptive Capabilities**
-- **Real-time adaptation**: Dynamic story adjustment based on user input
-- **Personalization**: Tailored experiences based on user preferences and history
-- **Context awareness**: Situational understanding and appropriate responses
-- **Multi-modal support**: Text, dialogue, and structured narrative formats
-
-## Architecture
+## How It Works
 
 ```
-The Narrative Engine/
-├── core/
-│   ├── memory_system.py          # Layered memory implementation
-│   ├── narrative_engine.py       # Main engine orchestration
-│   ├── domain_adapters.py        # Domain-specific handlers
-│   ├── story_analyzer.py         # Narrative analysis tools
-│   ├── character_model.py        # Character development system
-│   └── plot_generator.py         # Plot creation and adaptation
-├── domains/
-│   ├── gaming.py                 # Gaming narrative adapter
-│   ├── therapy.py                # Therapeutic narrative adapter
-│   ├── education.py              # Educational narrative adapter
-│   ├── organizational.py         # Business narrative adapter
-│   ├── creative_writing.py       # Creative writing adapter
-│   ├── journalism.py             # Journalistic narrative adapter
-│   └── marketing.py              # Marketing narrative adapter
-├── utils/
-│   ├── text_processing.py        # NLP and text analysis
-│   ├── coherence_checker.py      # Narrative consistency tools
-│   └── export_import.py          # Data serialization
-├── examples/
-│   ├── demo.py                   # Basic usage examples
-│   ├── gaming_example.py         # Gaming narrative demo
-│   ├── therapy_example.py        # Therapeutic narrative demo
-│   └── education_example.py      # Educational narrative demo
-├── tests/
-│   ├── test_memory_system.py     # Memory system tests
-│   ├── test_narrative_engine.py  # Engine functionality tests
-│   └── test_domain_adapters.py   # Domain adapter tests
-├── docs/
-│   ├── API.md                    # API documentation
-│   ├── DOMAINS.md                # Domain-specific guides
-│   └── MEMORY_SYSTEM.md          # Memory system documentation
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
+Player Input → LLM Processing → Narrative Response → Campaign State Update
+     ↓              ↓                ↓                    ↓
+Natural Language → Context Analysis → Story Generation → Persistent Save
+     ↓              ↓                ↓                    ↓
+Character Creation → Memory Systems → Emotional Tracking → Campaign Progression
 ```
 
-## Installation
+### Core Flow
+1. **Start Screen** → Choose to begin new campaign or continue existing
+2. **Vibe Code Creation** → Natural conversation with AI to build your character
+3. **Narrative Gameplay** → Immersive storytelling with persistent campaign state
+4. **Save & Continue** → Seamless persistence across sessions
 
-```bash
-# Clone or create the project directory
-cd "The Narrative Engine"
+## Key Features
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
+- **🎯 Start Screen**: Begin a new campaign, continue, or delete existing campaigns
+- **💬 Vibe Code Character Creation**: Create a character through natural conversation with the LLM (GPT-4o-mini or compatible)
+- **📋 SRD-Compliant Character Data**: All character data is saved in a structured, open format
+- **📖 Immersive Narrative Gameplay**: Seamless transition into a pure narrative interface, with the LLM acting as DM
+- **💾 Persistent Campaigns**: Save, load, and delete campaigns with persistent storage
+- **📱 Mobile-Responsive UI**: Clean, thematic, and immersive design
 
 ## Quick Start
 
-```python
-from core.narrative_engine import NarrativeEngine
-from domains.gaming import GamingAdapter
+### Prerequisites
+- Python 3.9+
+- OpenAI API key
 
-# Initialize the engine
-engine = NarrativeEngine()
+### Installation
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/PianomanSJPM/solo-rp-game-demo.git
+   cd solo-rp-game-demo/dnd_game
+   ```
 
-# Register a domain adapter
-engine.register_domain('gaming', GamingAdapter())
+2. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-# Create a narrative
-narrative = engine.create_narrative(
-    domain='gaming',
-    title='Epic Adventure',
-    description='A hero\'s journey through a mystical realm'
-)
+3. **Set up your OpenAI API key**:
+   ```bash
+   cp .env.template .env
+   # Add your OpenAI API key to .env
+   ```
 
-# Add characters
-engine.add_character(narrative.id, {
-    'name': 'Aria',
-    'role': 'protagonist',
-    'traits': ['brave', 'curious', 'determined']
-})
+### Running the Demo
+1. **Start the start screen interface** (port 5001):
+   ```bash
+   python start_screen_interface.py
+   ```
 
-# Generate plot points
-plot_point = engine.generate_plot_point(narrative.id, {
-    'context': 'The hero discovers an ancient map',
-    'tension': 'high',
-    'character_focus': 'Aria'
-})
+2. **In a new terminal, start the narrative interface** (port 5002):
+   ```bash
+   python narrative_focused_interface.py
+   ```
 
-# Analyze narrative
-analysis = engine.analyze_narrative(narrative.id)
-print(f"Coherence: {analysis.coherence_score}")
-print(f"Themes: {analysis.themes}")
-```
+3. **Open your browser**:
+   - Start screen: [http://localhost:5001](http://localhost:5001)
+   - Narrative gameplay: [http://localhost:5002](http://localhost:5002)
 
-## Core Concepts
+## Demo Walkthrough
 
-### Memory as Narrative Context
-The engine uses a sophisticated memory system that treats memories as narrative building blocks:
-- **Emotional weighting**: Memories are tagged with emotional significance
-- **Associative linking**: Memories connect through themes, characters, and events
-- **Temporal layering**: Different time scales for different narrative needs
-- **Decay and reinforcement**: Natural memory processes that affect narrative flow
+### 1. Start a New Campaign
+- Click "Start New Campaign" and follow the prompts
+- Choose your preferred character creation method
 
-### Domain Adaptability
-Each domain has specialized knowledge and capabilities:
-- **Gaming**: Character progression, quest systems, world-building
-- **Therapy**: Emotional processing, personal growth, healing narratives
-- **Education**: Learning objectives, knowledge retention, skill development
-- **Organizational**: Brand storytelling, corporate narratives, change management
-- **Creative Writing**: Literary techniques, genre conventions, artistic expression
-- **Journalism**: Fact-based storytelling, ethical reporting, audience engagement
-- **Marketing**: Brand narratives, customer journeys, conversion optimization
+### 2. Vibe Code Character Creation
+- Select the natural language option
+- Converse with the AI to describe your character concept
+- The LLM will ask clarifying questions and build your character sheet
 
-### Narrative Intelligence
-The engine understands narrative at multiple levels:
-- **Structural**: Plot arcs, pacing, scene construction
-- **Character**: Development, relationships, motivations
-- **Thematic**: Symbolism, motifs, deeper meanings
-- **Emotional**: Emotional arcs, tension, catharsis
-- **Contextual**: Cultural, historical, situational awareness
+### 3. Immersive Gameplay
+- After character creation, transition directly into narrative gameplay
+- Respond naturally to the AI DM's storytelling
+- Your choices and character development are tracked and remembered
 
-## API Reference
+### 4. Campaign Management
+- Return to the start screen to continue or delete campaigns
+- All progress is automatically saved and persistent
 
-### Core Engine
-- `NarrativeEngine()`: Main engine class
-- `create_narrative()`: Create new narrative
-- `analyze_narrative()`: Analyze narrative structure and themes
-- `generate_plot_point()`: Generate contextual plot points
-- `adapt_narrative()`: Adapt narrative based on new information
+## Screenshots
 
-### Memory System
-- `add_memory()`: Store new memory
-- `recall()`: Retrieve relevant memories
-- `reinforce()`: Strengthen memory connections
-- `forget()`: Natural memory decay
+![Demo Screenshot](demo_screenshot.txt)
 
-### Domain Adapters
-- `register_domain()`: Add new domain support
-- `get_domain_adapter()`: Access domain-specific functionality
-- `cross_domain_analysis()`: Apply insights across domains
+*Screenshot showing the start screen, character creation flow, and narrative gameplay interface*
+
+> _Replace with actual screenshots of the start screen, character creation, and narrative interface_
+
+## Technology Stack
+
+- **Backend**: Python, Flask, OpenAI API
+- **Frontend**: HTML5, CSS3, JavaScript
+- **Character System**: SRD 5.1-compliant JSON schema
+- **AI Integration**: GPT-4o-mini for natural language processing
+- **Storage**: Local file-based persistence
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started.
+
+## Documentation
+
+- [Investor Documentation](investor_docs/) - Project overview, features, and future vision
+- [Attribution](dnd_game/ATTRIBUTION.md) - Legal compliance and attributions
+
+## Attribution
+
+This project uses content from the Systems Reference Document 5.1 (SRD 5.1) by Wizards of the Coast LLC, available under the Creative Commons Attribution 4.0 International License (CC BY 4.0).
+
+- SRD 5.1: https://dnd.wizards.com/resources/systems-reference-document
+- License: https://creativecommons.org/licenses/by/4.0/
+
+This project uses the OpenAI API for natural language processing and LLM-driven gameplay.
+- https://openai.com/
 
 ## License
 
-Creative Commons Attribution-NonCommercial 4.0 International License
-
-## Contact
-
-For questions, suggestions, or collaboration opportunities, please contact the development team.
-
----
-
-*The Narrative Engine represents a new paradigm in computational storytelling, bridging the gap between human creativity and artificial intelligence to create truly adaptive, intelligent narrative experiences.* 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

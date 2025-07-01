@@ -1,0 +1,164 @@
+This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License.
+
+{
+  "monsters": {
+    "Goblin": {
+      "size": "Small",
+      "type": "humanoid",
+      "alignment": "neutral evil",
+      "armor_class": 15,
+      "hit_points": 7,
+      "hit_dice": "2d6",
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "STR": 8,
+        "DEX": 14,
+        "CON": 10,
+        "INT": 10,
+        "WIS": 8,
+        "CHA": 8
+      },
+      "skills": {
+        "Stealth": 6
+      },
+      "senses": {
+        "darkvision": 60,
+        "passive_perception": 8
+      },
+      "languages": ["Common", "Goblin"],
+      "challenge_rating": 0.25,
+      "actions": [
+        {
+          "name": "Scimitar",
+          "type": "melee_weapon_attack",
+          "attack_bonus": 4,
+          "reach": 5,
+          "targets": 1,
+          "damage": {
+            "type": "slashing",
+            "roll": "1d6 + 2"
+          }
+        },
+        {
+          "name": "Shortbow",
+          "type": "ranged_weapon_attack",
+          "attack_bonus": 4,
+          "range": "80/320",
+          "targets": 1,
+          "damage": {
+            "type": "piercing",
+            "roll": "1d6 + 2"
+          }
+        }
+      ],
+      "special_abilities": [
+        {
+          "name": "Nimble Escape",
+          "description": "The goblin can take the Disengage or Hide action as a bonus action on each of its turns."
+        }
+      ]
+    },
+    "Skeleton": {
+      "size": "Medium",
+      "type": "undead",
+      "alignment": "lawful evil",
+      "armor_class": 13,
+      "hit_points": 13,
+      "hit_dice": "2d8 + 4",
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "STR": 10,
+        "DEX": 14,
+        "CON": 15,
+        "INT": 6,
+        "WIS": 8,
+        "CHA": 5
+      },
+      "damage_vulnerabilities": ["bludgeoning"],
+      "damage_immunities": ["poison"],
+      "condition_immunities": ["exhaustion", "poisoned"],
+      "senses": {
+        "darkvision": 60,
+        "passive_perception": 9
+      },
+      "languages": ["understands all languages it knew in life but can't speak"],
+      "challenge_rating": 0.25,
+      "actions": [
+        {
+          "name": "Shortsword",
+          "type": "melee_weapon_attack",
+          "attack_bonus": 4,
+          "reach": 5,
+          "targets": 1,
+          "damage": {
+            "type": "piercing",
+            "roll": "1d6 + 2"
+          }
+        },
+        {
+          "name": "Shortbow",
+          "type": "ranged_weapon_attack",
+          "attack_bonus": 4,
+          "range": "80/320",
+          "targets": 1,
+          "damage": {
+            "type": "piercing",
+            "roll": "1d6 + 2"
+          }
+        }
+      ]
+    },
+    "Bandit": {
+      "size": "Medium",
+      "type": "humanoid",
+      "alignment": "any non-lawful",
+      "armor_class": 12,
+      "hit_points": 11,
+      "hit_dice": "2d8 + 2",
+      "speed": {
+        "walk": 30
+      },
+      "abilities": {
+        "STR": 11,
+        "DEX": 12,
+        "CON": 12,
+        "INT": 10,
+        "WIS": 10,
+        "CHA": 10
+      },
+      "senses": {
+        "passive_perception": 10
+      },
+      "languages": ["Common"],
+      "challenge_rating": 0.125,
+      "actions": [
+        {
+          "name": "Scimitar",
+          "type": "melee_weapon_attack",
+          "attack_bonus": 3,
+          "reach": 5,
+          "targets": 1,
+          "damage": {
+            "type": "slashing",
+            "roll": "1d6 + 1"
+          }
+        },
+        {
+          "name": "Light Crossbow",
+          "type": "ranged_weapon_attack",
+          "attack_bonus": 3,
+          "range": "80/320",
+          "targets": 1,
+          "damage": {
+            "type": "piercing",
+            "roll": "1d8 + 1"
+          }
+        }
+      ]
+    }
+  }
+} 

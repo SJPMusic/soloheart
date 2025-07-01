@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Campaign Orchestrator - Solo DnD 5E</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-dragon text-3xl text-yellow-400"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold">Dynamic Campaign Orchestrator</h1>
+                        <p class="text-blue-100">Solo DnD 5E with AI-Driven Narrative</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="debugToggle" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-bug mr-2"></i>Debug Mode
+                    </button>
+                    <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Column: Campaign Story & Actions -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Campaign Story -->
+                <div class="bg-gray-800 rounded-lg p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-yellow-400">
+                            <i class="fas fa-book-open mr-2"></i>Campaign Story
+                        </h2>
+                        <span id="storyTimestamp" class="text-sm text-gray-400"></span>
+                    </div>
+                    <div id="campaignStory" class="prose prose-invert max-w-none">
+                        <p class="text-gray-300 italic">Your adventure awaits... Take an action to begin your journey!</p>
+                    </div>
+                </div>
+
+                <!-- Player Actions -->
+                <div class="bg-gray-800 rounded-lg p-6 card-hover">
+                    <h2 class="text-xl font-bold text-green-400 mb-4">
+                        <i class="fas fa-user-edit mr-2"></i>Your Actions
+                    </h2>
+                    <form id="actionForm" class="space-y-4">
+                        <div>
+                            <label for="playerAction" class="block text-sm font-medium text-gray-300 mb-2">
+                                What would you like to do?
+                            </label>
+                            <textarea 
+                                id="playerAction" 
+                                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Describe your action in natural language... (e.g., 'I explore the mysterious cave entrance' or 'I cast a light spell to illuminate the darkness')"
+                                rows="3"
+                            ></textarea>
+                        </div>
+                        <div>
+                            <label for="actionContext" class="block text-sm font-medium text-gray-300 mb-2">
+                                Additional Context (optional)
+                            </label>
+                            <input 
+                                type="text" 
+                                id="actionContext" 
+                                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Any additional context about your situation..."
+                            >
+                        </div>
+                        <button 
+                            type="submit" 
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                        >
+                            <i class="fas fa-play mr-2"></i>Take Action
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Orchestration Events -->
+                <div class="bg-gray-800 rounded-lg p-6 card-hover">
+                    <h2 class="text-xl font-bold text-purple-400 mb-4">
+                        <i class="fas fa-magic mr-2"></i>Orchestration Events
+                    </h2>
+                    <div id="orchestrationEvents" class="space-y-4">
+                        <p class="text-gray-400 italic">Events will appear here as the campaign progresses...</p>
+                    </div>
+                </div>
+
+                <!-- Journal Entry -->
+                <div class="bg-gray-800 rounded-lg p-6 card-hover">
+                    <h2 class="text-xl font-bold text-blue-400 mb-4">
+                        <i class="fas fa-journal-whills mr-2"></i>Add Journal Entry
+                    </h2>
+                    <form id="journalForm" class="space-y-4">
+                        <div>
+                            <label for="journalTitle" class="block text-sm font-medium text-gray-300 mb-2">Title</label>
+                            <input 
+                                type="text" 
+                                id="journalTitle" 
+                                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Entry title..."
+                            >
+                        </div>
+                        <div>
+                            <label for="journalContent" class="block text-sm font-medium text-gray-300 mb-2">Content</label>
+                            <textarea 
+                                id="journalContent" 
+                                class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Write your thoughts, observations, or story notes..."
+                                rows="4"
+                            ></textarea>
+                        </div>
+                        <button 
+                            type="submit" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                        >
+                            <i class="fas fa-save mr-2"></i>Save Entry
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Column: Campaign State & Debug -->
+            <div class="space-y-6">
+                
+                <!-- Campaign Summary -->
+                <div class="bg-gray-800 rounded-lg p-6 card-hover">
+                    <h2 class="text-xl font-bold text-orange-400 mb-4">
+                        <i class="fas fa-chart-line mr-2"></i>Campaign State
+                    </h2>
+                    <div id="campaignSummary" class="space-y-4">
+                        <div class="animate-pulse">
+                            <div class="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
+                            <div class="h-4 bg-gray-700 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Character Arcs -->
+                <div class="bg-gray-800 rounded-lg p-6 card-hover">
+                    <h2 class="text-xl font-bold text-pink-400 mb-4">
+                        <i class="fas fa-user-graduate mr-2"></i>Character Arcs
+                    </h2>
+                    <div id="characterArcs" class="space-y-3">
+                        <p class="text-gray-400 italic">Character development will appear here...</p>
+                    </div>
+                </div>
+
+                <!-- Plot Threads -->
+                <div class="bg-gray-800 rounded-lg p-6 card-hover">
+                    <h2 class="text-xl font-bold text-indigo-400 mb-4">
+                        <i class="fas fa-project-diagram mr-2"></i>Plot Threads
+                    </h2>
+                    <div id="plotThreads" class="space-y-3">
+                        <p class="text-gray-400 italic">Active plot threads will appear here...</p>
+                    </div>
+                </div>
+
+                <!-- Recent Memories -->
+                <div class="bg-gray-800 rounded-lg p-6 card-hover">
+                    <h2 class="text-xl font-bold text-teal-400 mb-4">
+                        <i class="fas fa-brain mr-2"></i>Memory Highlights
+                    </h2>
+                    <div id="memoryHighlights" class="space-y-3 max-h-64 overflow-y-auto scrollbar-hide">
+                        <p class="text-gray-400 italic">Recent memories will appear here...</p>
+                    </div>
+                </div>
+
+                <!-- Debug Panel (Hidden by default) -->
+                <div id="debugPanel" class="bg-gray-800 rounded-lg p-6 card-hover hidden">
+                    <h2 class="text-xl font-bold text-red-400 mb-4">
+                        <i class="fas fa-bug mr-2"></i>Debug Information
+                    </h2>
+                    <div id="debugInfo" class="space-y-4 text-sm">
+                        <p class="text-gray-400 italic">Debug information will appear here...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-lg p-8 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p class="text-white">Processing your action...</p>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notificationToast" class="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span id="notificationMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let campaignId = 'orchestrator-campaign';
+        let debugMode = false;
+        let lastUpdate = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            loadCampaignSummary();
+            setInterval(loadCampaignSummary, 30000); // Refresh every 30 seconds
+        });
+
+        function initializeApp() {
+            // Form submissions
+            document.getElementById('actionForm').addEventListener('submit', handlePlayerAction);
+            document.getElementById('journalForm').addEventListener('submit', handleJournalEntry);
+            
+            // Buttons
+            document.getElementById('debugToggle').addEventListener('click', toggleDebugMode);
+            document.getElementById('refreshBtn').addEventListener('click', loadCampaignSummary);
+            
+            // Load initial state
+            loadOrchestrationEvents();
+        }
+
+        async function handlePlayerAction(e) {
+            e.preventDefault();
+            
+            const action = document.getElementById('playerAction').value.trim();
+            const context = document.getElementById('actionContext').value.trim();
+            
+            if (!action) {
+                showNotification('Please enter an action', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch(`/api/campaign/${campaignId}/action`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action, context })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateCampaignStory(data.narration);
+                    updateOrchestrationEvents(data.orchestration_events);
+                    updateMemoryHighlights(data.recent_memories);
+                    showNotification('Action processed successfully!', 'success');
+                    
+                    // Clear form
+                    document.getElementById('playerAction').value = '';
+                    document.getElementById('actionContext').value = '';
+                } else {
+                    showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                showNotification('Network error: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function handleJournalEntry(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('journalTitle').value.trim();
+            const content = document.getElementById('journalContent').value.trim();
+            
+            if (!title || !content) {
+                showNotification('Please enter both title and content', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/campaign/${campaignId}/journal`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title, content, entry_type: 'player_written' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Journal entry saved!', 'success');
+                    document.getElementById('journalTitle').value = '';
+                    document.getElementById('journalContent').value = '';
+                    loadCampaignSummary(); // Refresh to show new entry
+                } else {
+                    showNotification('Error: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                showNotification('Network error: ' + error.message, 'error');
+            }
+        }
+
+        async function toggleDebugMode() {
+            try {
+                const response = await fetch(`/api/campaign/${campaignId}/debug/toggle`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    debugMode = data.debug_mode;
+                    document.getElementById('debugPanel').classList.toggle('hidden', !debugMode);
+                    
+                    if (debugMode) {
+                        loadDebugInfo();
+                        showNotification('Debug mode enabled', 'success');
+                    } else {
+                        showNotification('Debug mode disabled', 'info');
+                    }
+                }
+            } catch (error) {
+                showNotification('Error toggling debug mode: ' + error.message, 'error');
+            }
+        }
+
+        async function loadCampaignSummary() {
+            try {
+                const response = await fetch(`/api/campaign/${campaignId}/summary`);
+                const data = await response.json();
+                
+                if (!data.error) {
+                    updateCampaignSummary(data.campaign_summary);
+                    updateCharacterArcs(data.character_arcs);
+                    updatePlotThreads(data.plot_threads);
+                    updateMemoryHighlights(data.memory_highlights);
+                    lastUpdate = new Date();
+                }
+            } catch (error) {
+                console.error('Error loading campaign summary:', error);
+            }
+        }
+
+        async function loadOrchestrationEvents() {
+            try {
+                const response = await fetch(`/api/campaign/${campaignId}/orchestration/events`);
+                const data = await response.json();
+                
+                if (!data.error) {
+                    updateOrchestrationEvents(data.events);
+                }
+            } catch (error) {
+                console.error('Error loading orchestration events:', error);
+            }
+        }
+
+        async function loadDebugInfo() {
+            if (!debugMode) return;
+            
+            try {
+                const response = await fetch(`/api/campaign/${campaignId}/debug/info`);
+                const data = await response.json();
+                
+                if (!data.error) {
+                    updateDebugInfo(data);
+                }
+            } catch (error) {
+                console.error('Error loading debug info:', error);
+            }
+        }
+
+        function updateCampaignStory(narration) {
+            const storyDiv = document.getElementById('campaignStory');
+            const timestamp = document.getElementById('storyTimestamp');
+            
+            storyDiv.innerHTML = `<p class="text-gray-300 fade-in">${narration}</p>`;
+            timestamp.textContent = new Date().toLocaleTimeString();
+        }
+
+        function updateOrchestrationEvents(events) {
+            const eventsDiv = document.getElementById('orchestrationEvents');
+            
+            if (!events || events.length === 0) {
+                eventsDiv.innerHTML = '<p class="text-gray-400 italic">No orchestration events at the moment...</p>';
+                return;
+            }
+            
+            eventsDiv.innerHTML = events.map(event => `
+                <div class="bg-gray-700 rounded-lg p-4 fade-in">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-purple-300">${event.event_type}</h3>
+                        <span class="text-sm text-gray-400">Priority: ${event.priority}</span>
+                    </div>
+                    <p class="text-gray-300 mb-2">${event.description}</p>
+                    <p class="text-sm text-blue-300 italic">${event.suggested_response}</p>
+                    <div class="mt-3">
+                        <button onclick="executeEvent('${event.id}')" class="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-sm transition-colors">
+                            Execute Event
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCampaignSummary(summary) {
+            const summaryDiv = document.getElementById('campaignSummary');
+            
+            if (!summary) {
+                summaryDiv.innerHTML = '<p class="text-gray-400 italic">No summary available</p>';
+                return;
+            }
+            
+            summaryDiv.innerHTML = `
+                <div class="space-y-3">
+                    <div class="bg-gray-700 rounded p-3">
+                        <h4 class="font-semibold text-orange-300 mb-1">Campaign Status</h4>
+                        <p class="text-sm text-gray-300">${summary.status || 'Active'}</p>
+                    </div>
+                    <div class="bg-gray-700 rounded p-3">
+                        <h4 class="font-semibold text-orange-300 mb-1">Progression</h4>
+                        <p class="text-sm text-gray-300">${summary.progression || 'Beginning'}</p>
+                    </div>
+                    <div class="bg-gray-700 rounded p-3">
+                        <h4 class="font-semibold text-orange-300 mb-1">Last Updated</h4>
+                        <p class="text-sm text-gray-300">${lastUpdate ? lastUpdate.toLocaleTimeString() : 'Never'}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateCharacterArcs(arcs) {
+            const arcsDiv = document.getElementById('characterArcs');
+            
+            if (!arcs || arcs.length === 0) {
+                arcsDiv.innerHTML = '<p class="text-gray-400 italic">No active character arcs</p>';
+                return;
+            }
+            
+            arcsDiv.innerHTML = arcs.map(arc => `
+                <div class="bg-gray-700 rounded p-3">
+                    <h4 class="font-semibold text-pink-300">${arc.name}</h4>
+                    <p class="text-sm text-gray-300">${arc.description}</p>
+                    <div class="mt-2">
+                        <span class="text-xs bg-pink-600 px-2 py-1 rounded">${arc.arc_type}</span>
+                        <span class="text-xs bg-green-600 px-2 py-1 rounded ml-1">${arc.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updatePlotThreads(threads) {
+            const threadsDiv = document.getElementById('plotThreads');
+            
+            if (!threads || threads.length === 0) {
+                threadsDiv.innerHTML = '<p class="text-gray-400 italic">No active plot threads</p>';
+                return;
+            }
+            
+            threadsDiv.innerHTML = threads.map(thread => `
+                <div class="bg-gray-700 rounded p-3">
+                    <h4 class="font-semibold text-indigo-300">${thread.name}</h4>
+                    <p class="text-sm text-gray-300">${thread.description}</p>
+                    <div class="mt-2">
+                        <span class="text-xs bg-indigo-600 px-2 py-1 rounded">Priority: ${thread.priority}</span>
+                        <span class="text-xs bg-blue-600 px-2 py-1 rounded ml-1">${thread.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateMemoryHighlights(memories) {
+            const memoriesDiv = document.getElementById('memoryHighlights');
+            
+            if (!memories || memories.length === 0) {
+                memoriesDiv.innerHTML = '<p class="text-gray-400 italic">No recent memories</p>';
+                return;
+            }
+            
+            memoriesDiv.innerHTML = memories.map(memory => `
+                <div class="bg-gray-700 rounded p-3">
+                    <p class="text-sm text-gray-300">${memory.content}</p>
+                    <div class="mt-1">
+                        <span class="text-xs bg-teal-600 px-2 py-1 rounded">${memory.emotion || 'Neutral'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateDebugInfo(debugData) {
+            const debugDiv = document.getElementById('debugInfo');
+            
+            if (debugData.error) {
+                debugDiv.innerHTML = `<p class="text-red-400">Error: ${debugData.error}</p>`;
+                return;
+            }
+            
+            debugDiv.innerHTML = `
+                <div class="space-y-3">
+                    <div class="bg-gray-700 rounded p-3">
+                        <h4 class="font-semibold text-red-300 mb-1">Memory Count</h4>
+                        <p class="text-sm text-gray-300">${debugData.memory_count || 0}</p>
+                    </div>
+                    <div class="bg-gray-700 rounded p-3">
+                        <h4 class="font-semibold text-red-300 mb-1">Pending Events</h4>
+                        <p class="text-sm text-gray-300">${debugData.pending_events ? debugData.pending_events.length : 0}</p>
+                    </div>
+                    <div class="bg-gray-700 rounded p-3">
+                        <h4 class="font-semibold text-red-300 mb-1">Emotional Memories</h4>
+                        <p class="text-sm text-gray-300">${debugData.emotional_memories ? debugData.emotional_memories.length : 0}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function executeEvent(eventId) {
+            try {
+                const response = await fetch(`/api/campaign/${campaignId}/orchestration/execute/${eventId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ notes: 'Executed via web UI' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Event executed successfully!', 'success');
+                    loadOrchestrationEvents(); // Refresh events
+                    loadCampaignSummary(); // Refresh summary
+                } else {
+                    showNotification('Error executing event: ' + (data.error || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                showNotification('Network error: ' + error.message, 'error');
+            }
+        }
+
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.toggle('hidden', !show);
+        }
+
+        function showNotification(message, type = 'success') {
+            const toast = document.getElementById('notificationToast');
+            const messageSpan = document.getElementById('notificationMessage');
+            
+            // Set message and color
+            messageSpan.textContent = message;
+            
+            // Set color based on type
+            toast.className = 'fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50';
+            if (type === 'success') {
+                toast.classList.add('bg-green-600', 'text-white');
+            } else if (type === 'error') {
+                toast.classList.add('bg-red-600', 'text-white');
+            } else if (type === 'info') {
+                toast.classList.add('bg-blue-600', 'text-white');
+            }
+            
+            // Show toast
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Hide toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solo DnD 5E - Start Screen</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e8e8e8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .start-container {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+        }
+
+        .title {
+            font-size: 2.5rem;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            margin-bottom: 2rem;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ccc;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .option-btn {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .option-btn:hover {
+            background: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .option-btn:active {
+            transform: translateY(0);
+        }
+
+        .option-icon {
+            font-size: 1.5rem;
+        }
+
+        .campaign-list {
+            display: none;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .campaign-list.show {
+            display: block;
+        }
+
+        .campaign-item {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            text-align: left;
+        }
+
+        .campaign-item:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .campaign-item:last-child {
+            border-bottom: none;
+        }
+
+        .campaign-name {
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 0.5rem;
+        }
+
+        .campaign-details {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .back-btn {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            margin-top: 1rem;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 0, 0, 0.2);
+        }
+
+        .delete-confirmation {
+            display: none;
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff4444;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .delete-confirmation.show {
+            display: block;
+        }
+
+        .delete-btn {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 0.5rem;
+        }
+
+        .cancel-btn {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+            color: #ffd700;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .start-container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .option-btn {
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="start-container">
+        <h1 class="title">🎲 Solo DnD 5E</h1>
+        <p class="subtitle">Begin your epic adventure in a world of magic, monsters, and mystery.</p>
+        
+        <div class="options-container" id="mainOptions">
+            <button class="option-btn" onclick="showNewCampaign()">
+                <span class="option-icon">🆕</span>
+                Start a New Campaign
+            </button>
+            
+            <button class="option-btn" onclick="showContinueCampaign()">
+                <span class="option-icon">📂</span>
+                Continue Existing Campaign
+            </button>
+            
+            <button class="option-btn" onclick="showDeleteCampaign()">
+                <span class="option-icon">🗑️</span>
+                Delete a Campaign
+            </button>
+        </div>
+
+        <div class="campaign-list" id="campaignList"></div>
+        <div class="delete-confirmation" id="deleteConfirmation"></div>
+        
+        <button class="back-btn" id="backBtn" onclick="showMainOptions()" style="display: none;">
+            ← Back to Main Menu
+        </button>
+        
+        <div class="loading" id="loadingIndicator"></div>
+    </div>
+
+    <script>
+        let currentView = 'main';
+        let campaigns = [];
+        let selectedCampaign = null;
+
+        // Load campaigns on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCampaigns();
+        });
+
+        async function loadCampaigns() {
+            try {
+                const response = await fetch('/api/campaigns');
+                const data = await response.json();
+                
+                if (data.success) {
+                    campaigns = data.campaigns;
+                }
+            } catch (error) {
+                console.error('Error loading campaigns:', error);
+            }
+        }
+
+        function showMainOptions() {
+            currentView = 'main';
+            document.getElementById('mainOptions').style.display = 'flex';
+            document.getElementById('campaignList').classList.remove('show');
+            document.getElementById('deleteConfirmation').classList.remove('show');
+            document.getElementById('backBtn').style.display = 'none';
+            selectedCampaign = null;
+        }
+
+        function showNewCampaign() {
+            window.location.href = '/character-creation';
+        }
+
+        function showContinueCampaign() {
+            currentView = 'continue';
+            document.getElementById('mainOptions').style.display = 'none';
+            document.getElementById('backBtn').style.display = 'block';
+            
+            const campaignList = document.getElementById('campaignList');
+            campaignList.innerHTML = '';
+            
+            if (campaigns.length === 0) {
+                campaignList.innerHTML = '<div class="campaign-item"><p>No saved campaigns found.</p></div>';
+            } else {
+                campaigns.forEach(campaign => {
+                    const item = document.createElement('div');
+                    item.className = 'campaign-item';
+                    item.onclick = () => loadCampaign(campaign.id);
+                    
+                    const createdDate = new Date(campaign.created_date).toLocaleDateString();
+                    const modifiedDate = new Date(campaign.last_modified).toLocaleDateString();
+                    
+                    item.innerHTML = `
+                        <div class="campaign-name">${campaign.name}</div>
+                        <div class="campaign-details">
+                            Character: ${campaign.character_name}<br>
+                            Created: ${createdDate}<br>
+                            Last Played: ${modifiedDate}
+                        </div>
+                    `;
+                    
+                    campaignList.appendChild(item);
+                });
+            }
+            
+            campaignList.classList.add('show');
+        }
+
+        function showDeleteCampaign() {
+            currentView = 'delete';
+            document.getElementById('mainOptions').style.display = 'none';
+            document.getElementById('backBtn').style.display = 'block';
+            
+            const campaignList = document.getElementById('campaignList');
+            campaignList.innerHTML = '';
+            
+            if (campaigns.length === 0) {
+                campaignList.innerHTML = '<div class="campaign-item"><p>No saved campaigns found.</p></div>';
+            } else {
+                campaigns.forEach(campaign => {
+                    const item = document.createElement('div');
+                    item.className = 'campaign-item';
+                    item.onclick = () => confirmDelete(campaign);
+                    
+                    const createdDate = new Date(campaign.created_date).toLocaleDateString();
+                    const modifiedDate = new Date(campaign.last_modified).toLocaleDateString();
+                    
+                    item.innerHTML = `
+                        <div class="campaign-name">${campaign.name}</div>
+                        <div class="campaign-details">
+                            Character: ${campaign.character_name}<br>
+                            Created: ${createdDate}<br>
+                            Last Played: ${modifiedDate}
+                        </div>
+                    `;
+                    
+                    campaignList.appendChild(item);
+                });
+            }
+            
+            campaignList.classList.add('show');
+        }
+
+        async function loadCampaign(campaignId) {
+            setLoading(true);
+            
+            try {
+                const response = await fetch(`/api/campaigns/${campaignId}/load`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    alert('Failed to load campaign: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error loading campaign:', error);
+                alert('Error loading campaign.');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function confirmDelete(campaign) {
+            selectedCampaign = campaign;
+            
+            const confirmation = document.getElementById('deleteConfirmation');
+            confirmation.innerHTML = `
+                <p><strong>Are you sure you want to delete "${campaign.name}"?</strong></p>
+                <p>This will permanently delete all campaign data including:</p>
+                <ul style="text-align: left; margin: 1rem 0;">
+                    <li>Character progress</li>
+                    <li>Story history</li>
+                    <li>World state</li>
+                    <li>All associated files</li>
+                </ul>
+                <p><em>This action cannot be undone.</em></p>
+                <button class="delete-btn" onclick="deleteCampaign()">Delete Campaign</button>
+                <button class="cancel-btn" onclick="cancelDelete()">Cancel</button>
+            `;
+            
+            confirmation.classList.add('show');
+        }
+
+        function cancelDelete() {
+            selectedCampaign = null;
+            document.getElementById('deleteConfirmation').classList.remove('show');
+        }
+
+        async function deleteCampaign() {
+            if (!selectedCampaign) return;
+            
+            setLoading(true);
+            
+            try {
+                const response = await fetch(`/api/campaigns/${selectedCampaign.id}/delete`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Campaign "${selectedCampaign.name}" has been deleted.`);
+                    selectedCampaign = null;
+                    document.getElementById('deleteConfirmation').classList.remove('show');
+                    
+                    // Reload campaigns and refresh the delete view
+                    await loadCampaigns();
+                    showDeleteCampaign();
+                } else {
+                    alert('Failed to delete campaign.');
+                }
+            } catch (error) {
+                console.error('Error deleting campaign:', error);
+                alert('Error deleting campaign.');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function setLoading(loading) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            if (loading) {
+                loadingIndicator.classList.add('show');
+                loadingIndicator.textContent = 'Loading...';
+            } else {
+                loadingIndicator.classList.remove('show');
+            }
+        }
+    </script>
+</body>
+</html> 

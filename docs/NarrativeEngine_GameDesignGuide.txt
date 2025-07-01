@@ -1,0 +1,57 @@
+
+Narrative Engine Solo DnD Game Design Guide
+Generated: 2025-07-01 01:00:31
+
+Purpose:
+--------
+This guide outlines the core design principles and required user experience for the Solo DnD 5E experience using the Narrative Engine. It is intended to be used by Cursor when making implementation decisions to prevent gamification drift and preserve immersive storytelling.
+
+Scope:
+------
+This system is NOT a traditional game engine. It is a narrative interface where an LLM acts as a Dungeon Master for a solo player using natural conversation.
+
+Initial Game Flow (Gamified Portion):
+-------------------------------------
+The *only* parts of the experience that may include gamified UI elements or structured choices are:
+
+1. **Start Menu Options:**
+   - "Start a New Campaign"
+   - "Load Existing Campaign"
+   - "Delete Saved Campaigns"
+
+2. **New Campaign Start Flow:**
+   - Prompt player to either:
+     a) Use **"Vibe Code"** (AI generates the character based on tone, themes, and loose player input — stats, feats, gear all handled automatically).
+     b) Use **Step-by-Step Builder** (traditional DnD 5E character creation flow).
+   - After character creation, the system sends a prompt to the LLM to generate a **setting introduction**:
+     - This should describe where the campaign begins (e.g., town, forest, dungeon, etc.).
+     - This scene **must be fully LLM-generated**. No static or pre-scripted descriptions.
+
+Post-Setup Gameplay (No Gamification):
+--------------------------------------
+- All responses from the moment the setting is introduced must be **authored dynamically by the LLM**.
+- The game UI should:
+  - Display user input as-is.
+  - Display LLM responses as immersive, in-character DM narration.
+  - Avoid mechanical prompts, reminders, or "turn indicators."
+
+- The backend should:
+  - Handle session memory using narrative, emotional, procedural, and episodic memory layers.
+  - Record relationships, world states, and progression events.
+  - Pass memory back to the LLM as context in every prompt.
+
+- The frontend should **never** alter user prompts or insert tokens, flags, or system markers. It should also never template prompts in a way that hints at commands.
+
+- The LLM should act as a DM, not a parser or assistant.
+
+Fallback Handling:
+------------------
+- If OpenAI API fails, fallback logic may trigger, but the user should be **notified**.
+- Stock or gamified fallback messages should be **visibly marked** as fallback and **never used** silently.
+- The system should always allow the user to retry for a real LLM response when fallback is detected.
+
+Closing Notes:
+--------------
+This document reflects the user's intention to create a high-immersion solo DnD 5E experience powered by a conversational LLM Dungeon Master. Cursor should use this guide as the authoritative reference for determining UI, backend, and prompt-handling logic.
+
+END OF GUIDE

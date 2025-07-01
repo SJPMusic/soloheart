@@ -1,0 +1,16 @@
+{
+  "short_name": "Solo Adventure",
+  "name": "Solo Adventure - 5E-Compatible Solo RPG",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x32 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#fefcf8",
+  "license": "This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License."
+}

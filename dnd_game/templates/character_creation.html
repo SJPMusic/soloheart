@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solo DnD 5E - Character Creation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e8e8e8;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .creation-container {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 3rem;
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+        }
+
+        .title {
+            font-size: 2.5rem;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ccc;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+
+        .method-selection {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            justify-content: center;
+        }
+
+        .method-btn {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            padding: 2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: bold;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .method-btn:hover {
+            background: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .method-btn.active {
+            background: rgba(255, 215, 0, 0.3);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .method-icon {
+            font-size: 3rem;
+        }
+
+        .creation-form {
+            display: none;
+            text-align: left;
+        }
+
+        .creation-form.show {
+            display: block;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section h3 {
+            color: #ffd700;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ccc;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #e8e8e8;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #ffd700;
+            outline: none;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-group {
+            text-align: center;
+        }
+
+        .stat-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #ffd700;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .stat-group input {
+            width: 80px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .vibe-code-section {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .vibe-code-section h4 {
+            color: #ffd700;
+            margin-bottom: 1rem;
+        }
+
+        .vibe-code-section p {
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .example-text {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid #ffd700;
+            border-radius: 5px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: #ffd700;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+        }
+
+        .btn-primary:hover {
+            background: rgba(0, 255, 0, 0.2);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff4444;
+            color: #ff4444;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 0, 0, 0.2);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+            color: #ffd700;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .creation-container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .method-selection {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .method-btn {
+                min-width: 250px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="creation-container">
+        <h1 class="title">🎭 Character Creation</h1>
+        <p class="subtitle">Choose how you'd like to create your character</p>
+        
+        <div class="method-selection" id="methodSelection">
+            <button class="method-btn" onclick="selectMethod('step_by_step')">
+                <span class="method-icon">📋</span>
+                <div>
+                    <strong>Step-by-Step</strong><br>
+                    <small>Traditional DnD character creation following the rules</small>
+                </div>
+            </button>
+            
+            <button class="method-btn" onclick="selectMethod('vibe_code')">
+                <span class="method-icon">✨</span>
+                <div>
+                    <strong>Vibe Code</strong><br>
+                    <small>Describe your character naturally and let the AI fill in the details</small>
+                </div>
+            </button>
+        </div>
+
+        <!-- Step-by-Step Form -->
+        <div class="creation-form" id="stepByStepForm">
+            <div class="form-section">
+                <h3>Basic Information</h3>
+                <div class="form-group">
+                    <label for="characterName">Character Name</label>
+                    <input type="text" id="characterName" placeholder="Enter your character's name">
+                </div>
+                <div class="form-group">
+                    <label for="characterRace">Race</label>
+                    <select id="characterRace">
+                        <option value="">Select a race</option>
+                        <option value="Human">Human</option>
+                        <option value="Elf">Elf</option>
+                        <option value="Dwarf">Dwarf</option>
+                        <option value="Halfling">Halfling</option>
+                        <option value="Dragonborn">Dragonborn</option>
+                        <option value="Gnome">Gnome</option>
+                        <option value="Half-Elf">Half-Elf</option>
+                        <option value="Half-Orc">Half-Orc</option>
+                        <option value="Tiefling">Tiefling</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="characterClass">Class</label>
+                    <select id="characterClass">
+                        <option value="">Select a class</option>
+                        <option value="Barbarian">Barbarian</option>
+                        <option value="Bard">Bard</option>
+                        <option value="Cleric">Cleric</option>
+                        <option value="Druid">Druid</option>
+                        <option value="Fighter">Fighter</option>
+                        <option value="Monk">Monk</option>
+                        <option value="Paladin">Paladin</option>
+                        <option value="Ranger">Ranger</option>
+                        <option value="Rogue">Rogue</option>
+                        <option value="Sorcerer">Sorcerer</option>
+                        <option value="Warlock">Warlock</option>
+                        <option value="Wizard">Wizard</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="characterLevel">Level</label>
+                    <input type="number" id="characterLevel" value="1" min="1" max="20">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Ability Scores</h3>
+                <div class="stats-grid">
+                    <div class="stat-group">
+                        <label for="strength">Strength</label>
+                        <input type="number" id="strength" value="10" min="1" max="20">
+                    </div>
+                    <div class="stat-group">
+                        <label for="dexterity">Dexterity</label>
+                        <input type="number" id="dexterity" value="10" min="1" max="20">
+                    </div>
+                    <div class="stat-group">
+                        <label for="constitution">Constitution</label>
+                        <input type="number" id="constitution" value="10" min="1" max="20">
+                    </div>
+                    <div class="stat-group">
+                        <label for="intelligence">Intelligence</label>
+                        <input type="number" id="intelligence" value="10" min="1" max="20">
+                    </div>
+                    <div class="stat-group">
+                        <label for="wisdom">Wisdom</label>
+                        <input type="number" id="wisdom" value="10" min="1" max="20">
+                    </div>
+                    <div class="stat-group">
+                        <label for="charisma">Charisma</label>
+                        <input type="number" id="charisma" value="10" min="1" max="20">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Campaign Information</h3>
+                <div class="form-group">
+                    <label for="campaignName">Campaign Name</label>
+                    <input type="text" id="campaignName" placeholder="Enter a name for your campaign">
+                </div>
+            </div>
+        </div>
+
+        <!-- Vibe Code Form -->
+        <div class="creation-form" id="vibeCodeForm">
+            <div class="vibe-code-section">
+                <h4>✨ Vibe Code Character Creation</h4>
+                <p>Describe your character in your own words. Tell me about their personality, background, appearance, and any special traits or abilities you envision. The AI will help translate your description into proper DnD character stats.</p>
+                
+                <div class="example-text">
+                    <strong>Example:</strong><br>
+                    "I want to play a wise old dwarf cleric who's been a healer in his mountain community for decades. He's gruff but kind-hearted, with a long white beard and carries a holy symbol of Moradin. He's not very strong but has great wisdom and healing magic."
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="characterDescription">Describe Your Character</label>
+                <textarea id="characterDescription" placeholder="Describe your character's personality, background, appearance, abilities, and any other details you'd like to include..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="vibeCampaignName">Campaign Name</label>
+                <input type="text" id="vibeCampaignName" placeholder="Enter a name for your campaign">
+            </div>
+        </div>
+
+        <div class="action-buttons" id="actionButtons" style="display: none;">
+            <button class="btn btn-primary" onclick="createCharacter()">
+                🎲 Create Character & Start Adventure
+            </button>
+            <button class="btn btn-secondary" onclick="goBack()">
+                ← Back to Start Screen
+            </button>
+        </div>
+
+        <div class="loading" id="loadingIndicator"></div>
+    </div>
+
+    <script>
+        let selectedMethod = null;
+
+        function selectMethod(method) {
+            selectedMethod = method;
+            
+            // Update button states
+            document.querySelectorAll('.method-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show appropriate form
+            document.getElementById('stepByStepForm').classList.remove('show');
+            document.getElementById('vibeCodeForm').classList.remove('show');
+            
+            if (method === 'step_by_step') {
+                document.getElementById('stepByStepForm').classList.add('show');
+            } else if (method === 'vibe_code') {
+                document.getElementById('vibeCodeForm').classList.add('show');
+            }
+            
+            // Show action buttons
+            document.getElementById('actionButtons').style.display = 'flex';
+            
+            // Hide method selection
+            document.getElementById('methodSelection').style.display = 'none';
+        }
+
+        function goBack() {
+            window.location.href = '/';
+        }
+
+        async function createCharacter() {
+            if (!selectedMethod) {
+                alert('Please select a character creation method first.');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                let characterData = {};
+                let campaignName = '';
+
+                if (selectedMethod === 'step_by_step') {
+                    // Validate required fields
+                    const name = document.getElementById('characterName').value.trim();
+                    const race = document.getElementById('characterRace').value;
+                    const characterClass = document.getElementById('characterClass').value;
+                    const level = parseInt(document.getElementById('characterLevel').value);
+                    campaignName = document.getElementById('campaignName').value.trim();
+
+                    if (!name || !race || !characterClass) {
+                        alert('Please fill in all required fields (Name, Race, Class).');
+                        setLoading(false);
+                        return;
+                    }
+
+                    characterData = {
+                        name: name,
+                        race: race,
+                        class: characterClass,
+                        level: level,
+                        stats: {
+                            strength: parseInt(document.getElementById('strength').value),
+                            dexterity: parseInt(document.getElementById('dexterity').value),
+                            constitution: parseInt(document.getElementById('constitution').value),
+                            intelligence: parseInt(document.getElementById('intelligence').value),
+                            wisdom: parseInt(document.getElementById('wisdom').value),
+                            charisma: parseInt(document.getElementById('charisma').value)
+                        }
+                    };
+                } else if (selectedMethod === 'vibe_code') {
+                    // Redirect to vibe code creation interface
+                    window.location.href = '/vibe-code-creation';
+                    return;
+                }
+
+                const response = await fetch('/api/character/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        method: selectedMethod,
+                        character_data: characterData,
+                        campaign_name: campaignName
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    alert('Error creating character: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error creating character:', error);
+                alert('Error creating character. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function setLoading(loading) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            if (loading) {
+                loadingIndicator.classList.add('show');
+                loadingIndicator.textContent = 'Creating your character...';
+            } else {
+                loadingIndicator.classList.remove('show');
+            }
+        }
+    </script>
+</body>
+</html> 

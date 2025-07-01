@@ -1,0 +1,135 @@
+# The Narrative Engine: Dual Development Roadmap
+
+## 🧭 Dual Development Plan  
+**For:**  
+- 🎲 Your **DnD Game Implementation** (Solo and Family Campaigns)  
+- 🧠 The broader **Narrative Engine Platform**
+
+---
+
+### 🧩 PHASE 1: Core Engine Infrastructure (Now–Month 1)
+
+#### 🔧 1. Finalize Modular Architecture (already underway)
+- ✅ Organize files into `/narrative_core/`, `/dnd_game/`, `/shared/`, etc.
+- 🔁 Ensure each module has clean interfaces:
+  - `MemoryCore`
+  - `NarrativeInterpreter`
+  - `WorldStateSimulator`
+  - `AIActorFramework`
+  - `OutputLayer`
+
+#### 🧠 2. Lock in Memory System MVP
+- Implement layered memory: `short_term`, `mid_term`, `long_term`
+- Include:
+  - Memory decay functions
+  - Emotional tagging
+  - Thematic recall
+- Integrate `VectorMemoryModule` for similarity search
+
+#### 🎲 3. DnD Rules & Player Input Processing
+- Implement `RulesAndLogicManager` for SRD 5.1
+- Build natural language → action parsing:
+  - Use regex/fallbacks for expressions like `2d6+3`
+  - Tag intents: `attack`, `move`, `ask`, `remember`, `explore`
+
+#### 🌐 4. Frontend/UI Hookup
+- Confirm full integration of:
+  - Localhost React frontend
+  - Markdown-rendered text
+  - Memory trace logs
+- Add toggles for:
+  - “Developer Mode”
+  - “Immersive Mode”
+
+---
+
+### 🔍 PHASE 2: Narrative Continuity, Emotional Intelligence (Month 1–2)
+
+#### 🧬 5. Contextual Drift Solutions
+- Weight past memory recall based on:
+  - Relevance
+  - Emotional tone
+  - Recency
+- Add user prompts for:
+  - `remember this`
+  - `forget that`
+  - `why did you say that?`
+
+#### ❤️ 6. Emotional Memory + NPC Psychology
+- Each NPC gets:
+  - Emotion tracker
+  - Memory profile
+  - Relationship arcs
+
+#### 🔥 7. Adaptive Story Beats
+- Allow:
+  - “Narrative hooks” to trigger based on moral themes
+  - Emergent quests triggered by actions
+- Trace causes/consequences across sessions
+
+---
+
+### 🧪 PHASE 3: Narrative Simulation Tools (Month 2–4)
+
+#### 🧠 8. Storyteller View
+- Custom interface to:
+  - View memory entries
+  - Adjust relationship weights
+  - Force consequences
+  - Pin/delete world events
+
+#### 🌎 9. Non-DnD Narrative Domains
+- Add folders:
+  - `/therapy_sim/`
+  - `/historical_sim/`
+  - `/corporate_brand_sim/`
+- Fork memory/output modules with domain rules
+
+---
+
+### 🚀 PHASE 4: Voice + Immersive Extensions (Month 4–6)
+
+#### 🎙️ 10. Voice Interface
+- Integrate Whisper
+- Optional: TTS with `pyttsx3` or `ElevenLabs`
+
+#### 🧠 11. Personal Memory Agent Mode
+- Persona uses memory engine for:
+  - Journaling
+  - Life coaching
+  - Therapy sandbox
+
+#### 🧱 12. World-State Visual Interface
+- Map visual with:
+  - Factions
+  - City events
+  - Quest states
+
+---
+
+## 📘 Manifesto Compliance
+
+| Principle                             | Implementation Example                         |
+|--------------------------------------|------------------------------------------------|
+| Memory is sacred                     | Vector recall + decay                          |
+| Story is interpretive, not generative| Moral consequence + tone-aware response        |
+| The user co-authors the world        | Persistent choices shape quests + relationships|
+| Emotional realism matters            | NPC tone-matching + arcs                       |
+| Narrative continuity is critical     | Trace logs + memory recall                     |
+| System must scale beyond games       | Add therapy/historical simulation modules      |
+
+---
+
+## 🛠 Next Steps for Stephen
+
+### ✅ Immediate:
+- Confirm roadmap vision
+- Define Phase 1 sprint backlog
+
+### 📁 Additions Needed:
+- Finish `README.md`
+- Create `DEV_NOTES.md`
+
+### 📣 Optional:
+- Plan for open-source
+- Tag GitHub issues for contributors
