@@ -23,7 +23,7 @@ The project is designed to be 5E-compatible while strictly adhering to the Creat
 
 ### 3. Restricted Content
 The following proprietary SRD publisher content is **NOT PERMITTED**:
-- **Settings**: classic fantasy setting, mystic realm, dark domain, established campaign setting
+- **Settings**: fantasy campaign setting, mystical realm, shadow domain, generic campaign setting
 - **Monsters**: psionic horror, eye tyrant
 - **Characters**: famous wizard, undying sorcerer
 - **Branding**: system-neutral roleplaying framework, system-neutral roleplaying framework, SRD publisher, SRD publisher

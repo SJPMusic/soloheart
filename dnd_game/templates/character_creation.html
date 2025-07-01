@@ -3,546 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solo DnD 5E - Character Creation</title>
+    <title>Character Creation - Step by Step</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Georgia', serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            color: #e8e8e8;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
         }
-
-        .creation-container {
-            background: rgba(0, 0, 0, 0.4);
-            border: 2px solid #ffd700;
-            border-radius: 15px;
-            padding: 3rem;
-            max-width: 800px;
-            width: 90%;
-            text-align: center;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-
-        .title {
-            font-size: 2.5rem;
-            color: #ffd700;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            margin-bottom: 1rem;
-            font-weight: bold;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: #ccc;
-            margin-bottom: 3rem;
-            line-height: 1.6;
-        }
-
-        .method-selection {
-            display: flex;
-            gap: 2rem;
-            margin-bottom: 3rem;
-            justify-content: center;
-        }
-
-        .method-btn {
-            background: rgba(255, 215, 0, 0.1);
-            border: 2px solid #ffd700;
-            color: #ffd700;
-            padding: 2rem;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: inherit;
-            font-size: 1.1rem;
-            font-weight: bold;
-            min-width: 200px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .method-btn:hover {
-            background: rgba(255, 215, 0, 0.2);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .method-btn.active {
-            background: rgba(255, 215, 0, 0.3);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        }
-
-        .method-icon {
-            font-size: 3rem;
-        }
-
-        .creation-form {
-            display: none;
-            text-align: left;
-        }
-
-        .creation-form.show {
-            display: block;
-        }
-
-        .form-section {
-            margin-bottom: 2rem;
-        }
-
-        .form-section h3 {
-            color: #ffd700;
-            margin-bottom: 1rem;
-            font-size: 1.3rem;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #ccc;
-            font-weight: bold;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.8rem;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid #333;
-            border-radius: 5px;
-            color: #e8e8e8;
-            font-family: inherit;
-            font-size: 1rem;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            border-color: #ffd700;
-            outline: none;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
-        }
-
-        .form-group textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .stat-group {
-            text-align: center;
-        }
-
-        .stat-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #ffd700;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-        }
-
-        .stat-group input {
-            width: 80px;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-
-        .vibe-code-section {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .vibe-code-section h4 {
-            color: #ffd700;
-            margin-bottom: 1rem;
-        }
-
-        .vibe-code-section p {
-            color: #ccc;
-            line-height: 1.6;
-            margin-bottom: 1rem;
-        }
-
-        .example-text {
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px solid #ffd700;
-            border-radius: 5px;
-            padding: 1rem;
-            margin: 1rem 0;
-            font-style: italic;
-            color: #ffd700;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 2rem;
-        }
-
-        .btn {
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: inherit;
-            font-size: 1rem;
-            font-weight: bold;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
         .btn-primary {
-            background: rgba(0, 255, 0, 0.1);
-            border: 2px solid #00ff00;
-            color: #00ff00;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            transition: all 0.3s ease;
         }
-
         .btn-primary:hover {
-            background: rgba(0, 255, 0, 0.2);
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
         }
-
         .btn-secondary {
-            background: rgba(255, 0, 0, 0.1);
-            border: 2px solid #ff4444;
-            color: #ff4444;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
         }
-
         .btn-secondary:hover {
-            background: rgba(255, 0, 0, 0.2);
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 1rem;
-            color: #ffd700;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        @media (max-width: 768px) {
-            .creation-container {
-                padding: 2rem;
-                margin: 1rem;
-            }
-
-            .title {
-                font-size: 2rem;
-            }
-
-            .method-selection {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .method-btn {
-                min-width: 250px;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
     </style>
 </head>
-<body>
-    <div class="creation-container">
-        <h1 class="title">🎭 Character Creation</h1>
-        <p class="subtitle">Choose how you'd like to create your character</p>
-        
-        <div class="method-selection" id="methodSelection">
-            <button class="method-btn" onclick="selectMethod('step_by_step')">
-                <span class="method-icon">📋</span>
-                <div>
-                    <strong>Step-by-Step</strong><br>
-                    <small>Traditional DnD character creation following the rules</small>
-                </div>
-            </button>
-            
-            <button class="method-btn" onclick="selectMethod('vibe_code')">
-                <span class="method-icon">✨</span>
-                <div>
-                    <strong>Vibe Code</strong><br>
-                    <small>Describe your character naturally and let the AI fill in the details</small>
-                </div>
-            </button>
+<body class="text-white">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-2xl">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <button onclick="goBack()" class="absolute top-4 left-4 text-2xl hover:text-yellow-400 transition-colors">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-3xl font-bold mb-2">
+                    <i class="fas fa-list-ol text-green-400 mr-2"></i>
+                    Step-by-Step Character Creation
+                </h1>
+                <p class="text-blue-100">Create your character using the traditional method</p>
+            </div>
+
+            <!-- Character Creation Form -->
+            <div class="glass rounded-2xl p-8">
+                <form id="characterForm" class="space-y-6">
+                    <!-- Campaign Name -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Campaign Name (Optional)</label>
+                        <input type="text" id="campaignName" placeholder="The Lost Mines of Phandelver" 
+                               class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200">
+                    </div>
+
+                    <!-- Character Name -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Character Name *</label>
+                        <input type="text" id="characterName" required placeholder="Enter your character's name" 
+                               class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200">
+                    </div>
+
+                    <!-- Race -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Race *</label>
+                        <select id="race" required class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white">
+                            <option value="">Select a race</option>
+                            <option value="Human">Human</option>
+                            <option value="Elf">Elf</option>
+                            <option value="Dwarf">Dwarf</option>
+                            <option value="Halfling">Halfling</option>
+                            <option value="Dragonborn">Dragonborn</option>
+                            <option value="Gnome">Gnome</option>
+                            <option value="Half-Elf">Half-Elf</option>
+                            <option value="Half-Orc">Half-Orc</option>
+                            <option value="Tiefling">Tiefling</option>
+                        </select>
+                    </div>
+
+                    <!-- Class -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Class *</label>
+                        <select id="class" required class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white">
+                            <option value="">Select a class</option>
+                            <option value="Barbarian">Barbarian</option>
+                            <option value="Bard">Bard</option>
+                            <option value="Cleric">Cleric</option>
+                            <option value="Druid">Druid</option>
+                            <option value="Fighter">Fighter</option>
+                            <option value="Monk">Monk</option>
+                            <option value="Paladin">Paladin</option>
+                            <option value="Ranger">Ranger</option>
+                            <option value="Rogue">Rogue</option>
+                            <option value="Sorcerer">Sorcerer</option>
+                            <option value="Warlock">Warlock</option>
+                            <option value="Wizard">Wizard</option>
+                        </select>
+                    </div>
+
+                    <!-- Level -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Level *</label>
+                        <select id="level" required class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white">
+                            <option value="">Select level</option>
+                            <option value="1">Level 1</option>
+                            <option value="2">Level 2</option>
+                            <option value="3">Level 3</option>
+                            <option value="4">Level 4</option>
+                            <option value="5">Level 5</option>
+                        </select>
+                    </div>
+
+                    <!-- Background -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Background</label>
+                        <select id="background" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white">
+                            <option value="">Select a background (optional)</option>
+                            <option value="Acolyte">Acolyte</option>
+                            <option value="Criminal">Criminal</option>
+                            <option value="Folk Hero">Folk Hero</option>
+                            <option value="Noble">Noble</option>
+                            <option value="Sage">Sage</option>
+                            <option value="Soldier">Soldier</option>
+                        </select>
+                    </div>
+
+                    <!-- Personality -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Personality Description</label>
+                        <textarea id="personality" rows="3" placeholder="Describe your character's personality, appearance, and background..." 
+                                  class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200 resize-none"></textarea>
+                    </div>
+
+                    <!-- Ability Scores -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Ability Scores *</label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div><input type="number" id="str" min="3" max="20" required placeholder="STR" class="w-full px-3 py-2 rounded bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200"></div>
+                            <div><input type="number" id="dex" min="3" max="20" required placeholder="DEX" class="w-full px-3 py-2 rounded bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200"></div>
+                            <div><input type="number" id="con" min="3" max="20" required placeholder="CON" class="w-full px-3 py-2 rounded bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200"></div>
+                            <div><input type="number" id="int" min="3" max="20" required placeholder="INT" class="w-full px-3 py-2 rounded bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200"></div>
+                            <div><input type="number" id="wis" min="3" max="20" required placeholder="WIS" class="w-full px-3 py-2 rounded bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200"></div>
+                            <div><input type="number" id="cha" min="3" max="20" required placeholder="CHA" class="w-full px-3 py-2 rounded bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200"></div>
+                        </div>
+                    </div>
+
+                    <!-- Saving Throws -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Saving Throw Proficiencies</label>
+                        <input type="text" id="savingThrows" placeholder="e.g. STR, CON" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200">
+                    </div>
+
+                    <!-- Skills -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Skill Proficiencies</label>
+                        <input type="text" id="skills" placeholder="e.g. Stealth, Perception, Arcana" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200">
+                    </div>
+
+                    <!-- Feats -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Feats</label>
+                        <input type="text" id="feats" placeholder="e.g. Alert, Lucky (optional)" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200">
+                    </div>
+
+                    <!-- HP -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Hit Points (HP) *</label>
+                        <input type="number" id="hp" min="1" required placeholder="e.g. 12" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200">
+                    </div>
+
+                    <!-- Starting Weapons -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Starting Weapons</label>
+                        <input type="text" id="weapons" placeholder="e.g. Longsword, Shortbow" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200">
+                    </div>
+
+                    <!-- Starting Gear -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Starting Gear</label>
+                        <input type="text" id="gear" placeholder="e.g. Explorer's Pack, Rope, Rations" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200">
+                    </div>
+
+                    <!-- Spells (if applicable) -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Spells (if applicable)</label>
+                        <input type="text" id="spells" placeholder="e.g. Firebolt, Cure Wounds" class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200">
+                    </div>
+
+                    <!-- Freeform Background -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Background (Freeform)</label>
+                        <textarea id="backgroundFreeform" rows="3" placeholder="Write your character's backstory, motivations, and history..." class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200 resize-none"></textarea>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="flex justify-between pt-4">
+                        <button type="button" onclick="goBack()" class="btn-secondary py-3 px-6 rounded-lg">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn-primary py-3 px-6 rounded-lg">
+                            <i class="fas fa-play mr-2"></i>Create Character
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-
-        <!-- Step-by-Step Form -->
-        <div class="creation-form" id="stepByStepForm">
-            <div class="form-section">
-                <h3>Basic Information</h3>
-                <div class="form-group">
-                    <label for="characterName">Character Name</label>
-                    <input type="text" id="characterName" placeholder="Enter your character's name">
-                </div>
-                <div class="form-group">
-                    <label for="characterRace">Race</label>
-                    <select id="characterRace">
-                        <option value="">Select a race</option>
-                        <option value="Human">Human</option>
-                        <option value="Elf">Elf</option>
-                        <option value="Dwarf">Dwarf</option>
-                        <option value="Halfling">Halfling</option>
-                        <option value="Dragonborn">Dragonborn</option>
-                        <option value="Gnome">Gnome</option>
-                        <option value="Half-Elf">Half-Elf</option>
-                        <option value="Half-Orc">Half-Orc</option>
-                        <option value="Tiefling">Tiefling</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="characterClass">Class</label>
-                    <select id="characterClass">
-                        <option value="">Select a class</option>
-                        <option value="Barbarian">Barbarian</option>
-                        <option value="Bard">Bard</option>
-                        <option value="Cleric">Cleric</option>
-                        <option value="Druid">Druid</option>
-                        <option value="Fighter">Fighter</option>
-                        <option value="Monk">Monk</option>
-                        <option value="Paladin">Paladin</option>
-                        <option value="Ranger">Ranger</option>
-                        <option value="Rogue">Rogue</option>
-                        <option value="Sorcerer">Sorcerer</option>
-                        <option value="Warlock">Warlock</option>
-                        <option value="Wizard">Wizard</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="characterLevel">Level</label>
-                    <input type="number" id="characterLevel" value="1" min="1" max="20">
-                </div>
-            </div>
-
-            <div class="form-section">
-                <h3>Ability Scores</h3>
-                <div class="stats-grid">
-                    <div class="stat-group">
-                        <label for="strength">Strength</label>
-                        <input type="number" id="strength" value="10" min="1" max="20">
-                    </div>
-                    <div class="stat-group">
-                        <label for="dexterity">Dexterity</label>
-                        <input type="number" id="dexterity" value="10" min="1" max="20">
-                    </div>
-                    <div class="stat-group">
-                        <label for="constitution">Constitution</label>
-                        <input type="number" id="constitution" value="10" min="1" max="20">
-                    </div>
-                    <div class="stat-group">
-                        <label for="intelligence">Intelligence</label>
-                        <input type="number" id="intelligence" value="10" min="1" max="20">
-                    </div>
-                    <div class="stat-group">
-                        <label for="wisdom">Wisdom</label>
-                        <input type="number" id="wisdom" value="10" min="1" max="20">
-                    </div>
-                    <div class="stat-group">
-                        <label for="charisma">Charisma</label>
-                        <input type="number" id="charisma" value="10" min="1" max="20">
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-section">
-                <h3>Campaign Information</h3>
-                <div class="form-group">
-                    <label for="campaignName">Campaign Name</label>
-                    <input type="text" id="campaignName" placeholder="Enter a name for your campaign">
-                </div>
-            </div>
-        </div>
-
-        <!-- Vibe Code Form -->
-        <div class="creation-form" id="vibeCodeForm">
-            <div class="vibe-code-section">
-                <h4>✨ Vibe Code Character Creation</h4>
-                <p>Describe your character in your own words. Tell me about their personality, background, appearance, and any special traits or abilities you envision. The AI will help translate your description into proper DnD character stats.</p>
-                
-                <div class="example-text">
-                    <strong>Example:</strong><br>
-                    "I want to play a wise old dwarf cleric who's been a healer in his mountain community for decades. He's gruff but kind-hearted, with a long white beard and carries a holy symbol of Moradin. He's not very strong but has great wisdom and healing magic."
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="characterDescription">Describe Your Character</label>
-                <textarea id="characterDescription" placeholder="Describe your character's personality, background, appearance, abilities, and any other details you'd like to include..."></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="vibeCampaignName">Campaign Name</label>
-                <input type="text" id="vibeCampaignName" placeholder="Enter a name for your campaign">
-            </div>
-        </div>
-
-        <div class="action-buttons" id="actionButtons" style="display: none;">
-            <button class="btn btn-primary" onclick="createCharacter()">
-                🎲 Create Character & Start Adventure
-            </button>
-            <button class="btn btn-secondary" onclick="goBack()">
-                ← Back to Start Screen
-            </button>
-        </div>
-
-        <div class="loading" id="loadingIndicator"></div>
     </div>
 
     <script>
-        let selectedMethod = null;
-
-        function selectMethod(method) {
-            selectedMethod = method;
-            
-            // Update button states
-            document.querySelectorAll('.method-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Show appropriate form
-            document.getElementById('stepByStepForm').classList.remove('show');
-            document.getElementById('vibeCodeForm').classList.remove('show');
-            
-            if (method === 'step_by_step') {
-                document.getElementById('stepByStepForm').classList.add('show');
-            } else if (method === 'vibe_code') {
-                document.getElementById('vibeCodeForm').classList.add('show');
-            }
-            
-            // Show action buttons
-            document.getElementById('actionButtons').style.display = 'flex';
-            
-            // Hide method selection
-            document.getElementById('methodSelection').style.display = 'none';
-        }
-
         function goBack() {
-            window.location.href = '/';
+            if (confirm('Are you sure you want to go back? Your character creation progress will be lost.')) {
+                window.location.href = '/';
+            }
         }
 
-        async function createCharacter() {
-            if (!selectedMethod) {
-                alert('Please select a character creation method first.');
-                return;
-            }
-
-            setLoading(true);
+        document.getElementById('characterForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('characterName').value,
+                race: document.getElementById('race').value,
+                class: document.getElementById('class').value,
+                level: parseInt(document.getElementById('level').value),
+                background: document.getElementById('background').value || 'Adventurer',
+                personality: document.getElementById('personality').value || 'A brave adventurer seeking fortune and glory.',
+                str: parseInt(document.getElementById('str').value),
+                dex: parseInt(document.getElementById('dex').value),
+                con: parseInt(document.getElementById('con').value),
+                int: parseInt(document.getElementById('int').value),
+                wis: parseInt(document.getElementById('wis').value),
+                cha: parseInt(document.getElementById('cha').value),
+                savingThrows: document.getElementById('savingThrows').value,
+                skills: document.getElementById('skills').value,
+                feats: document.getElementById('feats').value,
+                hp: parseInt(document.getElementById('hp').value),
+                weapons: document.getElementById('weapons').value,
+                gear: document.getElementById('gear').value,
+                spells: document.getElementById('spells').value,
+                backgroundFreeform: document.getElementById('backgroundFreeform').value,
+                campaign_name: document.getElementById('campaignName').value
+            };
 
             try {
-                let characterData = {};
-                let campaignName = '';
-
-                if (selectedMethod === 'step_by_step') {
-                    // Validate required fields
-                    const name = document.getElementById('characterName').value.trim();
-                    const race = document.getElementById('characterRace').value;
-                    const characterClass = document.getElementById('characterClass').value;
-                    const level = parseInt(document.getElementById('characterLevel').value);
-                    campaignName = document.getElementById('campaignName').value.trim();
-
-                    if (!name || !race || !characterClass) {
-                        alert('Please fill in all required fields (Name, Race, Class).');
-                        setLoading(false);
-                        return;
-                    }
-
-                    characterData = {
-                        name: name,
-                        race: race,
-                        class: characterClass,
-                        level: level,
-                        stats: {
-                            strength: parseInt(document.getElementById('strength').value),
-                            dexterity: parseInt(document.getElementById('dexterity').value),
-                            constitution: parseInt(document.getElementById('constitution').value),
-                            intelligence: parseInt(document.getElementById('intelligence').value),
-                            wisdom: parseInt(document.getElementById('wisdom').value),
-                            charisma: parseInt(document.getElementById('charisma').value)
-                        }
-                    };
-                } else if (selectedMethod === 'vibe_code') {
-                    // Redirect to vibe code creation interface
-                    window.location.href = '/vibe-code-creation';
-                    return;
-                }
-
                 const response = await fetch('/api/character/create', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        method: selectedMethod,
-                        character_data: characterData,
-                        campaign_name: campaignName
-                    })
+                    body: JSON.stringify(formData)
                 });
 
-                const data = await response.json();
+                const result = await response.json();
 
-                if (data.success) {
-                    window.location.href = data.redirect;
+                if (result.success) {
+                    window.location.href = result.redirect;
                 } else {
-                    alert('Error creating character: ' + data.message);
+                    alert('Error creating character: ' + result.message);
                 }
             } catch (error) {
-                console.error('Error creating character:', error);
+                console.error('Error:', error);
                 alert('Error creating character. Please try again.');
-            } finally {
-                setLoading(false);
             }
-        }
-
-        function setLoading(loading) {
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            
-            if (loading) {
-                loadingIndicator.classList.add('show');
-                loadingIndicator.textContent = 'Creating your character...';
-            } else {
-                loadingIndicator.classList.remove('show');
-            }
-        }
+        });
     </script>
 </body>
 </html> 

@@ -1,31 +1,30 @@
 #!/usr/bin/env python3
 """
-Start Screen Interface for Solo DnD 5E
-Handles the initial game flow: campaign management and character creation.
+Unified Solo DnD 5E Game Interface
+Follows the Narrative Engine Game Design Guide for a seamless, immersive experience.
 """
 
 import os
 import json
 import logging
-import shutil
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from narrative_focused_interface import NarrativeFocusedInterface
 from character_generator import CharacterGenerator
+from narrative_bridge import NarrativeBridge
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'start-screen-key')
+app.secret_key = os.environ.get('SECRET_KEY', 'unified-game-key')
 
-class StartScreenManager:
-    """Manages the start screen flow and campaign operations."""
+class UnifiedGameManager:
+    """Manages the complete game flow from start to gameplay."""
     
     def __init__(self):
-        self.narrative_interface = NarrativeFocusedInterface()
         self.character_generator = CharacterGenerator()
+        self.narrative_bridge = NarrativeBridge()
         self.ensure_directories()
     
     def ensure_directories(self):
@@ -57,7 +56,6 @@ class StartScreenManager:
                             })
                         except Exception as e:
                             logger.error(f"Error reading campaign {campaign_id}: {e}")
-                            # Still include it but mark as corrupted
                             campaigns.append({
                                 'id': campaign_id,
                                 'name': f'Campaign {campaign_id} (Corrupted)',
@@ -78,7 +76,7 @@ class StartScreenManager:
             if os.path.exists(campaign_file):
                 os.remove(campaign_file)
             
-            # Delete associated files (character arcs, plot threads, etc.)
+            # Delete associated files
             associated_files = [
                 f'character_arcs_{campaign_id}.jsonl',
                 f'plot_threads_{campaign_id}.jsonl',
@@ -103,45 +101,52 @@ class StartScreenManager:
             if not campaign_name:
                 campaign_name = f"Adventure of {character_data.get('name', 'the Hero')}"
             
-            campaign_data = self.narrative_interface.start_new_campaign(character_data)
-            campaign_data['name'] = campaign_name
+            # Initialize the narrative bridge with the character
+            campaign_data = self.narrative_bridge.initialize_campaign(character_data, campaign_name)
             
-            # Save the campaign
-            success = self.narrative_interface.save_campaign()
-            
-            if success:
+            if campaign_data:
                 return campaign_data
             else:
                 return None
         except Exception as e:
             logger.error(f"Error creating new campaign: {e}")
             return None
+    
+    def generate_setting_introduction(self, character_data, campaign_name):
+        """Generate LLM-created setting introduction as per design guide."""
+        try:
+            # Use the narrative bridge to generate the setting introduction
+            introduction = self.narrative_bridge.generate_setting_introduction(character_data, campaign_name)
+            return introduction
+        except Exception as e:
+            logger.error(f"Error generating setting introduction: {e}")
+            return "You find yourself in a mysterious land, ready to begin your adventure..."
 
 # Initialize manager
-start_manager = StartScreenManager()
+game_manager = UnifiedGameManager()
 
 @app.route('/')
 def start_screen():
-    """Main start screen."""
-    return render_template('start_screen.html')
+    """Main start screen - the only gamified portion."""
+    return render_template('unified_start_screen.html')
 
 @app.route('/api/campaigns')
 def list_campaigns():
     """List all saved campaigns."""
-    campaigns = start_manager.get_saved_campaigns()
+    campaigns = game_manager.get_saved_campaigns()
     return jsonify({'success': True, 'campaigns': campaigns})
 
 @app.route('/api/campaigns/<campaign_id>/delete', methods=['POST'])
 def delete_campaign(campaign_id):
     """Delete a campaign."""
-    success = start_manager.delete_campaign(campaign_id)
+    success = game_manager.delete_campaign(campaign_id)
     return jsonify({'success': success})
 
 @app.route('/api/campaigns/<campaign_id>/load', methods=['POST'])
 def load_campaign(campaign_id):
     """Load a campaign and redirect to game."""
     try:
-        success = start_manager.narrative_interface.load_campaign(campaign_id)
+        success = game_manager.narrative_bridge.load_campaign(campaign_id)
         if success:
             session['campaign_id'] = campaign_id
             return jsonify({'success': True, 'redirect': '/game'})
@@ -154,12 +159,12 @@ def load_campaign(campaign_id):
 @app.route('/character-creation')
 def character_creation():
     """Character creation screen."""
-    return render_template('character_creation.html')
+    return render_template('unified_character_creation.html')
 
 @app.route('/vibe-code-creation')
 def vibe_code_creation():
     """Vibe code character creation interface."""
-    return render_template('vibe_code_creation.html')
+    return render_template('unified_vibe_code_creation.html')
 
 @app.route('/api/character/vibe-code/start', methods=['POST'])
 def start_vibe_code_creation():
@@ -173,7 +178,7 @@ def start_vibe_code_creation():
             return jsonify({'success': False, 'message': 'Character description is required'})
         
         # Start character creation conversation
-        result = start_manager.character_generator.start_character_creation(description, campaign_name)
+        result = game_manager.character_generator.start_character_creation(description, campaign_name)
         
         if result['success']:
             # Store the character generator state in session
@@ -203,7 +208,7 @@ def continue_vibe_code_creation():
             return jsonify({'success': False, 'message': 'Input is required'})
         
         # Continue the conversation
-        result = start_manager.character_generator.continue_conversation(player_input)
+        result = game_manager.character_generator.continue_conversation(player_input)
         
         if result['success']:
             return jsonify({
@@ -220,31 +225,36 @@ def continue_vibe_code_creation():
 
 @app.route('/api/character/vibe-code/complete', methods=['POST'])
 def complete_vibe_code_creation():
-    """Complete the vibe code character creation and start the game."""
+    """Complete the vibe code character creation and generate setting introduction."""
     try:
-        if not start_manager.character_generator.is_complete:
+        if not game_manager.character_generator.is_complete:
             return jsonify({'success': False, 'message': 'Character creation is not complete'})
         
         # Get the completed character data
-        character_data = start_manager.character_generator.get_character_data()
+        character_data = game_manager.character_generator.get_character_data()
         campaign_name = session.get('campaign_name', '')
         
         # Create the campaign
-        campaign_data = start_manager.create_new_campaign(character_data, campaign_name)
+        campaign_data = game_manager.create_new_campaign(character_data, campaign_name)
         
         if campaign_data:
+            # Generate LLM-created setting introduction
+            setting_introduction = game_manager.generate_setting_introduction(character_data, campaign_name)
+            
             # Save the character data
-            start_manager.character_generator.save_character(campaign_data['campaign_id'])
+            game_manager.character_generator.save_character(campaign_data['campaign_id'])
             
             # Set session and redirect
             session['campaign_id'] = campaign_data['campaign_id']
+            session['setting_introduction'] = setting_introduction
             session.pop('character_creation_active', None)
             session.pop('campaign_name', None)
             
             return jsonify({
                 'success': True,
                 'redirect': '/game',
-                'character': character_data
+                'character': character_data,
+                'setting_introduction': setting_introduction
             })
         else:
             return jsonify({'success': False, 'message': 'Failed to create campaign'})
@@ -272,10 +282,13 @@ def create_character():
                     return jsonify({'success': False, 'message': f'Missing required field: {field}'})
             
             # Create campaign with character
-            campaign_data = start_manager.create_new_campaign(character_data, campaign_name)
+            campaign_data = game_manager.create_new_campaign(character_data, campaign_name)
             
             if campaign_data:
+                # Generate setting introduction
+                setting_introduction = game_manager.generate_setting_introduction(character_data, campaign_name)
                 session['campaign_id'] = campaign_data['campaign_id']
+                session['setting_introduction'] = setting_introduction
                 return jsonify({'success': True, 'redirect': '/game'})
             else:
                 return jsonify({'success': False, 'message': 'Failed to create campaign'})
@@ -293,15 +306,80 @@ def create_character():
 
 @app.route('/game')
 def game_screen():
-    """Main game screen - redirect to narrative interface."""
+    """Main game screen - pure narrative experience."""
     if 'campaign_id' not in session:
         return redirect('/')
     
-    # Redirect to the narrative interface on port 5002
-    return redirect('http://localhost:5002/')
+    return render_template('unified_game_screen.html')
+
+@app.route('/api/game/action', methods=['POST'])
+def process_game_action():
+    """Process player action and return LLM DM response."""
+    try:
+        data = request.get_json()
+        player_input = data.get('action', '').strip()
+        
+        if not player_input:
+            return jsonify({'success': False, 'message': 'No action provided'})
+        
+        campaign_id = session.get('campaign_id')
+        if not campaign_id:
+            return jsonify({'success': False, 'message': 'No active campaign'})
+        
+        # Process the input through the narrative bridge
+        response = game_manager.narrative_bridge.process_player_input(player_input, campaign_id)
+        
+        return jsonify({
+            'success': True,
+            'dm_response': response,
+            'character_info': game_manager.narrative_bridge.get_character_info(campaign_id)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error processing action: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error processing action'
+        })
+
+@app.route('/api/game/save', methods=['POST'])
+def save_game():
+    """Save current game state."""
+    try:
+        campaign_id = session.get('campaign_id')
+        if not campaign_id:
+            return jsonify({'success': False, 'message': 'No active campaign'})
+        
+        success = game_manager.narrative_bridge.save_campaign(campaign_id)
+        return jsonify({'success': success})
+        
+    except Exception as e:
+        logger.error(f"Error saving game: {e}")
+        return jsonify({'success': False, 'message': 'Error saving game'})
+
+@app.route('/api/game/current')
+def get_current_game():
+    """Get current game state."""
+    try:
+        campaign_id = session.get('campaign_id')
+        if not campaign_id:
+            return jsonify({'success': False, 'message': 'No active campaign'})
+        
+        campaign_data = game_manager.narrative_bridge.get_campaign_data(campaign_id)
+        setting_introduction = session.get('setting_introduction', '')
+        
+        return jsonify({
+            'success': True,
+            'campaign': campaign_data,
+            'setting_introduction': setting_introduction
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting current game: {e}")
+        return jsonify({'success': False, 'message': 'Error getting game state'})
 
 if __name__ == '__main__':
-    print("Starting Solo DnD 5E - Start Screen Interface...")
+    print("🎲 Starting Unified Solo DnD 5E Game Interface...")
     print("Access the game at: http://localhost:5001")
     print("Press Ctrl+C to stop the server")
     app.run(debug=True, host='0.0.0.0', port=5001) 

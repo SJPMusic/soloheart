@@ -1951,6 +1951,289 @@ class NarrativeBridge:
             logger.error(f"Error getting lore by tag: {e}")
             return []
 
+    def initialize_campaign(self, character_data: Dict[str, Any], campaign_name: str = None) -> Optional[Dict[str, Any]]:
+        """
+        Initialize a new campaign with the given character.
+        
+        Args:
+            character_data: Character data dictionary
+            campaign_name: Optional campaign name
+            
+        Returns:
+            Campaign data dictionary or None if failed
+        """
+        try:
+            if not campaign_name:
+                campaign_name = f"Adventure of {character_data.get('name', 'the Hero')}"
+            
+            # Generate unique campaign ID
+            import uuid
+            campaign_id = f"campaign-{uuid.uuid4().hex[:8]}"
+            
+            # Store initial character data
+            character_file = f"character_saves/{campaign_id}_character.json"
+            with open(character_file, 'w') as f:
+                json.dump(character_data, f, indent=2)
+            
+            # Create campaign data
+            campaign_data = {
+                "campaign_id": campaign_id,
+                "name": campaign_name,
+                "created_date": datetime.datetime.now().isoformat(),
+                "active_character": character_data,
+                "session_count": 0,
+                "current_location": "Starting Area",
+                "world_state": {}
+            }
+            
+            # Save campaign data
+            campaign_file = f"campaign_saves/{campaign_id}.json"
+            with open(campaign_file, 'w') as f:
+                json.dump(campaign_data, f, indent=2)
+            
+            # Initialize narrative bridge for this campaign
+            self.campaign_id = campaign_id
+            
+            # Store initial memory
+            self.store_dnd_memory(
+                f"You begin your adventure as {character_data.get('name', 'a hero')}, a {character_data.get('race', 'adventurer')} {character_data.get('class', 'hero')}.",
+                memory_type="campaign_start",
+                character_id=character_data.get('name', 'player')
+            )
+            
+            # Create initial character arc
+            self.create_character_arc(
+                character_id=character_data.get('name', 'player'),
+                name="The Hero's Journey",
+                arc_type=ArcType.PERSONAL_GROWTH,
+                description=f"The journey of {character_data.get('name', 'the hero')} as they discover their destiny.",
+                emotional_themes=["courage", "growth", "discovery"]
+            )
+            
+            # Create initial plot thread
+            self.create_plot_thread(
+                name="The Mysterious Artifacts",
+                thread_type=ThreadType.MAIN_QUEST,
+                description="Ancient artifacts have appeared in the world, drawing the attention of many.",
+                priority=1,
+                assigned_characters=[character_data.get('name', 'player')]
+            )
+            
+            logger.info(f"Initialized campaign: {campaign_id}")
+            return campaign_data
+            
+        except Exception as e:
+            logger.error(f"Error initializing campaign: {e}")
+            return None
+
+    def generate_setting_introduction(self, character_data: Dict[str, Any], campaign_name: str) -> str:
+        """
+        Generate LLM-created setting introduction as per design guide.
+        
+        Args:
+            character_data: Character data dictionary
+            campaign_name: Campaign name
+            
+        Returns:
+            Generated setting introduction text
+        """
+        try:
+            # Use OpenAI to generate a unique setting introduction
+            import openai
+            
+            prompt = f"""
+            You are a master storyteller creating an immersive opening scene for a DnD 5e solo adventure.
+            
+            Character: {character_data.get('name', 'the Hero')} - a {character_data.get('race', 'adventurer')} {character_data.get('class', 'hero')}
+            Campaign: {campaign_name}
+            
+            Create a vivid, atmospheric opening scene that introduces the character to their adventure. 
+            This should be 2-3 paragraphs that set the mood, establish the immediate environment, 
+            and hint at the adventure to come. Make it feel like the opening of an epic fantasy novel.
+            
+            Focus on:
+            - Sensory details (sights, sounds, smells)
+            - Atmospheric mood
+            - Immediate surroundings
+            - A sense of mystery or adventure
+            - The character's current situation
+            
+            Write in third person, present tense, as if narrating the scene to the player.
+            """
+            
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a master DnD storyteller creating immersive opening scenes."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=300,
+                temperature=0.8
+            )
+            
+            introduction = response.choices[0].message.content.strip()
+            
+            # Store this as a memory
+            self.store_dnd_memory(
+                introduction,
+                memory_type="setting_introduction",
+                character_id=character_data.get('name', 'player')
+            )
+            
+            return introduction
+            
+        except Exception as e:
+            logger.error(f"Error generating setting introduction: {e}")
+            # Fallback introduction
+            return f"You find yourself in a mysterious land, ready to begin your adventure as {character_data.get('name', 'a hero')}..."
+
+    def load_campaign(self, campaign_id: str) -> bool:
+        """
+        Load an existing campaign.
+        
+        Args:
+            campaign_id: Campaign ID to load
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            import os
+            campaign_file = f"campaign_saves/{campaign_id}.json"
+            if not os.path.exists(campaign_file):
+                logger.error(f"Campaign file not found: {campaign_file}")
+                return False
+            
+            with open(campaign_file, 'r') as f:
+                campaign_data = json.load(f)
+            
+            # Update the bridge's campaign ID
+            self.campaign_id = campaign_id
+            
+            # Reinitialize components with the new campaign ID
+            self.memory_system = VectorMemoryModule(campaign_id=campaign_id)
+            self.campaign_orchestrator = DynamicCampaignOrchestrator(
+                storage_path=f"orchestrator_{campaign_id}.jsonl"
+            )
+            self.lore_manager = LoreManager(campaign_id)
+            
+            logger.info(f"Loaded campaign: {campaign_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error loading campaign: {e}")
+            return False
+
+    def process_player_input(self, player_input: str, campaign_id: str) -> str:
+        """
+        Process player input and return DM response.
+        
+        Args:
+            player_input: Player's action/input
+            campaign_id: Campaign ID
+            
+        Returns:
+            DM response text
+        """
+        try:
+            # Store player action as memory
+            self.store_dnd_memory(
+                player_input,
+                memory_type="player_action",
+                character_id="player"
+            )
+            
+            # Recall relevant memories
+            relevant_memories = self.recall_related_memories(
+                player_input,
+                max_results=5,
+                character_id="player"
+            )
+            
+            # Generate DM response using AI
+            if self.ai_dm_engine:
+                context = {
+                    "player_action": player_input,
+                    "relevant_memories": relevant_memories,
+                    "campaign_id": campaign_id,
+                    "character_name": "the player"
+                }
+                
+                response = self.ai_dm_engine.generate_response(context)
+            else:
+                # Fallback response
+                response = self._generate_fallback_narration(
+                    situation="player action",
+                    player_actions=[player_input]
+                )
+            
+            # Store DM response as memory
+            self.store_dnd_memory(
+                response,
+                memory_type="dm_response",
+                character_id="dm"
+            )
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error processing player input: {e}")
+            return "I'm sorry, but I'm having trouble processing that right now. Please try again."
+
+    def save_campaign(self, campaign_id: str) -> bool:
+        """
+        Save current campaign state.
+        
+        Args:
+            campaign_id: Campaign ID to save
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            import os
+            # Update campaign data
+            campaign_file = f"campaign_saves/{campaign_id}.json"
+            if os.path.exists(campaign_file):
+                with open(campaign_file, 'r') as f:
+                    campaign_data = json.load(f)
+                
+                campaign_data["last_modified"] = datetime.datetime.now().isoformat()
+                campaign_data["session_count"] = campaign_data.get("session_count", 0) + 1
+                
+                with open(campaign_file, 'w') as f:
+                    json.dump(campaign_data, f, indent=2)
+            
+            logger.info(f"Saved campaign: {campaign_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error saving campaign: {e}")
+            return False
+
+    def get_campaign_data(self, campaign_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get campaign data.
+        
+        Args:
+            campaign_id: Campaign ID
+            
+        Returns:
+            Campaign data dictionary or None if not found
+        """
+        try:
+            import os
+            campaign_file = f"campaign_saves/{campaign_id}.json"
+            if not os.path.exists(campaign_file):
+                return None
+            
+            with open(campaign_file, 'r') as f:
+                return json.load(f)
+                
+        except Exception as e:
+            logger.error(f"Error getting campaign data: {e}")
+            return None
+
 # Convenience functions for common DnD operations
 def create_dnd_bridge(campaign_id: str, api_key: Optional[str] = None) -> NarrativeBridge:
     """Create a new narrative bridge for DnD gameplay"""
@@ -1979,3 +2262,216 @@ def store_quest_memory(bridge: NarrativeBridge, quest_description: str,
         tags=["quest", quest_name]
     )
     return bridge.store_dnd_memory(memory) 
+
+    def initialize_campaign(self, character_data: Dict[str, Any], campaign_name: str = None) -> Optional[Dict[str, Any]]:
+        """Initialize a new campaign with the given character."""
+        try:
+            if not campaign_name:
+                campaign_name = f"Adventure of {character_data.get('name', 'the Hero')}"
+            
+            import uuid
+            campaign_id = f"campaign-{uuid.uuid4().hex[:8]}"
+            
+            character_file = f"character_saves/{campaign_id}_character.json"
+            with open(character_file, 'w') as f:
+                json.dump(character_data, f, indent=2)
+            
+            campaign_data = {
+                "campaign_id": campaign_id,
+                "name": campaign_name,
+                "created_date": datetime.datetime.now().isoformat(),
+                "active_character": character_data,
+                "session_count": 0,
+                "current_location": "Starting Area",
+                "world_state": {}
+            }
+            
+            campaign_file = f"campaign_saves/{campaign_id}.json"
+            with open(campaign_file, 'w') as f:
+                json.dump(campaign_data, f, indent=2)
+            
+            self.campaign_id = campaign_id
+            
+            self.store_dnd_memory(
+                f"You begin your adventure as {character_data.get('name', 'a hero')}, a {character_data.get('race', 'adventurer')} {character_data.get('class', 'hero')}.",
+                memory_type="campaign_start",
+                character_id=character_data.get('name', 'player')
+            )
+            
+            self.create_character_arc(
+                character_id=character_data.get('name', 'player'),
+                name="The Hero's Journey",
+                arc_type=ArcType.PERSONAL_GROWTH,
+                description=f"The journey of {character_data.get('name', 'the hero')} as they discover their destiny.",
+                emotional_themes=["courage", "growth", "discovery"]
+            )
+            
+            self.create_plot_thread(
+                name="The Mysterious Artifacts",
+                thread_type=ThreadType.MAIN_QUEST,
+                description="Ancient artifacts have appeared in the world, drawing the attention of many.",
+                priority=1,
+                assigned_characters=[character_data.get('name', 'player')]
+            )
+            
+            logger.info(f"Initialized campaign: {campaign_id}")
+            return campaign_data
+            
+        except Exception as e:
+            logger.error(f"Error initializing campaign: {e}")
+            return None
+
+    def generate_setting_introduction(self, character_data: Dict[str, Any], campaign_name: str) -> str:
+        """Generate LLM-created setting introduction as per design guide."""
+        try:
+            import openai
+            
+            prompt = f"""
+            You are a master storyteller creating an immersive opening scene for a DnD 5e solo adventure.
+            
+            Character: {character_data.get('name', 'the Hero')} - a {character_data.get('race', 'adventurer')} {character_data.get('class', 'hero')}
+            Campaign: {campaign_name}
+            
+            Create a vivid, atmospheric opening scene that introduces the character to their adventure. 
+            This should be 2-3 paragraphs that set the mood, establish the immediate environment, 
+            and hint at the adventure to come. Make it feel like the opening of an epic fantasy novel.
+            
+            Focus on:
+            - Sensory details (sights, sounds, smells)
+            - Atmospheric mood
+            - Immediate surroundings
+            - A sense of mystery or adventure
+            - The character's current situation
+            
+            Write in third person, present tense, as if narrating the scene to the player.
+            """
+            
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a master DnD storyteller creating immersive opening scenes."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=300,
+                temperature=0.8
+            )
+            
+            introduction = response.choices[0].message.content.strip()
+            
+            self.store_dnd_memory(
+                introduction,
+                memory_type="setting_introduction",
+                character_id=character_data.get('name', 'player')
+            )
+            
+            return introduction
+            
+        except Exception as e:
+            logger.error(f"Error generating setting introduction: {e}")
+            return f"You find yourself in a mysterious land, ready to begin your adventure as {character_data.get('name', 'a hero')}..."
+
+    def load_campaign(self, campaign_id: str) -> bool:
+        """Load an existing campaign."""
+        try:
+            import os
+            campaign_file = f"campaign_saves/{campaign_id}.json"
+            if not os.path.exists(campaign_file):
+                logger.error(f"Campaign file not found: {campaign_file}")
+                return False
+            
+            with open(campaign_file, 'r') as f:
+                campaign_data = json.load(f)
+            
+            self.campaign_id = campaign_id
+            
+            self.memory_system = VectorMemoryModule(campaign_id=campaign_id)
+            self.campaign_orchestrator = DynamicCampaignOrchestrator(
+                storage_path=f"orchestrator_{campaign_id}.jsonl"
+            )
+            self.lore_manager = LoreManager(campaign_id)
+            
+            logger.info(f"Loaded campaign: {campaign_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error loading campaign: {e}")
+            return False
+
+    def process_player_input(self, player_input: str, campaign_id: str) -> str:
+        """Process player input and return DM response."""
+        try:
+            self.store_dnd_memory(
+                player_input,
+                memory_type="player_action",
+                character_id="player"
+            )
+            
+            relevant_memories = self.recall_related_memories(
+                player_input,
+                max_results=5,
+                character_id="player"
+            )
+            
+            if self.ai_dm_engine:
+                context = {
+                    "player_action": player_input,
+                    "relevant_memories": relevant_memories,
+                    "campaign_id": campaign_id,
+                    "character_name": "the player"
+                }
+                
+                response = self.ai_dm_engine.generate_response(context)
+            else:
+                response = self._generate_fallback_narration(
+                    situation="player action",
+                    player_actions=[player_input]
+                )
+            
+            self.store_dnd_memory(
+                response,
+                memory_type="dm_response",
+                character_id="dm"
+            )
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error processing player input: {e}")
+            return "I'm sorry, but I'm having trouble processing that right now. Please try again."
+
+    def save_campaign(self, campaign_id: str) -> bool:
+        """Save current campaign state."""
+        try:
+            import os
+            campaign_file = f"campaign_saves/{campaign_id}.json"
+            if os.path.exists(campaign_file):
+                with open(campaign_file, 'r') as f:
+                    campaign_data = json.load(f)
+                
+                campaign_data["last_modified"] = datetime.datetime.now().isoformat()
+                campaign_data["session_count"] = campaign_data.get("session_count", 0) + 1
+                
+                with open(campaign_file, 'w') as f:
+                    json.dump(campaign_data, f, indent=2)
+            
+            logger.info(f"Saved campaign: {campaign_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error saving campaign: {e}")
+            return False
+
+    def get_campaign_data(self, campaign_id: str) -> Optional[Dict[str, Any]]:
+        """Get campaign data."""
+        try:
+            import os
+            campaign_file = f"campaign_saves/{campaign_id}.json"
+            if not os.path.exists(campaign_file):
+                return None
+            
+            with open(campaign_file, 'r') as f:
+                return json.load(f)
+                
+        except Exception as e:
+            logger.error(f"Error getting campaign data: {e}")
+            return None
