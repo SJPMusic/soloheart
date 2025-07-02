@@ -1,4 +1,4 @@
-# 🎲 Solo Narrative Engine Demo
+# 🎲 SoloHeart Game Engine
 
 > **Transform solo tabletop gaming with AI-powered storytelling that adapts to your choices and creates truly personalized adventures.**
 
@@ -47,7 +47,7 @@ Character Creation → Memory Systems → Emotional Tracking → Campaign Progre
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/PianomanSJPM/solo-rp-game-demo.git
-   cd solo-rp-game-demo/dnd_game
+   cd solo-rp-game-demo/solo_heart
    ```
 
 2. **Install dependencies**:
@@ -119,7 +119,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details on 
 ## Documentation
 
 - [Investor Documentation](investor_docs/) - Project overview, features, and future vision
-- [Attribution](dnd_game/ATTRIBUTION.md) - Legal compliance and attributions
+- [Attribution](solo_heart/ATTRIBUTION.md) - Legal compliance and attributions
 
 ## Attribution
 

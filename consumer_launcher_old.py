@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Consumer-Friendly Launcher for Solo DnD 5E
+Consumer-Friendly Launcher for SoloHeart
 Simple setup and launch for non-technical users.
 """
 
@@ -11,7 +11,7 @@ import os
 import webbrowser
 
 def main():
-    print("🎲 Solo DnD 5E - AI Adventure Game")
+    print("🎲 SoloHeart - AI Adventure Game")
     print("=" * 40)
     
     # Check if .env exists and has API key

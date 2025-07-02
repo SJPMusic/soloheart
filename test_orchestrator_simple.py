@@ -14,7 +14,7 @@ from pathlib import Path
 # Add the current directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from dnd_game.narrative_bridge import NarrativeBridge
+from solo_heart.narrative_bridge import NarrativeBridge
 from narrative_engine.memory.emotional_memory import EmotionType
 from narrative_engine.journaling.player_journal import JournalEntryType
 from narrative_engine.narrative_structure.character_arcs import ArcType, ArcStatus

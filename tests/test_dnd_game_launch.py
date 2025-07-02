@@ -15,11 +15,11 @@ from unittest.mock import patch, MagicMock
 # Add the project root to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from dnd_game.narrative_bridge import (
+from solo_heart.narrative_bridge import (
     NarrativeBridge, DnDMemoryEntry, DnDNPCResponse,
     create_dnd_bridge, store_combat_memory, store_quest_memory
 )
-from dnd_game.enhanced_campaign_manager import EnhancedCampaignManager
+from solo_heart.enhanced_campaign_manager import EnhancedCampaignManager
 
 
 class TestDnDGameLaunch(unittest.TestCase):
@@ -211,7 +211,7 @@ class TestDnDGameLaunch(unittest.TestCase):
         
         self.assertTrue(success)
     
-    @patch('dnd_game.narrative_bridge.NarrativeBridge')
+    @patch('solo_heart.narrative_bridge.NarrativeBridge')
     def test_bridge_error_handling(self, mock_bridge_class):
         """Test error handling in the bridge"""
         # Mock the bridge to raise an exception

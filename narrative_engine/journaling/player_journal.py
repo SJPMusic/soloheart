@@ -23,6 +23,7 @@ class JournalEntryType(Enum):
     QUEST_LOG = "quest_log"
     CHARACTER_DEVELOPMENT = "character_development"
     WORLD_OBSERVATION = "world_observation"
+    CHARACTER_CREATION = "character_creation"
 
 
 @dataclass

@@ -1,42 +1,49 @@
 #!/usr/bin/env python3
 """
-OpenAI API Setup for DnD 5E AI-Powered Game
-===========================================
+Ollama LLM Service Setup for SoloHeart
+======================================
 
-This script helps you set up your OpenAI API key for the DnD game.
+This script helps you set up Ollama for local LLM functionality.
 """
 
 import os
 import getpass
 from pathlib import Path
 
-def setup_openai_api():
-    """Set up OpenAI API key"""
-    print("🤖 OpenAI API Setup for DnD 5E AI-Powered Game")
+def setup_ollama_service():
+    """Set up Ollama LLM service"""
+    print("🤖 Ollama LLM Service Setup for SoloHeart")
     print("=" * 50)
     
-    # Check if API key already exists
-    api_key = os.getenv('OPENAI_API_KEY')
-    if api_key:
-        print(f"✅ OpenAI API key already found: {api_key[:8]}...")
-        print("You can now run the game with ChatGPT-quality responses!")
-        return True
-    
-    print("\n📋 To use ChatGPT-quality responses, you need an OpenAI API key.")
-    print("\n🔑 How to get your API key:")
-    print("1. Go to https://platform.openai.com/api-keys")
-    print("2. Sign in or create an account")
-    print("3. Click 'Create new secret key'")
-    print("4. Copy the key (it starts with 'sk-')")
-    print("\n💰 Cost: Very cheap - typically $1-5/month for heavy usage")
-    
-    # Get API key from user
-    print("\n" + "=" * 50)
-    api_key = getpass.getpass("Enter your OpenAI API key (starts with 'sk-'): ").strip()
-    
-    if not api_key.startswith('sk-'):
-        print("❌ Invalid API key format. API keys should start with 'sk-'")
+    # Check if Ollama is running
+    try:
+        import requests
+        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        if response.status_code == 200:
+            models = response.json().get('models', [])
+            model_names = [model.get('name', '') for model in models]
+            if 'llama3' in model_names:
+                print("✅ Ollama service found with LLaMA 3 model")
+                print("You can now run the game with local LLM responses!")
+                return True
+            else:
+                print("⚠️  Ollama service found but LLaMA 3 model not available")
+                print("Please run: ollama pull llama3")
+                return False
+        else:
+            print("❌ Ollama service not responding")
+            return False
+    except Exception as e:
+        print(f"❌ Cannot connect to Ollama service: {e}")
+        print("Please make sure Ollama is running: https://ollama.ai")
         return False
+    
+    print("\n📋 To use local LLM responses, you need Ollama with LLaMA 3.")
+    print("\n🔧 How to set up Ollama:")
+    print("1. Install Ollama from https://ollama.ai")
+    print("2. Start Ollama service")
+    print("3. Pull the LLaMA 3 model: ollama pull llama3")
+    print("\n💰 Cost: Free - runs entirely on your local machine")
     
     # Save to .env file
     env_file = Path('.env')
@@ -45,56 +52,55 @@ def setup_openai_api():
         with open(env_file, 'r') as f:
             lines = f.readlines()
         
-        # Check if OPENAI_API_KEY already exists
-        api_key_exists = any(line.startswith('OPENAI_API_KEY=') for line in lines)
+        # Check if OLLAMA_MODEL already exists
+        model_exists = any(line.startswith('OLLAMA_MODEL=') for line in lines)
         
-        if api_key_exists:
+        if model_exists:
             # Update existing line
             with open(env_file, 'w') as f:
                 for line in lines:
-                    if line.startswith('OPENAI_API_KEY='):
-                        f.write(f'OPENAI_API_KEY={api_key}\n')
+                    if line.startswith('OLLAMA_MODEL='):
+                        f.write('OLLAMA_MODEL=llama3\n')
                     else:
                         f.write(line)
         else:
             # Add new line
             with open(env_file, 'a') as f:
-                f.write(f'\nOPENAI_API_KEY={api_key}\n')
+                f.write('\nOLLAMA_MODEL=llama3\n')
+                f.write('OLLAMA_BASE_URL=http://localhost:11434\n')
     else:
         # Create new .env file
         with open(env_file, 'w') as f:
-            f.write(f'OPENAI_API_KEY={api_key}\n')
+            f.write('OLLAMA_MODEL=llama3\n')
+            f.write('OLLAMA_BASE_URL=http://localhost:11434\n')
     
-    print(f"✅ API key saved to .env file")
+    print(f"✅ Ollama configuration saved to .env file")
     print("\n🎮 You can now run the game with:")
-    print("   source venv/bin/activate && python3 gui_interface.py")
+    print("   python solo_heart/simple_unified_interface.py")
     
     return True
 
-def test_openai_connection():
-    """Test the OpenAI connection"""
+def test_ollama_connection():
+    """Test the Ollama connection"""
     try:
-        from openai import OpenAI
-        client = OpenAI()
+        from ollama_llm_service import chat_completion
         
         # Simple test call
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": "Say 'Hello, DnD world!'"}],
-            max_tokens=10
-        )
+        response = chat_completion([
+            {"role": "user", "content": "Say 'Hello, SoloHeart world!'"}
+        ], max_tokens=10)
         
-        print("✅ OpenAI connection successful!")
-        print(f"Test response: {response.choices[0].message.content}")
+        print("✅ Ollama connection successful!")
+        print(f"Test response: {response}")
         return True
         
     except Exception as e:
-        print(f"❌ OpenAI connection failed: {e}")
+        print(f"❌ Ollama connection failed: {e}")
         return False
 
 if __name__ == "__main__":
-    if setup_openai_api():
+    if setup_ollama_service():
         print("\n🧪 Testing connection...")
-        test_openai_connection()
+        test_ollama_connection()
     else:
         print("\n❌ Setup incomplete. Please try again.") 

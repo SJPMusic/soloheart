@@ -164,7 +164,7 @@ def get_database_url():
         return db_url
     
     # Default to SQLite in the project directory
-    db_path = os.path.join(os.path.dirname(__file__), 'dnd_game.db')
+    db_path = os.path.join(os.path.dirname(__file__), 'solo_heart.db')
     return f'sqlite:///{db_path}'
 
 def create_database():
