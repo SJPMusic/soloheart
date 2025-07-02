@@ -20,18 +20,18 @@ class AIDMEngine:
     """AI DM Engine that dynamically interprets DnD 5e rules"""
     
     def __init__(self, api_key: str = None):
-        self.api_key = api_key or os.getenv('OPENAI_API_KEY')
-        if self.api_key:
-            try:
-                from openai import OpenAI
-                self.client = OpenAI(api_key=self.api_key)
-                logger.info("OpenAI client initialized successfully")
-            except Exception as e:
-                logger.error(f"Failed to initialize OpenAI client: {e}")
-                self.client = None
-        else:
-            logger.warning("No OpenAI API key provided - using fallback responses")
-            self.client = None
+        try:
+            # Import the Ollama service from the solo_heart module
+            import sys
+            import os
+            sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'solo_heart'))
+            from ollama_llm_service import get_ollama_service
+            self.ollama_service = get_ollama_service()
+            logger.info("Ollama LLM service initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize Ollama LLM service: {e}")
+            self.ollama_service = None
+            logger.warning("Using fallback responses due to Ollama service failure")
         
         # Core DnD 5e knowledge base for context
         self.dnd_context = """
@@ -216,27 +216,27 @@ Explain your reasoning and provide a clear ruling.
         return "\n".join(parts)
     
     def _get_ai_response(self, prompt: str) -> str:
-        """Get response from OpenAI API"""
-        if not self.client:
+        """Get response from Ollama LLM service"""
+        if not self.ollama_service:
             # Fallback response without API
-            logger.warning("No OpenAI client available - using fallback response")
+            logger.warning("No Ollama service available - using fallback response")
             return self._fallback_response(prompt)
         
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are an expert DnD 5e Dungeon Master."},
-                    {"role": "user", "content": prompt}
-                ],
+            # Create a system message for the DM role
+            system_message = "You are an expert DnD 5e Dungeon Master. Respond as the DM, being helpful, engaging, and mechanically accurate."
+            
+            response = self.ollama_service.generate_response(
+                prompt=prompt,
+                system_message=system_message,
                 max_tokens=500,
                 temperature=0.7
             )
             
-            return response.choices[0].message.content.strip()
+            return response.strip()
             
         except Exception as e:
-            logger.error(f"OpenAI API error: {e}")
+            logger.error(f"Ollama API error: {e}")
             return self._fallback_response(prompt)
     
     def _parse_dice_roll(self, message: str) -> Optional[str]:

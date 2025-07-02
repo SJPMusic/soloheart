@@ -19,12 +19,15 @@ try:
 except ImportError:
     pass
 
-# OpenAI integration
+# Ollama LLM integration
 try:
-    from openai import OpenAI
-    OPENAI_AVAILABLE = True
+    import sys
+    import os
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'solo_heart'))
+    from ollama_llm_service import get_ollama_service
+    OLLAMA_AVAILABLE = True
 except ImportError:
-    OPENAI_AVAILABLE = False
+    OLLAMA_AVAILABLE = False
 
 @dataclass
 class ContentRequest:
@@ -51,12 +54,13 @@ class AIContentGenerator:
         self.templates = self._load_templates()
         self.name_generators = self._load_name_generators()
         
-        # Initialize OpenAI client
-        self.openai_client = None
-        if OPENAI_AVAILABLE:
-            api_key = os.getenv('OPENAI_API_KEY')
-            if api_key:
-                self.openai_client = OpenAI(api_key=api_key)
+        # Initialize Ollama LLM service
+        self.ollama_service = None
+        if OLLAMA_AVAILABLE:
+            try:
+                self.ollama_service = get_ollama_service()
+            except Exception as e:
+                logger.warning(f"Failed to initialize Ollama service: {e}")
     
     def _load_templates(self) -> Dict[str, List[str]]:
         """Load content templates"""
@@ -405,31 +409,28 @@ class AIContentGenerator:
         return summary.get('recent_activity', [])
     
     def generate_conversational_response(self, context: Dict[str, Any]) -> GeneratedContent:
-        """Generate conversational response using OpenAI API"""
-        if self.openai_client:
-            return self._generate_openai_response(context)
+        """Generate conversational response using Ollama LLM service"""
+        if self.ollama_service:
+            return self._generate_ollama_response(context)
         else:
             return self._generate_fallback_response(context)
     
-    def _generate_openai_response(self, context: Dict[str, Any]) -> GeneratedContent:
-        """Generate response using OpenAI API"""
+    def _generate_ollama_response(self, context: Dict[str, Any]) -> GeneratedContent:
+        """Generate response using Ollama LLM service"""
         try:
             # Build the prompt with memory context
             prompt = self._build_dm_prompt(context)
             
-            # Get response from OpenAI
-            response = self.openai_client.chat.completions.create(
-                model="gpt-4o-mini",  # Using the latest model
-                messages=[
-                    {"role": "system", "content": self._get_system_prompt()},
-                    {"role": "user", "content": prompt}
-                ],
+            # Get response from Ollama
+            system_message = self._get_system_prompt()
+            response = self.ollama_service.generate_response(
+                prompt=prompt,
+                system_message=system_message,
                 max_tokens=1000,
-                temperature=0.8,
-                stream=False
+                temperature=0.8
             )
             
-            ai_response = response.choices[0].message.content
+            ai_response = response.strip()
             
             # Extract entities and continuity notes
             entities = self._extract_entities_from_response(ai_response)
@@ -444,7 +445,7 @@ class AIContentGenerator:
             )
             
         except Exception as e:
-            print(f"OpenAI API error: {e}")
+            print(f"Ollama API error: {e}")
             return self._generate_fallback_response(context)
     
     def _get_system_prompt(self) -> str:

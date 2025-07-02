@@ -6,6 +6,8 @@ from typing import List, Dict, Any, Optional
 try:
     import faiss
     import numpy as np
+    # Note: OpenAI embeddings are still used for vector memory
+    # This could be replaced with a local embedding model in the future
     from openai import OpenAI
 except ImportError:
     faiss = None
