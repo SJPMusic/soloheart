@@ -23,4 +23,6 @@ Required attribution for SRD 5.1 was incorrectly flagged as a restricted keyword
 - All commits now pass compliance checks.
 - Legal SRD 5.1 attribution is respected and never blocked.
 - Future keyword checks will not flag valid SRD license language, ensuring ongoing compliance and auditability.
+
+This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License.
 --- 
