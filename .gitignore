@@ -154,4 +154,23 @@ data/volumes/
 
 # Docker logs
 docker.log
-container.log 
+container.log
+
+# Large files and backups
+backups/*.tar.gz
+backups/*.zip
+*.tar.gz
+*.zip
+
+# Images and media files
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.mp4
+*.mov
+*.avi
+
+# Test files
+test_memory.json
+cli_memory.json 
