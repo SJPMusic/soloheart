@@ -50,6 +50,8 @@ EXCLUDE_PATTERNS=(
     "LICENSE.txt"
     "COMPLIANCE_SUMMARY.md"
     ".hooks"
+    "branding_status/compliance_log.md"
+    "branding_status/compliance_milestone_srd_exemption.md"
 )
 
 echo -e "${GREEN}🔍 Running SRD 5.1 compliance check...${NC}"
