@@ -1,12 +1,12 @@
 """
-Narrative Bridge Module for DnD Game
+Narrative Bridge Module for SoloHeart Game
 
-This module acts as the DnD-specific adapter for The Narrative Engine.
-It provides a simplified interface tailored to the DnD game context while
+This module acts as the SoloHeart-specific adapter for The Narrative Engine.
+It provides a simplified interface tailored to the SoloHeart game context while
 isolating domain-specific logic from engine internals.
 
 The bridge allows easy future replacement or upgrade of the Narrative Engine
-without requiring changes to the DnD game code.
+without requiring changes to the SoloHeart game code.
 """
 
 import logging
@@ -44,8 +44,8 @@ from lore_manager import LoreManager, LoreType, LoreEntry
 logger = logging.getLogger(__name__)
 
 @dataclass
-class DnDGameState:
-    """DnD-specific game state wrapper"""
+class SoloHeartGameState:
+    """SoloHeart-specific game state wrapper"""
     campaign_id: str
     current_location: str
     party_members: List[Dict[str, Any]]
@@ -54,8 +54,8 @@ class DnDGameState:
     session_data: Dict[str, Any]
 
 @dataclass
-class DnDMemoryEntry:
-    """DnD-specific memory entry"""
+class SoloHeartMemoryEntry:
+    """SoloHeart-specific memory entry"""
     content: str
     memory_type: str
     metadata: Dict[str, Any]
@@ -69,8 +69,8 @@ class DnDMemoryEntry:
             self.emotional_context = []
 
 @dataclass
-class DnDNPCResponse:
-    """DnD-specific NPC response"""
+class SoloHeartNPCResponse:
+    """SoloHeart-specific NPC response"""
     text: str
     npc_name: str
     emotional_tone: str
@@ -80,9 +80,9 @@ class DnDNPCResponse:
 
 class NarrativeBridge:
     """
-    Bridge between DnD game and The Narrative Engine
+    Bridge between SoloHeart game and The Narrative Engine
     
-    This class provides a DnD-specific interface to the narrative engine,
+    This class provides a SoloHeart-specific interface to the narrative engine,
     handling domain-specific logic while maintaining clean separation
     from the engine internals.
     """
@@ -118,26 +118,26 @@ class NarrativeBridge:
         # Initialize lore manager
         self.lore_manager = LoreManager(campaign_id)
         
-        # Initialize AI DM engine and contextual drift guard
+        # Initialize AI SoloHeart Guide engine and contextual drift guard
         try:
             from narrative_engine.core.ai_dm_engine import AIDMEngine
             from narrative_engine.context.contextual_drift_guard import ContextualDriftGuard
             
             self.ai_dm_engine = AIDMEngine()
             self.drift_guard = ContextualDriftGuard()
-            logger.info("AI DM Engine and Contextual Drift Guard initialized successfully")
+            logger.info("AI SoloHeart Guide Engine and Contextual Drift Guard initialized successfully")
         except ImportError as e:
-            logger.warning(f"AI DM Engine not available: {e}. Using fallback narration.")
+            logger.warning(f"AI SoloHeart Guide Engine not available: {e}. Using fallback narration.")
             self.ai_dm_engine = None
             self.drift_guard = None
         except Exception as e:
-            logger.warning(f"Error initializing AI DM Engine: {e}. Using fallback narration.")
+            logger.warning(f"Error initializing AI SoloHeart Guide Engine: {e}. Using fallback narration.")
             self.ai_dm_engine = None
             self.drift_guard = None
         
         logger.info(f"Narrative Bridge initialized for campaign: {campaign_id}")
     
-    def store_dnd_memory(
+    def store_soloheart_memory(
         self,
         content: str,
         memory_type: str = "event",
@@ -149,7 +149,7 @@ class NarrativeBridge:
         character_id: str = "player"
     ) -> bool:
         """
-        Store a DnD memory with optional emotional tagging and character association.
+        Store a SoloHeart memory with optional emotional tagging and character association.
         """
         try:
             if primary_emotion is None:
@@ -180,10 +180,10 @@ class NarrativeBridge:
                         )
                 except Exception as e:
                     logger.warning(f"Could not enhance memory with emotional context: {e}")
-            logger.info(f"Stored DnD memory with emotion {primary_emotion} for {character_id}: {content[:50]}...")
+            logger.info(f"Stored SoloHeart memory with emotion {primary_emotion} for {character_id}: {content[:50]}...")
             return True
         except Exception as e:
-            logger.error(f"Error storing DnD memory: {e}")
+            logger.error(f"Error storing SoloHeart memory: {e}")
             return False
 
     def store_character_creation(self, character_data: dict, campaign_id: str) -> bool:
@@ -239,7 +239,7 @@ class NarrativeBridge:
             """
             
             # Store the character creation with high importance
-            success = self.store_dnd_memory(
+            success = self.store_soloheart_memory(
                 content=character_description,
                 memory_type="character_creation",
                 metadata=character_data,
@@ -333,7 +333,7 @@ class NarrativeBridge:
         return EmotionType.DETERMINATION
     
     def get_npc_response(self, npc_name: str, context: str, 
-                        player_emotion: Optional[Dict[str, float]] = None) -> DnDNPCResponse:
+                        player_emotion: Optional[Dict[str, float]] = None) -> SoloHeartNPCResponse:
         """
         Generate an NPC response using the narrative engine
         
@@ -343,7 +343,7 @@ class NarrativeBridge:
             player_emotion: Player's emotional state
             
         Returns:
-            DnDNPCResponse: NPC response with DnD-specific context
+            SoloHeartNPCResponse: NPC response with SoloHeart-specific context
         """
         try:
             # Get or create NPC character
@@ -351,7 +351,7 @@ class NarrativeBridge:
             if not npc:
                 npc = Character(
                     name=npc_name,
-                    personality="Adaptive DnD NPC",
+                    personality="Adaptive SoloHeart NPC",
                     current_emotion="neutral"
                 )
                 self.character_manager.add_character(npc)
@@ -363,12 +363,12 @@ class NarrativeBridge:
                 emotional_context=player_emotion or {}
             )
             
-            # Analyze response for DnD-specific elements
+            # Analyze response for SoloHeart-specific elements
             quest_hints = self._extract_quest_hints(response)
             combat_ready = self._detect_combat_readiness(response)
             emotional_tone = self._analyze_emotional_tone(response)
             
-            return DnDNPCResponse(
+            return SoloHeartNPCResponse(
                 text=response,
                 npc_name=npc_name,
                 emotional_tone=emotional_tone,
@@ -378,13 +378,13 @@ class NarrativeBridge:
             
         except Exception as e:
             logger.error(f"Failed to generate NPC response: {e}")
-            return DnDNPCResponse(
+            return SoloHeartNPCResponse(
                 text="The NPC seems distracted and doesn't respond clearly.",
                 npc_name=npc_name,
                 emotional_tone="neutral"
             )
     
-    def generate_dm_narration(
+    def generate_guide_narration(
         self,
         situation: str,
         player_actions: List[str],
@@ -392,7 +392,7 @@ class NarrativeBridge:
         emotional_context: Optional[List[str]] = None
     ) -> str:
         """
-        Generate DM narration for a situation.
+        Generate SoloHeart Guide narration for a situation.
         
         Args:
             situation: Current situation description
@@ -404,7 +404,7 @@ class NarrativeBridge:
             Generated narration
         """
         try:
-            # Check if AI DM engine is available
+            # Check if AI SoloHeart Guide engine is available
             if self.ai_dm_engine is None:
                 # Enhanced fallback narration
                 return self._generate_fallback_narration(situation, player_actions, emotional_context)
@@ -415,7 +415,7 @@ class NarrativeBridge:
             context["player_actions"] = player_actions
             context["emotional_context"] = emotional_context or []
             
-            # Generate narration using AI DM engine
+            # Generate narration using AI SoloHeart Guide engine
             narration = self.ai_dm_engine.process_action(
                 player_action=situation,
                 character_info=world_context.get("character_info"),
@@ -428,11 +428,11 @@ class NarrativeBridge:
             else:
                 validated_narration = narration
             
-            logger.info(f"Generated DM narration: {validated_narration[:50]}...")
+            logger.info(f"Generated SoloHeart Guide narration: {validated_narration[:50]}...")
             return validated_narration
             
         except Exception as e:
-            logger.error(f"Error generating DM narration: {e}")
+            logger.error(f"Error generating SoloHeart Guide narration: {e}")
             return self._generate_fallback_narration(situation, player_actions, emotional_context)
     
     def _generate_fallback_narration(
@@ -442,7 +442,7 @@ class NarrativeBridge:
         emotional_context: Optional[List[str]] = None
     ) -> str:
         """
-        Generate enhanced fallback narration when AI DM engine is not available.
+        Generate enhanced fallback narration when AI SoloHeart Guide engine is not available.
         
         Args:
             situation: Current situation description
@@ -505,12 +505,12 @@ class NarrativeBridge:
                 memories = emotional_filter_obj.filter_by_emotion(
                     memories, emotional_filter, min_emotional_intensity
                 )
-            dnd_memories = []
+            soloheart_memories = []
             for memory in memories:
                 metadata = memory.get("metadata", {})
                 primary_emotion = metadata.get("primary_emotion", "Neutral")
                 emotional_intensity = metadata.get("emotional_intensity", 0.5)
-                dnd_memory = {
+                soloheart_memory = {
                     "content": memory.get("text", str(memory)),
                     "memory_type": memory.get("memory_type", "event"),
                     "relevance_score": memory.get("importance", 0.5),
@@ -524,9 +524,9 @@ class NarrativeBridge:
                     "timestamp": metadata.get("timestamp"),
                     "character_id": metadata.get("character_id", "player")
                 }
-                dnd_memories.append(dnd_memory)
-            logger.info(f"Recalled {len(dnd_memories)} related memories for {character_id or 'all characters'}")
-            return dnd_memories
+                soloheart_memories.append(soloheart_memory)
+            logger.info(f"Recalled {len(soloheart_memories)} related memories for {character_id or 'all characters'}")
+            return soloheart_memories
         except Exception as e:
             logger.error(f"Error recalling memories: {e}")
             return []
@@ -2085,7 +2085,7 @@ class NarrativeBridge:
             self.store_character_creation(character_data, campaign_id)
             
             # Store initial memory
-            self.store_dnd_memory(
+            self.store_soloheart_memory(
                 f"You begin your adventure as {character_data.get('name', 'a hero')}, a {character_data.get('race', 'adventurer')} {character_data.get('class', 'hero')}.",
                 memory_type="campaign_start",
                 character_id=character_data.get('name', 'player')
@@ -2132,7 +2132,7 @@ class NarrativeBridge:
             from ollama_llm_service import chat_completion
             
             prompt = f"""
-            You are a master storyteller creating an immersive opening scene for a DnD 5e solo adventure.
+            You are a master storyteller creating an immersive opening scene for a SoloHeart solo adventure.
             
             Character: {character_data.get('name', 'the Hero')} - a {character_data.get('race', 'adventurer')} {character_data.get('class', 'hero')}
             Campaign: {campaign_name}
@@ -2152,14 +2152,14 @@ class NarrativeBridge:
             """
             
             introduction = chat_completion([
-                {"role": "system", "content": "You are a master DnD storyteller creating immersive opening scenes."},
+                {"role": "system", "content": "You are a master SoloHeart storyteller creating immersive opening scenes."},
                 {"role": "user", "content": prompt}
             ], temperature=0.8, max_tokens=300)
             
             introduction = introduction.strip()
             
             # Store this as a memory
-            self.store_dnd_memory(
+            self.store_soloheart_memory(
                 introduction,
                 memory_type="setting_introduction",
                 character_id=character_data.get('name', 'player')
@@ -2211,18 +2211,18 @@ class NarrativeBridge:
 
     def process_player_input(self, player_input: str, campaign_id: str) -> str:
         """
-        Process player input and return DM response.
+        Process player input and return SoloHeart Guide response.
         
         Args:
             player_input: Player's action/input
             campaign_id: Campaign ID
             
         Returns:
-            DM response text
+            SoloHeart Guide response text
         """
         try:
             # Store player action as memory
-            self.store_dnd_memory(
+            self.store_soloheart_memory(
                 player_input,
                 memory_type="player_action",
                 character_id="player"
@@ -2235,7 +2235,7 @@ class NarrativeBridge:
                 character_id="player"
             )
             
-            # Generate DM response using AI
+            # Generate SoloHeart Guide response using AI
             if self.ai_dm_engine:
                 context = {
                     "player_action": player_input,
@@ -2252,11 +2252,11 @@ class NarrativeBridge:
                     player_actions=[player_input]
                 )
             
-            # Store DM response as memory
-            self.store_dnd_memory(
+            # Store SoloHeart Guide response as memory
+            self.store_soloheart_memory(
                 response,
-                memory_type="dm_response",
-                character_id="dm"
+                memory_type="guide_response",
+                character_id="guide"
             )
             
             return response
@@ -2319,34 +2319,34 @@ class NarrativeBridge:
             logger.error(f"Error getting campaign data: {e}")
             return None
 
-# Convenience functions for common DnD operations
-def create_dnd_bridge(campaign_id: str, api_key: Optional[str] = None) -> NarrativeBridge:
-    """Create a new narrative bridge for DnD gameplay"""
+# Convenience functions for common SoloHeart operations
+def create_soloheart_bridge(campaign_id: str, api_key: Optional[str] = None) -> NarrativeBridge:
+    """Create a new narrative bridge for SoloHeart gameplay"""
     return NarrativeBridge(campaign_id, api_key)
 
 def store_combat_memory(bridge: NarrativeBridge, combat_description: str, 
                        location: str, participants: List[str]) -> bool:
     """Store a combat-related memory"""
-    memory = DnDMemoryEntry(
+    memory = SoloHeartMemoryEntry(
         content=combat_description,
         memory_type="episodic",
         location=location,
         combat_related=True,
         tags=["combat"] + participants
     )
-    return bridge.store_dnd_memory(memory)
+    return bridge.store_soloheart_memory(memory)
 
 def store_quest_memory(bridge: NarrativeBridge, quest_description: str,
                       quest_name: str, location: str) -> bool:
     """Store a quest-related memory"""
-    memory = DnDMemoryEntry(
+    memory = SoloHeartMemoryEntry(
         content=quest_description,
         memory_type="semantic",
         location=location,
         quest_related=quest_name,
         tags=["quest", quest_name]
     )
-    return bridge.store_dnd_memory(memory) 
+    return bridge.store_soloheart_memory(memory) 
 
     def initialize_campaign(self, character_data: Dict[str, Any], campaign_name: str = None) -> Optional[Dict[str, Any]]:
         """Initialize a new campaign with the given character."""
@@ -2377,7 +2377,7 @@ def store_quest_memory(bridge: NarrativeBridge, quest_description: str,
             
             self.campaign_id = campaign_id
             
-            self.store_dnd_memory(
+            self.store_soloheart_memory(
                 f"You begin your adventure as {character_data.get('name', 'a hero')}, a {character_data.get('race', 'adventurer')} {character_data.get('class', 'hero')}.",
                 memory_type="campaign_start",
                 character_id=character_data.get('name', 'player')
@@ -2412,7 +2412,7 @@ def store_quest_memory(bridge: NarrativeBridge, quest_description: str,
             from ollama_llm_service import chat_completion
             
             prompt = f"""
-            You are a master storyteller creating an immersive opening scene for a DnD 5e solo adventure.
+            You are a master storyteller creating an immersive opening scene for a SoloHeart solo adventure.
             
             Character: {character_data.get('name', 'the Hero')} - a {character_data.get('race', 'adventurer')} {character_data.get('class', 'hero')}
             Campaign: {campaign_name}
@@ -2432,13 +2432,13 @@ def store_quest_memory(bridge: NarrativeBridge, quest_description: str,
             """
             
             introduction = chat_completion([
-                {"role": "system", "content": "You are a master DnD storyteller creating immersive opening scenes."},
+                {"role": "system", "content": "You are a master SoloHeart storyteller creating immersive opening scenes."},
                 {"role": "user", "content": prompt}
             ], temperature=0.8, max_tokens=300)
             
             introduction = introduction.strip()
             
-            self.store_dnd_memory(
+            self.store_soloheart_memory(
                 introduction,
                 memory_type="setting_introduction",
                 character_id=character_data.get('name', 'player')
@@ -2478,9 +2478,9 @@ def store_quest_memory(bridge: NarrativeBridge, quest_description: str,
             return False
 
     def process_player_input(self, player_input: str, campaign_id: str) -> str:
-        """Process player input and return DM response."""
+        """Process player input and return SoloHeart Guide response."""
         try:
-            self.store_dnd_memory(
+            self.store_soloheart_memory(
                 player_input,
                 memory_type="player_action",
                 character_id="player"
@@ -2507,10 +2507,10 @@ def store_quest_memory(bridge: NarrativeBridge, quest_description: str,
                     player_actions=[player_input]
                 )
             
-            self.store_dnd_memory(
+            self.store_soloheart_memory(
                 response,
-                memory_type="dm_response",
-                character_id="dm"
+                memory_type="guide_response",
+                character_id="guide"
             )
             
             return response

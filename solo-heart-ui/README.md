@@ -1,6 +1,6 @@
-# Solo Adventure UI
+# SoloHeart UI
 
-A modern React web interface for the Solo DnD 5E game engine. This UI provides an immersive, chat-based interface for interacting with the AI Dungeon Master.
+A modern React web interface for the SoloHeart game engine. This UI provides an immersive, chat-based interface for interacting with the AI SoloHeart Guide.
 
 ## Features
 
@@ -24,7 +24,7 @@ A modern React web interface for the Solo DnD 5E game engine. This UI provides a
 ### 1. Install Dependencies
 
 ```bash
-cd dnd-ui
+cd soloheart-ui
 npm install
 ```
 
@@ -251,7 +251,7 @@ src/
 
 ## License
 
-This project is part of the Solo Adventure system and follows the same licensing terms.
+This project is part of the SoloHeart system and follows the same licensing terms.
 
 ---
 

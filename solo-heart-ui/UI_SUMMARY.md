@@ -1,8 +1,8 @@
-# Solo Adventure UI - Implementation Summary
+# SoloHeart UI - Implementation Summary
 
 ## Overview
 
-I've built a complete modern React web UI for your Solo DnD 5E game engine. The UI provides an immersive, chat-based interface that connects to your backend running on localhost:5001.
+I've built a complete modern React web UI for your SoloHeart game engine. The UI provides an immersive, chat-based interface that connects to your backend running on localhost:5001.
 
 ## 🎯 Key Features Implemented
 
@@ -106,7 +106,7 @@ dnd-ui/
 ### **Quick Start**
 1. **Install dependencies**:
    ```bash
-   cd dnd-ui
+   cd soloheart-ui
    npm install
    ```
 
@@ -120,7 +120,7 @@ dnd-ui/
 ### **Alternative: Static Demo**
 If you don't have Node.js installed, you can view the static demo:
 ```bash
-open dnd-ui/demo.html
+open soloheart-ui/demo.html
 ```
 
 ## 🎮 Usage Guide
@@ -213,7 +213,7 @@ The sidebar automatically collapses on small screens for better mobile experienc
 
 ---
 
-This UI provides a solid foundation for your Solo Adventure game. It's clean, immersive, and ready for immediate use with your existing backend. The modular design makes it easy to add new features as your game evolves.
+This UI provides a solid foundation for your SoloHeart game. It's clean, immersive, and ready for immediate use with your existing backend. The modular design makes it easy to add new features as your game evolves.
 
 
 ---

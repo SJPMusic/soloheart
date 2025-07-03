@@ -1,6 +1,6 @@
 # Demo Requirements - Minimal dependencies to run the Solo Narrative Engine Demo
 Flask>=2.3.0
 Flask-CORS>=4.0.0
-openai>=1.0.0
+# openai>=1.0.0  # Removed - using Ollama instead
 python-dotenv>=1.0.0
 jsonschema>=4.0.0

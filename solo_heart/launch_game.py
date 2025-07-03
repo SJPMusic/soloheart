@@ -37,9 +37,9 @@ def main():
     print("🎲 SoloHeart Game Launcher")
     print("=" * 40)
     
-    # Start the start screen interface (port 5001)
+    # Start the unified interface (port 5001)
     start_screen_process = start_server(
-        'start_screen_interface.py', 
+        'simple_unified_interface.py', 
         5001, 
         'Start Screen Interface'
     )

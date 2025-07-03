@@ -9,9 +9,9 @@ Integrates the layered memory system with AI DM responses for:
 - Emotional continuity and thematic callbacks
 """
 
-import openai
 import json
 import logging
+import requests
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 from .enhanced_memory_system import LayeredMemorySystem, MemoryType, MemoryLayer, EmotionalContext
@@ -21,10 +21,9 @@ logger = logging.getLogger(__name__)
 class EnhancedAIDMEngine:
     """AI DM Engine enhanced with layered memory system integration"""
     
-    def __init__(self, api_key: str = None, campaign_id: str = "default"):
-        self.api_key = api_key
-        if api_key:
-            openai.api_key = api_key
+    def __init__(self, ollama_url: str = "http://localhost:11434", campaign_id: str = "default"):
+        self.ollama_url = ollama_url
+        self.model = "llama3"
         
         # Initialize memory system
         self.memory_system = LayeredMemorySystem(campaign_id)
@@ -178,25 +177,30 @@ Make your response engaging, narrative-focused, and mechanically accurate while 
         return "\n".join(context_parts)
     
     def _get_memory_aware_response(self, context: str, user_id: str, session_id: str) -> str:
-        """Get AI response with memory awareness"""
-        if not self.api_key:
-            return self._fallback_response(context)
-        
+        """Get AI response with memory awareness using Ollama"""
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a memory-aware DnD 5e Dungeon Master."},
-                    {"role": "user", "content": context}
-                ],
-                max_tokens=600,
-                temperature=0.7
+            response = requests.post(
+                f"{self.ollama_url}/api/generate",
+                json={
+                    "model": self.model,
+                    "prompt": f"You are a memory-aware DnD 5e Dungeon Master. Respond to the following context:\n\n{context}",
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.7,
+                        "num_predict": 600
+                    }
+                },
+                timeout=30
             )
             
-            return response.choices[0].message.content.strip()
-            
+            if response.status_code == 200:
+                return response.json().get("response", "").strip()
+            else:
+                logger.error(f"Ollama API error: {response.status_code}")
+                return self._fallback_response(context)
+                
         except Exception as e:
-            logger.error(f"OpenAI API error: {e}")
+            logger.error(f"Ollama API error: {e}")
             return self._fallback_response(context)
     
     def _add_response_memory(self, response: str, original_action: str, 

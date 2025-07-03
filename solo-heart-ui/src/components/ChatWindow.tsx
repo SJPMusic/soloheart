@@ -54,7 +54,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading = false }) 
           <span></span>
           <span></span>
         </div>
-        <span className="text-ink-600 text-sm">The Dungeon Master is thinking...</span>
+        <span className="text-ink-600 text-sm">The SoloHeart Guide is thinking...</span>
       </div>
     </div>
   );
@@ -66,7 +66,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading = false }) 
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-ink-500">
               <div className="text-4xl mb-4">🎲</div>
-              <h3 className="text-xl font-fantasy mb-2">Welcome to Your Adventure</h3>
+              <h3 className="text-xl font-fantasy mb-2">Welcome to SoloHeart</h3>
               <p className="text-lg">Begin your journey by typing your first action or command.</p>
             </div>
           </div>
@@ -80,7 +80,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading = false }) 
                 <div className="flex-shrink-0">
                   {message.type === 'ai' ? (
                     <div className="w-8 h-8 bg-parchment-600 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">DM</span>
+                      <span className="text-white text-sm font-bold">SH</span>
                     </div>
                   ) : (
                     <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
@@ -90,7 +90,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading = false }) 
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs text-ink-500 mb-1">
-                    {message.type === 'ai' ? 'Dungeon Master' : 'You'} •{' '}
+                    {message.type === 'ai' ? 'SoloHeart Guide' : 'You'} •{' '}
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </div>
                   {formatMessage(message.content, message.type)}

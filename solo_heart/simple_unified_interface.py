@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Simple Unified SoloHeart Narrative Interface
-A single Flask server that provides the complete immersive solo DnD experience.
+A single Flask server that provides the complete immersive SoloHeart experience.
 """
 
 import os
@@ -12,12 +12,69 @@ import datetime
 from typing import Dict, List, Optional, Any
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from ollama_llm_service import chat_completion
+from utils.character_fact_extraction import (
+    extract_race_from_text,
+    extract_class_from_text,
+    extract_background_from_text,
+    extract_name_from_text
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Ollama LLM service - no fallbacks, must be available
+
+def check_system_requirements():
+    """Check that all system requirements are met."""
+    logger.info("🔍 Checking system requirements...")
+    
+    # Check if port 5001 is available
+    import socket
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('localhost', 5001))
+        sock.close()
+        logger.info("✅ Port 5001 is available")
+    except OSError:
+        # Only clear port if we're not in Flask debug mode (which restarts)
+        if not os.environ.get('FLASK_ENV') == 'development':
+            logger.error("❌ Port 5001 is already in use")
+            logger.info("💡 Stopping conflicting processes...")
+            os.system("lsof -ti:5001 | xargs kill -9 2>/dev/null")
+            logger.info("✅ Port 5001 cleared")
+        else:
+            logger.info("⚠️ Port 5001 in use (likely Flask restart) - continuing...")
+    
+    # Check Ollama connection
+    try:
+        import requests
+        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        if response.status_code == 200:
+            models = response.json().get('models', [])
+            model_names = [model.get('name', '') for model in models]
+            if 'llama3:latest' in model_names:
+                logger.info("✅ Ollama is running with llama3 model")
+            else:
+                logger.warning("⚠️ Ollama is running but llama3 model not found")
+                logger.info("💡 Run: ollama pull llama3")
+        else:
+            raise Exception(f"Ollama health check failed: {response.status_code}")
+    except Exception as e:
+        logger.error(f"❌ Ollama connection failed: {e}")
+        logger.error("💡 Please start Ollama with: brew services start ollama")
+        logger.error("💡 Or install with: brew install ollama")
+        raise Exception("System requirements not met")
+    
+    logger.info("✅ All system requirements met")
+
+# Run system checks at startup (only on initial start, not Flask restarts)
+if not os.environ.get('WERKZEUG_RUN_MAIN'):
+    try:
+        check_system_requirements()
+    except Exception as e:
+        logger.error(f"❌ System check failed: {e}")
+        logger.error("Please fix the issues above before starting the game")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'unified-narrative-key')
@@ -115,51 +172,48 @@ class SimpleCharacterGenerator:
     def _extract_single_fact(self, user_input: str, step: str) -> Optional[str]:
         """Extract a single fact from user input for the current step."""
         user_input_lower = user_input.lower()
-        logger.info(f"Extracting {step} from: '{user_input}'")
+        logger.info(f"🔍 Extracting {step} from: '{user_input}'")
         
         if step == "race":
-            races = ["human", "elf", "dwarf", "halfling", "dragonborn", "gnome", "half-elf", "half-orc", "tiefling"]
-            for race in races:
-                if race in user_input_lower:
-                    return race.title()
+            # Use the centralized race extraction utility
+            extracted_race = extract_race_from_text(user_input)
+            if extracted_race:
+                logger.info(f"✅ Race detected: {extracted_race}")
+                return extracted_race
+            else:
+                logger.warning(f"⚠️ No race detected in: '{user_input}'")
+                return None
         
         elif step == "class":
-            classes = ["barbarian", "bard", "cleric", "druid", "fighter", "monk", "paladin", "ranger", "rogue", "sorcerer", "warlock", "wizard"]
-            for char_class in classes:
-                if char_class in user_input_lower:
-                    return char_class.title()
+            # Use the centralized class extraction utility
+            extracted_class = extract_class_from_text(user_input)
+            if extracted_class:
+                logger.info(f"✅ Class detected: {extracted_class}")
+                return extracted_class
+            else:
+                logger.warning(f"⚠️ No class detected in: '{user_input}'")
+                return None
         
         elif step == "name":
-            # Extract name from various patterns
-            import re
-            name_patterns = [
-                r"my name is ([a-z]+)", r"i'm called ([a-z]+)", r"call me ([a-z]+)",
-                r"my character is named ([a-z]+)", r"name me ([a-z]+)",
-                r"^i am ([a-z]+)$", r"^i'm ([a-z]+)$",
-                r"my name's ([a-z]+)", r"i go by ([a-z]+)",
-                r"my character is ([a-z]+)", r"([a-z]+) is my name",
-                r"name is ([a-z]+)", r"called ([a-z]+)", r"named ([a-z]+)",
-                r"my character's name is ([a-z]+)", r"character name is ([a-z]+)",
-                r"i want to be ([a-z]+)", r"i want to play ([a-z]+)"
-            ]
-            for pattern in name_patterns:
-                match = re.search(pattern, user_input_lower)
-                if match:
-                    return match.group(1).title()
-            
-            # If no pattern matches, try to extract a single word that could be a name
-            words = user_input_lower.split()
-            for word in words:
-                if len(word) > 2 and word.isalpha() and word not in ["the", "and", "but", "for", "with", "from", "that", "this", "they", "them", "their", "have", "will", "would", "could", "should", "want", "like", "make", "create", "character", "name", "race", "class", "background", "personality", "ability", "scores", "stats", "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]:
-                    return word.title()
+            # Use the centralized name extraction utility
+            extracted_name = extract_name_from_text(user_input)
+            if extracted_name:
+                logger.info(f"✅ Name detected: {extracted_name}")
+                return extracted_name
+            else:
+                logger.warning(f"⚠️ No name detected in: '{user_input}'")
+                return None
         
         elif step == "background":
-            backgrounds = ["acolyte", "criminal", "folk hero", "noble", "sage", "soldier"]
-            for bg in backgrounds:
-                if bg in user_input_lower:
-                    return bg.title()
-            # For custom backgrounds, return the input as-is
-            return user_input.strip()
+            # Use the centralized background extraction utility
+            extracted_background = extract_background_from_text(user_input)
+            if extracted_background:
+                logger.info(f"✅ Background detected: {extracted_background}")
+                return extracted_background
+            else:
+                # For custom backgrounds, return the input as-is
+                logger.info(f"✅ Custom background detected: {user_input.strip()}")
+                return user_input.strip()
         
         elif step == "personality":
             # For personality, return the input as-is
@@ -172,12 +226,13 @@ class SimpleCharacterGenerator:
         try:
             old_value = self.character_data.get(step)
             self.fact_history.append((step, old_value))
-            logger.info(f"Committing {step} = {value} (old value: {old_value})")
+            logger.info(f"💾 Committing {step} = {value} (old value: {old_value})")
             
             if step == "name":
                 self.character_data["name"] = value
             elif step == "race":
                 self.character_data["race"] = value
+                logger.info(f"🎯 RACE COMMITTED: {value}")
             elif step == "class":
                 self.character_data["class"] = value
                 self.character_data["saving_throws"] = self._get_class_saving_throws(value)
@@ -194,7 +249,10 @@ class SimpleCharacterGenerator:
             
             self.confirmed_facts.add(step)
             timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
-            logger.info(f"[STEP COMMIT] {step} = {value} (replaced: {old_value}) @ {timestamp}")
+            logger.info(f"✅ [STEP COMMIT] {step} = {value} (replaced: {old_value}) @ {timestamp}")
+            
+            # Store in memory for persistence
+            self._store_character_fact_in_memory(step, value, "player")
             
             # Advance to next step
             self.current_step_index += 1
@@ -483,19 +541,45 @@ class SimpleCharacterGenerator:
         """Make a real LLM call to Ollama."""
         try:
             import time
+            import signal
             
             # Add a small delay to avoid overwhelming the local model
             time.sleep(0.5)
             
-            response_content = chat_completion(messages, temperature=0.7, max_tokens=500)
-            return response_content.strip()
+            logger.info("🤖 Making LLM call to Ollama...")
+            
+            # Set a timeout for the LLM call (30 seconds)
+            def timeout_handler(signum, frame):
+                raise TimeoutError("LLM call timed out after 30 seconds")
+            
+            # Set the timeout
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(30)
+            
+            try:
+                response_content = chat_completion(messages, temperature=0.7, max_tokens=500)
+                signal.alarm(0)  # Cancel the alarm
+                logger.info(f"✅ LLM response received: {response_content[:100]}...")
+                return response_content.strip()
+            except TimeoutError:
+                signal.alarm(0)  # Cancel the alarm
+                raise Exception("❌ LLM request timed out after 30 seconds. The model may be too slow or overloaded.")
+                
         except Exception as e:
-            logger.error(f"Error in Ollama LLM call: {e}")
-            raise Exception(f"Ollama LLM service error: {e}")
+            logger.error(f"❌ LLM call failed: {e}")
+            if "Cannot connect to Ollama" in str(e):
+                raise Exception("❌ Ollama not running. Please start it with: 'ollama serve' or 'brew services start ollama'")
+            elif "timeout" in str(e).lower():
+                raise Exception("❌ LLM request timed out. The model may be too slow or overloaded.")
+            else:
+                raise Exception(f"Ollama LLM service error: {e}")
     
     def start_character_creation(self, description: str, campaign_name: str = "") -> Dict[str, Any]:
         """Start step-by-step character creation."""
         try:
+            logger.info(f"🎲 Starting character creation with description: {description[:100]}...")
+            logger.info(f"📝 Campaign name: {campaign_name}")
+            
             # Reset to beginning
             self.current_step_index = 0
             self.confirmed_facts.clear()
@@ -503,30 +587,40 @@ class SimpleCharacterGenerator:
             self.in_review_mode = False
             self.is_complete = False
             
+            logger.info("🔄 Reset character creation state")
+            
             # Get the first step prompt
+            logger.info("🤖 Generating first step prompt...")
             first_prompt = self._get_next_step_prompt()
+            logger.info(f"✅ First prompt generated: {first_prompt[:100]}...")
             
             # Store initial conversation
             self.conversation_history = [
-                {"role": "system", "content": "You are a helpful DnD 5e character creation assistant guiding the player through each step one at a time."},
+                {"role": "system", "content": "You are a helpful SoloHeart character creation assistant guiding the player through each step one at a time."},
                 {"role": "assistant", "content": first_prompt}
             ]
             
+            logger.info("💾 Stored initial conversation")
             self._log('log_state', self.character_data)
             
-            return {
+            result = {
                 "success": True,
                 "message": first_prompt,
                 "is_complete": False,
                 "current_step": self._get_current_step()
             }
             
+            logger.info(f"✅ Character creation started successfully. Current step: {result['current_step']}")
+            return result
+            
         except Exception as e:
             self._log('log_error', str(e))
-            logger.error(f"Error starting character creation: {e}")
+            logger.error(f"❌ Error starting character creation: {e}")
+            import traceback
+            logger.error(f"📋 Traceback: {traceback.format_exc()}")
             return {
                 "success": False,
-                "message": "Error starting character creation. Please try again."
+                "message": f"Error starting character creation: {str(e)}"
             }
     
     def continue_conversation(self, user_input: str) -> Dict[str, Any]:
@@ -617,7 +711,7 @@ class SimpleCharacterGenerator:
             conversation_text = " ".join([msg["content"] for msg in self.conversation_history])
             
             extraction_prompt = f"""
-            Based on this DnD 5e character creation conversation, extract a complete character sheet in JSON format.
+            Based on this SoloHeart character creation conversation, extract a complete character sheet in JSON format.
             
             Conversation:
             {conversation_text}
@@ -660,10 +754,65 @@ class SimpleCharacterGenerator:
             Use reasonable defaults for any missing information. Return only valid JSON.
             """
             
-            response_text = chat_completion([
-                {"role": "system", "content": "You are a DnD 5e character sheet generator. Carefully analyze the conversation and extract all character details mentioned. Return only valid JSON."},
-                {"role": "user", "content": extraction_prompt}
-            ], temperature=0.1, max_tokens=800)
+            logger.info("🤖 Making LLM call to extract character data...")
+            try:
+                import requests
+                from requests.exceptions import Timeout
+                
+                # Use requests with timeout for the LLM call
+                response_text = chat_completion([
+                    {"role": "system", "content": "You are a SoloHeart character sheet generator. Carefully analyze the conversation and extract all character details mentioned. Return only valid JSON."},
+                    {"role": "user", "content": extraction_prompt}
+                ], temperature=0.1, max_tokens=800)
+                logger.info("✅ LLM response received for character data extraction")
+            except Timeout:
+                logger.error("❌ LLM request timed out after 30 seconds")
+                # Return a default character if LLM times out
+                return {
+                    "name": "Adventurer",
+                    "race": "Human",
+                    "class": "Fighter",
+                    "level": 1,
+                    "background": "Adventurer",
+                    "personality": "A brave adventurer",
+                    "ability_scores": {
+                        "strength": 10, "dexterity": 10, "constitution": 10,
+                        "intelligence": 10, "wisdom": 10, "charisma": 10
+                    },
+                    "hit_points": 10,
+                    "armor_class": 10,
+                    "saving_throws": [],
+                    "skills": [],
+                    "feats": [],
+                    "weapons": [],
+                    "gear": [],
+                    "spells": [],
+                    "background_freeform": "A brave adventurer ready for adventure"
+                }
+            except Exception as e:
+                logger.error(f"❌ LLM call failed for character data extraction: {e}")
+                # Return a default character if LLM fails
+                return {
+                    "name": "Adventurer",
+                    "race": "Human",
+                    "class": "Fighter",
+                    "level": 1,
+                    "background": "Adventurer",
+                    "personality": "A brave adventurer",
+                    "ability_scores": {
+                        "strength": 10, "dexterity": 10, "constitution": 10,
+                        "intelligence": 10, "wisdom": 10, "charisma": 10
+                    },
+                    "hit_points": 10,
+                    "armor_class": 10,
+                    "saving_throws": [],
+                    "skills": [],
+                    "feats": [],
+                    "weapons": [],
+                    "gear": [],
+                    "spells": [],
+                    "background_freeform": "A brave adventurer ready for adventure"
+                }
             
             # Parse the JSON response
             import json
@@ -756,12 +905,21 @@ class SimpleCharacterGenerator:
                             self._commit_fact(fact_type, value.title(), "player")
                             found_any = True
                 return found_any
-            # Race
-            match_patterns("race", ["Human", "Elf", "Dwarf", "Halfling", "Dragonborn", "Gnome", "Half-Elf", "Half-Orc", "Tiefling"])
-            # Class
-            match_patterns("class", ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard"])
-            # Background
-            match_patterns("background", ["Acolyte", "Criminal", "Folk Hero", "Noble", "Sage", "Soldier"])
+            # Race - use centralized extraction utility
+            extracted_race = extract_race_from_text(combined_text)
+            if extracted_race:
+                self._commit_fact("race", extracted_race, "player")
+                logger.info(f"✅ Race fact committed: {extracted_race}")
+            # Class - use centralized extraction utility
+            extracted_class = extract_class_from_text(combined_text)
+            if extracted_class:
+                self._commit_fact("class", extracted_class, "player")
+                logger.info(f"✅ Class fact committed: {extracted_class}")
+            # Background - use centralized extraction utility
+            extracted_background = extract_background_from_text(combined_text)
+            if extracted_background:
+                self._commit_fact("background", extracted_background, "player")
+                logger.info(f"✅ Background fact committed: {extracted_background}")
             # Name
             name_patterns = [
                 r"my name is ([a-z]+)", r"i'm called ([a-z]+)", r"call me ([a-z]+)",
@@ -1117,21 +1275,11 @@ Level: {self.character_data.get('level', 1)}
         name_match = re.search(r'(?:name is|called|named)\s+([A-Z][a-z]+)', conversation_text, re.IGNORECASE)
         name = name_match.group(1) if name_match else "Adventurer"
         
-        # Race - look for race mentions
-        races = ["Human", "Elf", "Dwarf", "Halfling", "Dragonborn", "Gnome", "Half-Elf", "Half-Orc", "Tiefling"]
-        race = "Human"
-        for r in races:
-            if r.lower() in conversation_text.lower():
-                race = r
-                break
+        # Race - use centralized extraction utility
+        race = extract_race_from_text(conversation_text) or "Human"
         
-        # Class - look for class mentions
-        classes = ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard"]
-        character_class = "Fighter"
-        for c in classes:
-            if c.lower() in conversation_text.lower():
-                character_class = c
-                break
+        # Class - use centralized extraction utility
+        character_class = extract_class_from_text(conversation_text) or "Fighter"
         
         # Generate reasonable ability scores based on class
         ability_scores = self._generate_ability_scores(character_class)
@@ -1296,7 +1444,7 @@ Level: {self.character_data.get('level', 1)}
             logger.error(f"Error saving character: {e}")
 
 class SimpleNarrativeBridge:
-    """Simple narrative bridge for basic DnD functionality."""
+    """Simple narrative bridge for basic SoloHeart functionality."""
     
     def __init__(self):
         self.ensure_directories()
@@ -1324,7 +1472,7 @@ class SimpleNarrativeBridge:
                 "setting_introduction": setting_intro,
                 "session_count": 1,
                 "conversation_history": [
-                    {"role": "dm", "content": setting_intro, "timestamp": datetime.datetime.now().isoformat()}
+                    {"role": "guide", "content": setting_intro, "timestamp": datetime.datetime.now().isoformat()}
                 ]
             }
             
@@ -1349,7 +1497,7 @@ class SimpleNarrativeBridge:
         """Generate an immersive setting introduction."""
         try:
             prompt = f"""
-            Create an immersive opening scene for a DnD 5e solo adventure featuring:
+            Create an immersive opening scene for a SoloHeart solo adventure featuring:
             
             Character: {character_data.get('name', 'Adventurer')} - a {character_data.get('race', 'Human')} {character_data.get('class', 'Fighter')}
             Campaign: {campaign_name}
@@ -1364,7 +1512,7 @@ class SimpleNarrativeBridge:
             """
             
             response_content = chat_completion([
-                {"role": "system", "content": "You are a master DnD storyteller creating immersive opening scenes."},
+                {"role": "system", "content": "You are a master SoloHeart storyteller creating immersive opening scenes."},
                 {"role": "user", "content": prompt}
             ], temperature=0.8, max_tokens=300)
             
@@ -1390,12 +1538,12 @@ class SimpleNarrativeBridge:
             return False
     
     def process_player_input(self, player_input: str, campaign_id: str) -> str:
-        """Process player input and return DM response."""
+        """Process player input and return SoloHeart Guide response."""
         try:
             prompt = f"""
-            You are a Dungeon Master running a solo DnD 5e adventure. The player has just said: "{player_input}"
+            You are a SoloHeart Guide running a solo SoloHeart adventure. The player has just said: "{player_input}"
             
-            Respond as a DM would, describing what happens next, asking for clarification if needed, 
+            Respond as a SoloHeart Guide would, describing what happens next, asking for clarification if needed, 
             and moving the story forward. Be descriptive, atmospheric, and engaging.
             
             Keep your response to 2-3 paragraphs maximum. Focus on the immediate consequences and 
@@ -1403,7 +1551,7 @@ class SimpleNarrativeBridge:
             """
             
             response_content = chat_completion([
-                {"role": "system", "content": "You are an experienced Dungeon Master running a solo DnD 5e adventure. Be descriptive, atmospheric, and engaging."},
+                {"role": "system", "content": "You are an experienced SoloHeart Guide running a solo SoloHeart adventure. Be descriptive, atmospheric, and engaging."},
                 {"role": "user", "content": prompt}
             ], temperature=0.8, max_tokens=400)
             
@@ -1561,24 +1709,35 @@ def vibe_code_creation():
 def start_vibe_code_creation():
     """Start the vibe code character creation process."""
     try:
+        logger.info("🚀 Starting vibe code character creation...")
         data = request.get_json()
         description = data.get('description', '')
         campaign_name = data.get('campaign_name', '')
         
+        logger.info(f"📝 Raw user input: '{description}'")
+        logger.info(f"🎯 Campaign: {campaign_name}")
+        
         if not description:
+            logger.warning("❌ No description provided")
             return jsonify({'success': False, 'message': 'Character description is required'})
         
         # Initialize narrative bridge for character creation
+        logger.info("🔧 Initializing narrative bridge...")
         temp_bridge = SimpleNarrativeBridge()
         game.character_generator.narrative_bridge = temp_bridge
         
         # Start character creation conversation
+        logger.info("🎲 Starting character creation conversation...")
         result = game.character_generator.start_character_creation(description, campaign_name)
+        
+        logger.info(f"✅ Character creation result: {result.get('success', False)}")
         
         if result['success']:
             # Store the character generator state in session
             session['character_creation_active'] = True
             session['campaign_name'] = campaign_name
+            
+            logger.info("💾 Session data stored successfully")
             
             return jsonify({
                 'success': True,
@@ -1586,24 +1745,39 @@ def start_vibe_code_creation():
                 'is_complete': result['is_complete']
             })
         else:
+            logger.error(f"❌ Character creation failed: {result.get('message', 'Unknown error')}")
             return jsonify({'success': False, 'message': 'Failed to start character creation'})
     
     except Exception as e:
-        logger.error(f"Error starting vibe code creation: {e}")
-        return jsonify({'success': False, 'message': 'Error starting character creation'})
+        logger.error(f"❌ Error starting vibe code creation: {e}")
+        import traceback
+        logger.error(f"📋 Full traceback: {traceback.format_exc()}")
+        return jsonify({'success': False, 'message': f'Error starting character creation: {str(e)}'})
 
 @app.route('/api/character/vibe-code/continue', methods=['POST'])
 def continue_vibe_code_creation():
     """Continue the vibe code character creation conversation."""
     try:
+        logger.info("🔄 Continuing vibe code character creation...")
         data = request.get_json()
         user_input = data.get('user_input', '')
         
+        logger.info(f"📝 Raw user input: '{user_input}'")
+        
         if not user_input:
+            logger.warning("❌ No user input provided")
             return jsonify({'success': False, 'message': 'User input is required'})
         
         # Continue character creation conversation
+        logger.info("🤖 Processing user input...")
         result = game.character_generator.continue_conversation(user_input)
+        
+        logger.info(f"✅ Conversation result: {result.get('success', False)}")
+        logger.info(f"📊 Is complete: {result.get('is_complete', False)}")
+        
+        # Log extracted facts for debugging
+        current_character = game.character_generator.get_character_data()
+        logger.info(f"🎭 Current character state: {current_character.get('race', 'Unknown')} {current_character.get('class', 'Unknown')} named {current_character.get('name', 'Unknown')}")
         
         response_data = {
             'success': result['success'],
@@ -1615,51 +1789,71 @@ def continue_vibe_code_creation():
         if result.get('in_review_mode'):
             response_data['in_review_mode'] = True
             response_data['character_summary'] = game.character_generator.get_character_summary()
+            logger.info("📋 Character in review mode")
         
         # Add finalization specific fields
         if result.get('character_finalized'):
             response_data['character_finalized'] = True
             response_data['character_data'] = result.get('character_data')
+            logger.info("✅ Character finalized")
         
+        logger.info("📤 Sending response to client")
         return jsonify(response_data)
     
     except Exception as e:
-        logger.error(f"Error continuing vibe code creation: {e}")
+        logger.error(f"❌ Error continuing vibe code creation: {e}")
+        import traceback
+        logger.error(f"📋 Full traceback: {traceback.format_exc()}")
         return jsonify({'success': False, 'message': 'Error continuing character creation'})
 
 @app.route('/api/character/vibe-code/complete', methods=['POST'])
 def complete_vibe_code_creation():
     """Complete character creation and start campaign."""
     try:
+        logger.info("🎯 Completing vibe code character creation...")
+        
         # Get character data
+        logger.info("📋 Getting character data...")
         character_data = game.character_generator.get_character_data()
         campaign_name = session.get('campaign_name', 'New Campaign')
         
+        logger.info(f"📝 Campaign name: {campaign_name}")
+        logger.info(f"👤 Final character: {character_data.get('race', 'Unknown')} {character_data.get('class', 'Unknown')} named {character_data.get('name', 'Unknown')}")
+        
         if not character_data:
+            logger.error("❌ No character data available")
             return jsonify({'success': False, 'message': 'No character data available'})
         
         # Initialize campaign
+        logger.info("🚀 Initializing campaign...")
         campaign_data = game.narrative_bridge.initialize_campaign(character_data, campaign_name)
         
         if campaign_data:
+            logger.info(f"✅ Campaign initialized with ID: {campaign_data.get('id', 'Unknown')}")
+            
             # Store character creation data in memory (this is now called within initialize_campaign)
             # The store_character_creation method is called automatically during campaign initialization
             
             # Clear session data
+            logger.info("🧹 Clearing session data...")
             session.pop('character_creation_active', None)
             session.pop('campaign_name', None)
             session['campaign_id'] = campaign_data['id']
             
+            logger.info("🎉 Character creation completed successfully!")
             return jsonify({
                 'success': True,
                 'message': 'Character created and campaign started!',
                 'redirect': '/game'
             })
         else:
+            logger.error("❌ Failed to initialize campaign")
             return jsonify({'success': False, 'message': 'Failed to start campaign'})
     
     except Exception as e:
-        logger.error(f"Error completing vibe code creation: {e}")
+        logger.error(f"❌ Error completing vibe code creation: {e}")
+        import traceback
+        logger.error(f"📋 Full traceback: {traceback.format_exc()}")
         return jsonify({'success': False, 'message': 'Error completing character creation'})
 
 @app.route('/api/character/vibe-code/undo', methods=['POST'])
@@ -1852,14 +2046,14 @@ def process_game_action():
             return jsonify({'success': False, 'message': 'No active campaign'})
         
         # Process player input
-        dm_response = game.narrative_bridge.process_player_input(player_input, campaign_id)
+        guide_response = game.narrative_bridge.process_player_input(player_input, campaign_id)
         
         # Save campaign
         game.narrative_bridge.save_campaign(campaign_id)
         
         return jsonify({
             'success': True,
-            'response': dm_response
+            'response': guide_response
         })
     
     except Exception as e:

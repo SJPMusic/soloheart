@@ -47,7 +47,7 @@ class GeneratedContent:
     confidence: float
 
 class AIContentGenerator:
-    """Generates dynamic DnD content using memory system and OpenAI API"""
+    """Generates dynamic DnD content using memory system and Ollama LLM"""
     
     def __init__(self, memory_system: LayeredMemorySystem):
         self.memory = memory_system
@@ -571,7 +571,7 @@ Keep your response engaging but focused. End with something that invites the pla
         return [entity for entity in potential_entities if len(entity) > 2][:5]  # Top 5 entities
     
     def _generate_fallback_response(self, context: Dict[str, Any]) -> GeneratedContent:
-        """Generate fallback response when OpenAI is not available"""
+        """Generate fallback response when Ollama is not available"""
         # Use the existing template-based system
         return self._generate_general_response(context.get('player_message', ''), context)
     

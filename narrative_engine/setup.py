@@ -55,7 +55,7 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=[
-        "openai>=1.0.0",
+        # "openai>=1.0.0",  # Removed - using Ollama instead
         "numpy>=1.21.0",
         "pydantic>=2.0.0",
         "python-dotenv>=0.19.0",

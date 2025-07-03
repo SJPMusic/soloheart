@@ -99,7 +99,7 @@ const App: React.FC = () => {
         const aiMessage: Message = {
           id: `msg-${Date.now()}-ai`,
           type: 'ai',
-          content: response.data?.response || response.message || 'The Dungeon Master nods thoughtfully...',
+          content: response.data?.response || response.message || 'The SoloHeart Guide nods thoughtfully...',
           timestamp: new Date()
         };
 
@@ -216,7 +216,7 @@ const App: React.FC = () => {
         <div className="bg-white border-b border-parchment-300 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-fantasy text-ink-800">Solo Adventure</h1>
+              <h1 className="text-2xl font-fantasy text-ink-800">SoloHeart</h1>
               <div className="flex items-center space-x-2">
                 <p className="text-ink-600 text-sm">
                   {session ? `Session: ${session.id.slice(0,8)}...` : 'No active session'}
@@ -234,21 +234,21 @@ const App: React.FC = () => {
                   onClick={handleSaveGame}
                   className="btn-secondary text-sm"
                 >
-                  💾 Save
+                  💾 Save SoloHeart
                 </button>
               )}
               <button
                 onClick={handleLoadGame}
                 className="btn-secondary text-sm"
               >
-                📂 Load
+                📂 Load SoloHeart
               </button>
               <button
                 onClick={handleNewGame}
                 className="btn-primary text-sm"
                 disabled={isLoading}
               >
-                🎲 New Game
+                🎲 New SoloHeart Session
               </button>
             </div>
           </div>

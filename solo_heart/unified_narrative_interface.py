@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Unified SoloHeart Narrative Interface
-A single Flask server that provides the complete immersive solo DnD experience.
+A single Flask server that provides the complete immersive SoloHeart experience.
 """
 
 import os

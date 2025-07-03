@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Solo Adventure UI - Setup Test Script
+ * SoloHeart UI - Setup Test Script
  * 
  * This script verifies that the development environment is properly configured.
  * Run this before starting the development server.
@@ -10,12 +10,12 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('🎲 Solo Adventure UI - Setup Test\n');
+console.log('🎲 SoloHeart UI - Setup Test\n');
 
 // Check if we're in the right directory
 const packageJsonPath = path.join(__dirname, 'package.json');
 if (!fs.existsSync(packageJsonPath)) {
-  console.error('❌ Error: package.json not found. Make sure you\'re in the dnd-ui directory.');
+  console.error('❌ Error: package.json not found. Make sure you\'re in the soloheart-ui directory.');
   process.exit(1);
 }
 

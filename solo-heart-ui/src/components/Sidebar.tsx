@@ -66,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Header */}
       <div className="p-4 border-b border-parchment-300 bg-parchment-50">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-fantasy text-ink-800">Adventure Log</h2>
+          <h2 className="text-lg font-fantasy text-ink-800">SoloHeart Log</h2>
           <button
             onClick={onToggleCollapse}
             className="btn-secondary p-2"

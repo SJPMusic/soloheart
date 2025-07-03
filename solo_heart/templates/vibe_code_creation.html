@@ -93,7 +93,7 @@
         <div class="message ai">
             <div class="message-content">
                 <p><strong>Welcome to Vibe Code Character Creation!</strong></p>
-                <p>I'm here to help you create your DnD 5e character through natural conversation. Just describe your character concept, and I'll ask questions to flesh out the details.</p>
+                <p>I'm here to help you create your SoloHeart character through natural conversation. Just describe your character concept, and I'll ask questions to flesh out the details.</p>
                 <p>For example, you could say:</p>
                 <ul class="list-disc list-inside mt-2 space-y-1">
                     <li>"I want to play a wise old wizard who's seen too many wars"</li>
@@ -176,18 +176,35 @@
                 } else {
                     // Continue conversation
                     endpoint += 'continue';
-                    data = { input: message };
+                    data = { user_input: message };
                 }
 
+                console.log(`📡 Making request to ${endpoint} with data:`, data);
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => {
+                    console.log('⏰ Request timeout - aborting');
+                    controller.abort();
+                }, 60000); // 60 second timeout
+                
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data),
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
+                console.log(`📊 Response status: ${response.status}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
 
                 const result = await response.json();
+                console.log('📄 Response data:', result);
 
                 if (result.success) {
                     addMessage(result.message, 'ai');
@@ -197,11 +214,17 @@
                         showCompletionOptions();
                     }
                 } else {
-                    addMessage('Sorry, there was an error. Please try again.', 'ai');
+                    addMessage(`Error: ${result.message || 'Unknown error occurred'}`, 'ai');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                addMessage('Sorry, there was an error connecting to the server. Please try again.', 'ai');
+                console.error('❌ Error:', error);
+                if (error.name === 'AbortError') {
+                    addMessage('⏰ Request timed out after 60 seconds. The AI model may be taking too long to respond. Please try again.', 'ai');
+                } else if (error.message.includes('HTTP')) {
+                    addMessage(`❌ Server error: ${error.message}. Please try again.`, 'ai');
+                } else {
+                    addMessage('❌ Connection error. Please check if the server is running and try again.', 'ai');
+                }
             } finally {
                 hideTypingIndicator();
                 isProcessing = false;

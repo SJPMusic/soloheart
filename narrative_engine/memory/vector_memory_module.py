@@ -6,13 +6,11 @@ from typing import List, Dict, Any, Optional
 try:
     import faiss
     import numpy as np
-    # Note: OpenAI embeddings are still used for vector memory
+    # Note: OpenAI embeddings removed - using simple fallback approach
     # This could be replaced with a local embedding model in the future
-    from openai import OpenAI
 except ImportError:
     faiss = None
     np = None
-    OpenAI = None
 
 class VectorMemoryModule:
     def __init__(self, campaign_id: str, db_path: str = "vector_memory.index"):
@@ -20,11 +18,11 @@ class VectorMemoryModule:
         self.db_path = db_path
         self.index = None
         self.memories: List[Dict[str, Any]] = []  # Store metadata for each vector
-        self.available = faiss is not None and np is not None and OpenAI is not None
+        self.available = faiss is not None and np is not None
         if self.available:
             self._init_index()
         else:
-            print("[VectorMemoryModule] FAISS, numpy, or OpenAI not available. Vector memory disabled.")
+            print("[VectorMemoryModule] FAISS or numpy not available. Vector memory disabled.")
 
     def _init_index(self):
         # Use 1536 for text-embedding-3-small
@@ -57,13 +55,11 @@ class VectorMemoryModule:
     def _embed(self, text: str) -> Optional[Any]:
         if not self.available:
             return None
-        client = OpenAI()
+        # Simple fallback: use basic text features for similarity
+        # In a production system, this would use a local embedding model
         try:
-            response = client.embeddings.create(
-                input=text,
-                model="text-embedding-3-small"
-            )
-            return np.array(response.data[0].embedding, dtype=np.float32)
+            # For now, return None to use fallback retrieval
+            return None
         except Exception as e:
             print(f"[VectorMemoryModule] Embedding error: {e}")
             return None

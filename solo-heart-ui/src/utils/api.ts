@@ -278,7 +278,7 @@ export const loadGame = async (): Promise<ApiResponse> => {
 export const saveToLocalStorage = (session: Session): boolean => {
   try {
     const sessionData = JSON.stringify(session);
-    localStorage.setItem('dnd-session', sessionData);
+    localStorage.setItem('soloheart-session', sessionData);
     console.log('💾 Session saved to localStorage:', session);
     return true;
   } catch (error) {
@@ -289,7 +289,7 @@ export const saveToLocalStorage = (session: Session): boolean => {
 
 export const loadFromLocalStorage = (): Session | null => {
   try {
-    const saved = localStorage.getItem('dnd-session');
+    const saved = localStorage.getItem('soloheart-session');
     if (!saved) {
       console.log('📂 No saved session found in localStorage');
       return null;
@@ -306,7 +306,7 @@ export const loadFromLocalStorage = (): Session | null => {
 
 export const clearLocalStorage = (): boolean => {
   try {
-    localStorage.removeItem('dnd-session');
+    localStorage.removeItem('soloheart-session');
     console.log('🗑️ Session cleared from localStorage');
     return true;
   } catch (error) {

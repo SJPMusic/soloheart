@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🎲 Setting up Solo Adventure UI..."
+echo "🎲 Setting up SoloHeart UI..."
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
