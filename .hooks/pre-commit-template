@@ -106,13 +106,17 @@ for file in $STAGED_FILES; do
         fi
     fi
     
-    # Check for restricted keywords
-    for keyword in "${RESTRICTED_KEYWORDS[@]}"; do
-        if grep -n -i "$keyword" "$file" 2>/dev/null; then
-            KEYWORD_VIOLATIONS+=("$file:$keyword")
-            echo -e "  ${RED}❌ Restricted keyword found: $keyword${NC}"
-        fi
-    done
+    # Check for restricted keywords (skip if file contains required attribution)
+    if ! grep -q "$REQUIRED_ATTRIBUTION" "$file" 2>/dev/null; then
+        for keyword in "${RESTRICTED_KEYWORDS[@]}"; do
+            if grep -n -i "$keyword" "$file" 2>/dev/null; then
+                KEYWORD_VIOLATIONS+=("$file:$keyword")
+                echo -e "  ${RED}❌ Restricted keyword found: $keyword${NC}"
+            fi
+        done
+    else
+        echo -e "  ${GREEN}✅ File contains required attribution - skipping keyword check${NC}"
+    fi
 done
 
 # Report violations

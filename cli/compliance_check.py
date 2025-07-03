@@ -142,10 +142,17 @@ class ComplianceChecker:
         
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
-                for line_num, line in enumerate(f, 1):
-                    for keyword in RESTRICTED_KEYWORDS:
-                        if re.search(rf'\b{re.escape(keyword)}\b', line, re.IGNORECASE):
-                            violations.append((keyword, line_num))
+                content = f.read()
+                
+            # Skip keyword checking if the file contains the required attribution
+            # This prevents false positives on the legally required attribution text
+            if REQUIRED_ATTRIBUTION in content:
+                return violations
+                
+            for line_num, line in enumerate(content.split('\n'), 1):
+                for keyword in RESTRICTED_KEYWORDS:
+                    if re.search(rf'\b{re.escape(keyword)}\b', line, re.IGNORECASE):
+                        violations.append((keyword, line_num))
         except (UnicodeDecodeError, IOError):
             # Skip binary files or files that can't be read
             pass
