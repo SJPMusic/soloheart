@@ -85,3 +85,58 @@ COMPLIANCE_SUMMARY.md
 COMPLIANCE_SUMMARY.md
 .hooks/pre-commit-template
 cli/compliance_check.py
+
+# SRD data files (contain legitimate SRD content that may include restricted keywords)
+srd_data/
+
+# Archive and historical files (contain legacy branding for reference)
+archive_unused/
+development_journal/
+docs/
+investor_docs/
+The Narrative Engine/
+*.backup
+*_backup.py
+*_old.py
+
+# Documentation files with historical references
+BRANCH_STRATEGY.md
+COURSE_CORRECTION_SUMMARY.md
+NarrativeEngine_Roadmap.txt
+CHARACTER_CREATION_ENHANCEMENTS_SUMMARY.md
+STABILITY_FIRST_CHARACTER_CREATION_SUMMARY.md
+FEATURE_BRANCH_SUMMARY.md
+HOW_TO_PLAY.md
+README.md
+CONTRIBUTING.md
+SECURITY.md
+
+# Test files and demos (may contain legacy references for testing)
+tests/
+cli/demo_*.py
+cli/main.py
+cli/main_game.py
+simple_test_interface.html
+
+# Package files (contain dependencies and metadata)
+package-lock.json
+node_modules/
+
+# Branding compliance files (contain examples of restricted terms)
+branding_status/compliance_log.md
+branding_status/soloheart_verification.md
+branding_status/automated_compliance_check.py
+branding_status/final_milestone_report.md
+branding_status/compliance_milestone_srd_exemption.md
+
+# Backup files (contain historical data)
+backups/
+
+# Shared utilities (may contain legacy references)
+shared/
+cache_manager.py
+security_check.py
+setup.py
+
+# This file should not be scanned for compliance
+.complianceignore

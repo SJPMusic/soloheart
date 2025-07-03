@@ -82,6 +82,23 @@ class ComplianceChecker:
         self.passed_files: List[str] = []
         self.excluded_files: List[str] = []
         
+    def _should_ignore_file(self, file_path: Path) -> bool:
+        """Check if file should be ignored based on patterns."""
+        relative_path = file_path.relative_to(self.project_root)
+        # Always ignore the ignore file and the compliance checker itself
+        if str(relative_path) in ['.complianceignore', 'cli/compliance_check.py']:
+            return True
+        for pattern in EXCLUDE_PATTERNS:
+            if pattern.endswith('/'):
+                # Directory pattern
+                if str(relative_path).startswith(pattern[:-1]):
+                    return True
+            else:
+                # File pattern
+                if str(relative_path) == pattern or str(relative_path).endswith(pattern):
+                    return True
+        return False
+    
     def should_exclude_file(self, file_path: Path) -> bool:
         """Check if file should be excluded from scanning."""
         relative_path = file_path.relative_to(self.project_root)
@@ -187,7 +204,7 @@ class ComplianceChecker:
                 
             relative_path = file_path.relative_to(self.project_root)
             
-            if self.should_exclude_file(file_path):
+            if self._should_ignore_file(file_path):
                 self.excluded_files.append(str(relative_path))
                 if verbose:
                     print(f"{Colors.YELLOW}⏭️  Excluded: {relative_path}{Colors.NC}")

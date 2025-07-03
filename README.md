@@ -1,47 +1,55 @@
-# 🎲 SoloHeart Game Engine
+# The Narrative Engine
 
-> **Transform solo tabletop gaming with AI-powered storytelling that adapts to your choices and creates truly personalized adventures.**
+> **A memory-driven, context-aware storytelling framework that simulates and evolves complex narratives across domains like games, therapy, education, and strategic planning.**
 
-![Demo Status](https://img.shields.io/badge/status-Demo%20Stage%20%E2%80%93%20Actively%20Developing-blue)
+![Demo Status](https://img.shields.io/badge/status-Proof%20of%20Concept%20%E2%80%93%20Actively%20Developing-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Python](https://img.shields.io/badge/python-3.9+-blue)
 
-![Demo Screenshot](demo_screenshot.txt)
+## What is The Narrative Engine?
 
-## Project Summary
+The Narrative Engine treats narrative as a simulation of memory, emotion, decision history, and real-time contextual input—rather than just linear storytelling. It's designed to create AI co-architects that understand context, remember choices, and evolve stories based on layered memory systems.
 
-This is a proof-of-concept demo for the **Narrative Engine**: an immersive, LLM-powered solo DnD 5E experience. The system enables a single player to create a character using natural language and play through a campaign with an AI Dungeon Master, all in a clean, SRD 5.1-compliant, and legally safe environment.
+**Current Proof-of-Concept: SoloHeart**  
+SoloHeart is a solo tabletop RPG that demonstrates The Narrative Engine's capabilities in a gaming context. It features:
+
+- **Context-aware memory retrieval** that recalls past choices and their emotional weight
+- **Emotionally responsive narratives** that adapt to player decisions and character development
+- **Persistent character and campaign state** that maintains continuity across sessions
+- **Natural language character creation** through "Vibe Code" conversations with the AI
+
+## Beyond Gaming: The Broader Vision
+
+While SoloHeart showcases the system in entertainment, The Narrative Engine is designed for much broader applications:
+
+- **Therapy & Mental Health**: AI companions that remember therapeutic progress and adapt interventions
+- **Education**: Personalized learning narratives that evolve based on student engagement and comprehension
+- **Leadership Development**: Simulation environments that track decision patterns and leadership growth
+- **Strategic Planning**: Scenario modeling that maintains context across complex, multi-session planning
+
+The core innovation is treating narrative as a **simulation of human memory and reasoning**—not just story generation, but a system that understands context, learns from interactions, and maintains coherent continuity across time.
 
 ## How It Works
 
 ```
-Player Input → LLM Processing → Narrative Response → Campaign State Update
-     ↓              ↓                ↓                    ↓
-Natural Language → Context Analysis → Story Generation → Persistent Save
-     ↓              ↓                ↓                    ↓
-Character Creation → Memory Systems → Emotional Tracking → Campaign Progression
+User Input → Context Analysis → Memory Retrieval → Narrative Response → State Update
+     ↓              ↓                ↓                    ↓                ↓
+Natural Language → Emotional Tagging → Layered Recall → Adaptive Story → Persistent Save
+     ↓              ↓                ↓                    ↓                ↓
+Character Creation → Memory Systems → Contextual Reasoning → Campaign Progression → Continuity
 ```
 
-### Core Flow
-1. **Start Screen** → Choose to begin new campaign or continue existing
-2. **Vibe Code Creation** → Natural conversation with AI to build your character
-3. **Narrative Gameplay** → Immersive storytelling with persistent campaign state
-4. **Save & Continue** → Seamless persistence across sessions
+### Core Architecture
+- **Layered Memory System**: Short-term, mid-term, and long-term memory with emotional tagging
+- **Contextual Drift Prevention**: Advanced algorithms that maintain narrative coherence
+- **Emotional Intelligence**: AI that understands and responds to emotional context
+- **Domain-Agnostic Design**: Modular architecture that can be adapted to any narrative domain
 
-## Key Features
-
-- **🎯 Start Screen**: Begin a new campaign, continue, or delete existing campaigns
-- **💬 Vibe Code Character Creation**: Create a character through natural conversation with the LLM (GPT-4o-mini or compatible)
-- **📋 SRD-Compliant Character Data**: All character data is saved in a structured, open format
-- **📖 Immersive Narrative Gameplay**: Seamless transition into a pure narrative interface, with the LLM acting as DM
-- **💾 Persistent Campaigns**: Save, load, and delete campaigns with persistent storage
-- **📱 Mobile-Responsive UI**: Clean, thematic, and immersive design
-
-## Quick Start
+## Quick Start: SoloHeart Demo
 
 ### Prerequisites
 - Python 3.9+
-- OpenAI API key
+- OpenAI API key or Ollama (local LLM)
 
 ### Installation
 1. **Clone the repository**:
@@ -55,71 +63,64 @@ Character Creation → Memory Systems → Emotional Tracking → Campaign Progre
    pip install -r requirements.txt
    ```
 
-3. **Set up your OpenAI API key**:
+3. **Set up your API key**:
    ```bash
-   cp .env.template .env
+   cp env.template .env
    # Add your OpenAI API key to .env
    ```
 
-### Running the Demo
-1. **Start the start screen interface** (port 5001):
-   ```bash
-   python start_screen_interface.py
-   ```
+### Running SoloHeart
+```bash
+python simple_unified_interface.py
+```
 
-2. **In a new terminal, start the narrative interface** (port 5002):
-   ```bash
-   python narrative_focused_interface.py
-   ```
-
-3. **Open your browser**:
-   - Start screen: [http://localhost:5001](http://localhost:5001)
-   - Narrative gameplay: [http://localhost:5002](http://localhost:5002)
+Access the game at: [http://localhost:5001](http://localhost:5001)
 
 ## Demo Walkthrough
 
-### 1. Start a New Campaign
-- Click "Start New Campaign" and follow the prompts
-- Choose your preferred character creation method
+### 1. Character Creation
+- Use "Vibe Code" to describe your character concept in natural language
+- The AI asks clarifying questions and builds your character sheet
+- All data is SRD 5.1 compliant and legally safe
 
-### 2. Vibe Code Character Creation
-- Select the natural language option
-- Converse with the AI to describe your character concept
-- The LLM will ask clarifying questions and build your character sheet
+### 2. Narrative Gameplay
+- Seamless transition into immersive storytelling
+- Your choices are remembered and influence future encounters
+- Emotional context is tracked and affects narrative responses
 
-### 3. Immersive Gameplay
-- After character creation, transition directly into narrative gameplay
-- Respond naturally to the AI DM's storytelling
-- Your choices and character development are tracked and remembered
-
-### 4. Campaign Management
-- Return to the start screen to continue or delete campaigns
-- All progress is automatically saved and persistent
-
-## Screenshots
-
-![Demo Screenshot](demo_screenshot.txt)
-
-*Screenshot showing the start screen, character creation flow, and narrative gameplay interface*
-
-> _Replace with actual screenshots of the start screen, character creation, and narrative interface_
+### 3. Persistent Continuity
+- Campaign state is automatically saved
+- Return to continue your story with full context preserved
+- Memory systems ensure the AI remembers your journey
 
 ## Technology Stack
 
-- **Backend**: Python, Flask, OpenAI API
-- **Frontend**: HTML5, CSS3, JavaScript
-- **Character System**: SRD 5.1-compliant JSON schema
-- **AI Integration**: GPT-4o-mini for natural language processing
-- **Storage**: Local file-based persistence
+- **Backend**: Python, Flask, OpenAI API/Ollama
+- **Memory System**: Vector-based similarity search with emotional tagging
+- **Frontend**: HTML5, CSS3, JavaScript (mobile-responsive)
+- **Compliance**: SRD 5.1 compliant, fully rebranded as SoloHeart
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started.
+We welcome contributors interested in:
+- **The Narrative Engine**: Core memory systems, contextual reasoning, domain adaptation
+- **SoloHeart**: Game mechanics, UI/UX, character systems
+- **New Domains**: Therapy, education, leadership, or other narrative applications
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Documentation
 
-- [Investor Documentation](investor_docs/) - Project overview, features, and future vision
-- [Attribution](solo_heart/ATTRIBUTION.md) - Legal compliance and attributions
+- [The Narrative Engine Roadmap](NarrativeEngine_Roadmap.txt) - Development phases and vision
+- [Investor Documentation](investor_docs/) - Project overview and future potential
+- [Compliance Summary](COMPLIANCE_SUMMARY.md) - Legal and branding compliance
+
+## Vision & Future
+
+The Narrative Engine represents a new approach to AI interaction—one that prioritizes memory, context, and emotional intelligence over simple response generation. SoloHeart is just the beginning.
+
+**Interested in collaborating or investing?**  
+We're actively seeking partners to explore applications in therapy, education, leadership development, and beyond. The technology is real, demonstrable, and ready for broader deployment.
 
 ## Attribution
 
@@ -127,9 +128,6 @@ This project uses content from the Systems Reference Document 5.1 (SRD 5.1) by W
 
 - SRD 5.1: https://dnd.wizards.com/resources/systems-reference-document
 - License: https://creativecommons.org/licenses/by/4.0/
-
-This project uses the OpenAI API for natural language processing and LLM-driven gameplay.
-- https://openai.com/
 
 ## License
 
