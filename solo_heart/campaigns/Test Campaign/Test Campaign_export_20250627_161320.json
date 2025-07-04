@@ -1,0 +1,175 @@
+This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License.
+
+{
+  "campaign_info": {
+    "name": "Test Campaign",
+    "settings": {
+      "campaign_name": "Test Campaign",
+      "created_date": "2025-06-27",
+      "dm_name": "",
+      "player_count": 0,
+      "starting_level": 1,
+      "world_name": "Forgotten Realms",
+      "difficulty": "medium",
+      "magic_level": "standard",
+      "ai_assistance_level": "moderate",
+      "session_duration": 180,
+      "auto_save": true,
+      "backup_frequency": "daily"
+    },
+    "export_date": "2025-06-27T16:13:20.306491"
+  },
+  "characters": {
+    "Alice": {
+      "name": "Iados Crius",
+      "race": "tiefling",
+      "character_class": "warlock",
+      "level": 1,
+      "ability_scores": {
+        "charisma": 8,
+        "constitution": 10,
+        "dexterity": 12,
+        "strength": 14,
+        "intelligence": 15,
+        "wisdom": 13
+      },
+      "hit_points": 8,
+      "armor_class": 11,
+      "background": "hermit",
+      "personality_traits": [
+        "I keep my thoughts and observations to myself.",
+        "I am quiet around strangers, but I am not shy."
+      ],
+      "ideals": [],
+      "bonds": [],
+      "flaws": [],
+      "proficiencies": [],
+      "equipment": [],
+      "spells": [],
+      "features": [],
+      "custom_flavor": {
+        "description": "Tall and graceful with silver hair and twinkling eyes",
+        "special_abilities": "Can see through illusions"
+      }
+    }
+  },
+  "active_quests": [],
+  "campaign_memory": {
+    "total_entities": 0,
+    "total_sessions": 0,
+    "entity_types": {},
+    "semantic_distribution": {},
+    "key_entities": [],
+    "recent_activity": [],
+    "campaign_timeline": [],
+    "relationship_network": {
+      "nodes": [],
+      "edges": []
+    }
+  },
+  "sessions": [
+    {
+      "session": {
+        "session_id": "session_001",
+        "date": "2025-06-27",
+        "duration_minutes": 0,
+        "participants": [
+          "Alice"
+        ],
+        "locations_visited": [
+          "Mystwood Forest"
+        ],
+        "npcs_encountered": [
+          "Gandalf"
+        ],
+        "major_events": [
+          "Alice casts Detect Magic on the ancient door"
+        ],
+        "decisions_made": [],
+        "combat_encounters": [],
+        "items_found": [
+          "magical runes",
+          "old map"
+        ],
+        "quests_progressed": [],
+        "quests_completed": [],
+        "xp_gained": 0,
+        "gold_gained": 0,
+        "notes": ""
+      },
+      "entries": [
+        {
+          "timestamp": "2025-06-27T16:13:20.299775",
+          "entry_type": "system",
+          "speaker": null,
+          "content": "Session session_001 started with participants: Alice",
+          "metadata": {
+            "event": "session_start"
+          },
+          "entities_mentioned": [],
+          "locations_mentioned": [],
+          "actions_taken": [],
+          "decisions_made": []
+        },
+        {
+          "timestamp": "2025-06-27T16:13:20.300404",
+          "entry_type": "dialogue",
+          "speaker": "Gandalf",
+          "content": "Welcome, young wizard. The path ahead is fraught with peril.",
+          "metadata": {},
+          "entities_mentioned": [
+            "Welcome,",
+            "The"
+          ],
+          "locations_mentioned": [],
+          "actions_taken": [],
+          "decisions_made": []
+        },
+        {
+          "timestamp": "2025-06-27T16:13:20.300423",
+          "entry_type": "action",
+          "speaker": "Alice",
+          "content": "Alice casts Detect Magic on the ancient door",
+          "metadata": {},
+          "entities_mentioned": [
+            "Alice",
+            "Detect Magic",
+            "Magic"
+          ],
+          "locations_mentioned": [],
+          "actions_taken": [],
+          "decisions_made": []
+        },
+        {
+          "timestamp": "2025-06-27T16:13:20.300435",
+          "entry_type": "exploration",
+          "speaker": null,
+          "content": "Explored Mystwood Forest: A dense forest with ancient trees. Discoveries: magical runes, old map",
+          "metadata": {},
+          "entities_mentioned": [
+            "magical runes",
+            "old map"
+          ],
+          "locations_mentioned": [
+            "Mystwood Forest"
+          ],
+          "actions_taken": [],
+          "decisions_made": []
+        },
+        {
+          "timestamp": "2025-06-27T16:13:20.300567",
+          "entry_type": "system",
+          "speaker": null,
+          "content": "Session session_001 ended",
+          "metadata": {
+            "event": "session_end"
+          },
+          "entities_mentioned": [],
+          "locations_mentioned": [],
+          "actions_taken": [],
+          "decisions_made": []
+        }
+      ]
+    }
+  ]
+}

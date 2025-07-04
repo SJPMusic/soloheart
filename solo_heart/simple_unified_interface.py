@@ -9,6 +9,7 @@ import json
 import logging
 import uuid
 import datetime
+import re
 from typing import Dict, List, Optional, Any
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from ollama_llm_service import chat_completion
@@ -16,7 +17,11 @@ from utils.character_fact_extraction import (
     extract_race_from_text,
     extract_class_from_text,
     extract_background_from_text,
-    extract_name_from_text
+    extract_name_from_text,
+    extract_emotional_themes,
+    extract_combat_style,
+    extract_traits,
+    extract_motivations
 )
 # Temporarily disable Narrative Engine integration for basic functionality
 # from narrative_engine_integration import SoloHeartNarrativeEngine
@@ -94,6 +99,7 @@ class SimpleCharacterGenerator:
             "background": "Unknown",
             "alignment": "Neutral",
             "personality": "A brave adventurer",
+            "age": None,
             "ability_scores": {
                 "strength": 10, "dexterity": 10, "constitution": 10,
                 "intelligence": 10, "wisdom": 10, "charisma": 10
@@ -116,16 +122,33 @@ class SimpleCharacterGenerator:
         self.narrative_bridge = None
         self.fact_history = []
         
-        # Step-by-step creation tracking
-        self.creation_steps = [
-            "race", "class", "name", "background", "personality", "ability_scores"
-        ]
-        self.current_step_index = 0
-        self.in_ability_score_assignment = False
+        # Enhanced fact tracking
+        self.fact_types = {
+            "name": {"required": True, "extracted": False, "value": None, "source_text": None, "timestamp": None},
+            "race": {"required": True, "extracted": False, "value": None, "source_text": None, "timestamp": None},
+            "class": {"required": True, "extracted": False, "value": None, "source_text": None, "timestamp": None},
+            "background": {"required": True, "extracted": False, "value": None, "source_text": None, "timestamp": None},
+            "personality": {"required": True, "extracted": False, "value": None, "source_text": None, "timestamp": None},
+            "age": {"required": False, "extracted": False, "value": None, "source_text": None, "timestamp": None},
+            "alignment": {"required": False, "extracted": False, "value": None, "source_text": None, "timestamp": None}
+        }
+        
+        # Session tracking
+        self.session_id = str(uuid.uuid4())
+        self.session_start_time = datetime.datetime.now()
+        self.validation_pending = False
+        self.pending_facts = {}
+        
+        # Draft saving
+        self.draft_saved = False
+        self.draft_id = None
         
         if playtest_mode is None:
             playtest_mode = os.environ.get('PLAYTEST_LOG', '0') == '1'
         self.playtest_mode = playtest_mode
+        
+        # Ensure logs directory exists
+        os.makedirs("logs/character_creation_sessions", exist_ok=True)
     
     def _log(self, method, *args, **kwargs):
         # Logging disabled - removed playtest logger
@@ -170,6 +193,487 @@ class SimpleCharacterGenerator:
         
         else:
             return "Character creation is complete! Let's review your character."
+    
+    def _extract_and_stage_all_facts(self, text: str) -> None:
+        """Extract all possible facts from text input and stage them for user confirmation."""
+        logger.info(f"🔍 Extracting all possible facts from: '{text}'")
+        self.pending_facts = {}
+        ambiguous = []
+        contradictions = []
+        
+        # Use all extractors
+        extractors = {
+            'name': extract_name_from_text,
+            'race': extract_race_from_text,
+            'class': extract_class_from_text,
+            'background': extract_background_from_text,
+        }
+        
+        # Extract facts using utility functions
+        for fact_type, extractor in extractors.items():
+            try:
+                result = extractor(text)
+                if result:
+                    self.pending_facts[fact_type] = result
+                    logger.info(f"✅ Extracted {fact_type}: {result}")
+            except Exception as e:
+                logger.warning(f"⚠️ Error extracting {fact_type}: {e}")
+        
+        # Extract personality from the full text if no specific personality was found
+        if 'personality' not in self.pending_facts:
+            # Use the full text as personality if it contains emotional content
+            emotional_themes = extract_emotional_themes(text)
+            if emotional_themes or any(word in text.lower() for word in ['angry', 'sad', 'happy', 'fear', 'love', 'hate', 'trust', 'betray']):
+                self.pending_facts['personality'] = text.strip()
+                logger.info(f"✅ Extracted personality from full text")
+        
+        # Extract combat style
+        combat_style = extract_combat_style(text)
+        if combat_style:
+            self.pending_facts['combat_style'] = combat_style
+            logger.info(f"✅ Extracted combat style: {combat_style}")
+        
+        # Extract traits
+        traits = extract_traits(text)
+        if traits:
+            self.pending_facts['traits'] = traits
+            logger.info(f"✅ Extracted traits: {traits}")
+        
+        # Extract motivations (but don't stage for confirmation - store directly)
+        motivations = extract_motivations(text)
+        if motivations:
+            self.character_data['motivations'] = motivations
+            logger.info(f"✅ Extracted motivations: {motivations}")
+        
+        # Check for contradictions with existing character data
+        for fact_type, new_value in self.pending_facts.items():
+            old_value = self.character_data.get(fact_type)
+            if old_value and old_value != new_value:
+                if old_value != 'Unknown' and old_value != 'Adventurer':
+                    contradictions.append(f"{fact_type}: {old_value} vs {new_value}")
+        
+        # Log the extraction results
+        if self.pending_facts:
+            logger.info(f"📋 Staged facts: {self.pending_facts}")
+        if contradictions:
+            logger.warning(f"⚠️ Contradictions detected: {contradictions}")
+        if not self.pending_facts:
+            logger.info("ℹ️ No new facts extracted")
+        
+        return self.pending_facts, contradictions
+
+    def _build_confirmation_prompt(self, facts: dict, contradictions: list) -> str:
+        """Build a user-friendly confirmation prompt for all staged facts."""
+        if not facts:
+            return "I couldn't extract any new details from that. Could you rephrase or provide more information?"
+        
+        lines = ["Here's what I gathered:"]
+        lines.append("")
+        
+        # Define the order to display facts
+        fact_order = ['name', 'race', 'class', 'background', 'personality', 'combat_style', 'traits']
+        
+        for fact_type in fact_order:
+            if fact_type in facts:
+                value = facts[fact_type]
+                if fact_type == 'traits' and isinstance(value, list):
+                    # Handle traits as a list
+                    traits_str = ', '.join(value)
+                    lines.append(f"    • Traits: {traits_str}")
+                else:
+                    # Handle other facts as strings
+                    lines.append(f"    • {fact_type.title()}: {value}")
+        
+        lines.append("")
+        lines.append("Does that look right? You can say 'yes,' or tell me what to change.")
+        
+        return "\n".join(lines)
+
+    def _extract_and_commit_facts_from_text(self, text: str) -> None:
+        """Extract and stage facts from text input for validation, including corrections and removals."""
+        logger.info(f"🔍 Extracting and staging facts from: '{text}'")
+        self.pending_facts = {}
+        
+        # Check for corrections first (e.g., "Actually, he's 20, not 18")
+        corrections = self._detect_corrections(text)
+        if corrections:
+            for fact_type, new_value in corrections.items():
+                self.pending_facts[fact_type] = {
+                    'value': new_value,
+                    'source_text': text,
+                    'is_correction': True,
+                    'old_value': self.character_data.get(fact_type)
+                }
+            logger.info(f"✅ Detected corrections: {corrections}")
+            return
+        
+        # Check for fact removals (e.g., "Remove the backstory", "Take out the part about...")
+        removals = self._detect_removals(text)
+        if removals:
+            for fact_type in removals:
+                self.pending_facts[fact_type] = {
+                    'value': None,
+                    'source_text': text,
+                    'is_removal': True,
+                    'old_value': self.character_data.get(fact_type)
+                }
+            logger.info(f"✅ Detected removals: {removals}")
+            return
+        
+        # Check for fact expansions (e.g., "Add that he has a younger sister")
+        expansions = self._detect_expansions(text)
+        if expansions:
+            for fact_type, expansion_text in expansions.items():
+                current_value = self.character_data.get(fact_type, "")
+                if current_value:
+                    new_value = f"{current_value}. {expansion_text}"
+                else:
+                    new_value = expansion_text
+                self.pending_facts[fact_type] = {
+                    'value': new_value,
+                    'source_text': text,
+                    'is_expansion': True,
+                    'old_value': current_value
+                }
+            logger.info(f"✅ Detected expansions: {expansions}")
+            return
+        
+        # Regular fact extraction (existing logic)
+        for fact_type in self.fact_types:
+            if not self.fact_types[fact_type]['extracted']:
+                extractor = globals().get(f"extract_{fact_type}_from_text", None)
+                if extractor:
+                    value = extractor(text)
+                    if value:
+                        self.pending_facts[fact_type] = {
+                            'value': value,
+                            'source_text': text
+                        }
+        
+        # If nothing extracted, fallback to personality guess
+        if not self.pending_facts and len(text.strip().split()) > 1:
+            if not self.fact_types['personality']['extracted']:
+                self.pending_facts['personality'] = {'value': text.strip(), 'source_text': text}
+        
+        # Log all staged facts
+        for k, v in self.pending_facts.items():
+            self._log_fact_extraction(k, v['value'], v['source_text'])
+
+    def _detect_corrections(self, text: str) -> Dict[str, str]:
+        """Detect correction patterns in text."""
+        corrections = {}
+        text_lower = text.lower()
+        
+        # Pattern: "Actually, he's 20, not 18" or "Make her a sorcerer instead"
+        correction_patterns = [
+            (r"actually[,:]?\s+(?:he'?s|she'?s|they'?re|it'?s|he\s+is|she\s+is|they\s+are)\s+(\d+)(?:,\s*not\s+(\d+))?", "age"),
+            (r"actually[,:]?\s+(?:he'?s|she'?s|they'?re|he\s+is|she\s+is|they\s+are)\s+(human|elf|dwarf|halfling|dragonborn|gnome|half-elf|half-orc|tiefling)", "race"),
+            (r"make\s+(?:him|her|them)\s+(human|elf|dwarf|halfling|dragonborn|gnome|half-elf|half-orc|tiefling)", "race"),
+            (r"actually[,:]?\s+(?:he'?s|she'?s|they'?re|he\s+is|she\s+is|they\s+are)\s+(barbarian|bard|cleric|druid|fighter|monk|paladin|ranger|rogue|sorcerer|warlock|wizard)", "class"),
+            (r"make\s+(?:him|her|them)\s+(barbarian|bard|cleric|druid|fighter|monk|paladin|ranger|rogue|sorcerer|warlock|wizard)", "class"),
+            (r"actually[,:]?\s+(?:his|her|their)\s+name\s+is\s+([a-z]+)", "name"),
+            (r"call\s+(?:him|her|them)\s+([a-z]+)", "name"),
+            (r"actually[,:]?\s+(?:he'?s|she'?s|they'?re|he\s+is|she\s+is|they\s+are)\s+(acolyte|criminal|folk hero|noble|sage|soldier)", "background"),
+            (r"make\s+(?:his|her|their)\s+background\s+(acolyte|criminal|folk hero|noble|sage|soldier)", "background")
+        ]
+        
+        for pattern, fact_type in correction_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                if fact_type == "age":
+                    corrections["age"] = match.group(1)
+                else:
+                    corrections[fact_type] = match.group(1).title()
+        
+        return corrections
+
+    def _detect_removals(self, text: str) -> List[str]:
+        """Detect removal patterns in text."""
+        removals = []
+        text_lower = text.lower()
+        
+        removal_patterns = [
+            (r"remove\s+(?:the\s+)?(backstory|personality|age|name|race|class|background)", r"\1"),
+            (r"take\s+out\s+(?:the\s+)?(backstory|personality|age|name|race|class|background)", r"\1"),
+            (r"delete\s+(?:the\s+)?(backstory|personality|age|name|race|class|background)", r"\1"),
+            (r"forget\s+(?:about\s+)?(?:the\s+)?(backstory|personality|age|name|race|class|background)", r"\1"),
+            (r"don'?t\s+include\s+(?:the\s+)?(backstory|personality|age|name|race|class|background)", r"\1")
+        ]
+        
+        for pattern, fact_type in removal_patterns:
+            if re.search(pattern, text_lower):
+                removals.append(fact_type)
+        
+        return removals
+
+    def _detect_expansions(self, text: str) -> Dict[str, str]:
+        """Detect expansion patterns in text."""
+        expansions = {}
+        text_lower = text.lower()
+        
+        expansion_patterns = [
+            (r"add\s+that\s+(?:he|she|they)\s+(.+?)(?:\.|$)", "personality"),
+            (r"include\s+that\s+(?:he|she|they)\s+(.+?)(?:\.|$)", "personality"),
+            (r"also\s+(?:he|she|they)\s+(.+?)(?:\.|$)", "personality"),
+            (r"additionally[,:]?\s+(.+?)(?:\.|$)", "personality")
+        ]
+        
+        for pattern, fact_type in expansion_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                expansions[fact_type] = match.group(1).strip()
+        
+        return expansions
+
+    def _handle_contradictory_info(self, fact_type: str, new_value: str, old_value: str) -> str:
+        """Handle contradictory information by asking for clarification."""
+        clarification_prompts = {
+            "age": f"You mentioned {old_value} before, but now you've said {new_value}. Which age would you like to keep?",
+            "race": f"You mentioned {old_value} before, but now you've said {new_value}. Which race would you like to keep?",
+            "class": f"You mentioned {old_value} before, but now you've said {new_value}. Which class would you like to keep?",
+            "name": f"You mentioned {old_value} before, but now you've said {new_value}. Which name would you like to keep?",
+            "background": f"You mentioned {old_value} before, but now you've said {new_value}. Which background would you like to keep?",
+            "personality": f"You mentioned '{old_value}' before, but now you've said '{new_value}'. Which personality description would you like to keep?"
+        }
+        
+        return clarification_prompts.get(fact_type, f"You mentioned {old_value} before, but now you've said {new_value}. Which would you like to keep?")
+
+    def confirm_pending_facts(self, corrections=None):
+        """Commit pending facts after user confirmation/correction with enhanced logging."""
+        if corrections:
+            for k, v in corrections.items():
+                if v is None:
+                    # Remove fact
+                    old_value = self.character_data.get(k)
+                    self._log_fact_removal(k, old_value)
+                    if k in self.character_data:
+                        del self.character_data[k]
+                    continue
+                else:
+                    # Update fact
+                    old_value = self.character_data.get(k)
+                    if old_value and old_value != v:
+                        # Log the correction
+                        self._log_fact_correction(k, old_value, v)
+                    self.character_data[k] = v
+                    self._log_fact_addition(k, v)
+        else:
+            # Commit all pending facts
+            for fact_type, value in self.pending_facts.items():
+                old_value = self.character_data.get(fact_type)
+                if old_value and old_value != value:
+                    # Log the correction
+                    self._log_fact_correction(fact_type, old_value, value)
+                self.character_data[fact_type] = value
+                self._log_fact_addition(fact_type, value)
+        
+        # Clear pending facts
+        self.pending_facts = {}
+        
+        # Ensure motivations are preserved (they're stored directly, not staged)
+        if 'motivations' not in self.character_data:
+            self.character_data['motivations'] = []
+        
+        logger.info(f"✅ Facts committed to character_data: {self.character_data}")
+        
+        # Log the confirmation
+        self._log('fact_confirmation', {'facts': self.character_data})
+        
+        return True
+
+    def _log_fact_correction(self, fact_type: str, old_value: str, new_value: str):
+        """Log a fact correction with timestamp."""
+        timestamp = datetime.datetime.now().isoformat()
+        log_entry = {
+            'event': 'fact_correction',
+            'fact_type': fact_type,
+            'old_value': old_value,
+            'new_value': new_value,
+            'timestamp': timestamp
+        }
+        self._write_log_entry(log_entry)
+        logger.info(f"📝 [CORRECTION] {fact_type}: {old_value} → {new_value} @ {timestamp}")
+
+    def _log_fact_removal(self, fact_type: str, old_value: str):
+        """Log a fact removal with timestamp."""
+        timestamp = datetime.datetime.now().isoformat()
+        log_entry = {
+            'event': 'fact_removal',
+            'fact_type': fact_type,
+            'old_value': old_value,
+            'timestamp': timestamp
+        }
+        self._write_log_entry(log_entry)
+        logger.info(f"🗑️ [REMOVAL] {fact_type}: {old_value} @ {timestamp}")
+
+    def _log_fact_addition(self, fact_type: str, value: str):
+        """Log a fact addition with timestamp."""
+        timestamp = datetime.datetime.now().isoformat()
+        log_entry = {
+            'event': 'fact_addition',
+            'fact_type': fact_type,
+            'value': value,
+            'timestamp': timestamp
+        }
+        self._write_log_entry(log_entry)
+        logger.info(f"➕ [ADDITION] {fact_type}: {value} @ {timestamp}")
+
+    def _write_log_entry(self, log_entry: Dict[str, Any]):
+        """Write a log entry to the session log file."""
+        try:
+            log_file = f"logs/character_creation_sessions/{self.session_id}.jsonl"
+            with open(log_file, 'a') as f:
+                f.write(json.dumps(log_entry) + '\n')
+        except Exception as e:
+            logger.error(f"Error writing log entry: {e}")
+
+    def get_fact_summary(self):
+        """Return a summary of all committed facts."""
+        summary = []
+        
+        # Check for committed facts in character_data
+        if self.character_data.get('name') and self.character_data['name'] != 'Adventurer':
+            summary.append(f"**Name**: {self.character_data['name']}")
+        
+        if self.character_data.get('race') and self.character_data['race'] != 'Unknown':
+            summary.append(f"**Race**: {self.character_data['race']}")
+        
+        if self.character_data.get('class') and self.character_data['class'] != 'Unknown':
+            summary.append(f"**Class**: {self.character_data['class']}")
+        
+        if self.character_data.get('background') and self.character_data['background'] != 'Unknown':
+            summary.append(f"**Background**: {self.character_data['background']}")
+        
+        if self.character_data.get('personality') and self.character_data['personality'] != 'A brave adventurer':
+            summary.append(f"**Personality**: {self.character_data['personality']}")
+        
+        if self.character_data.get('combat_style'):
+            summary.append(f"**Combat Style**: {self.character_data['combat_style']}")
+        
+        if self.character_data.get('traits'):
+            traits_str = ', '.join(self.character_data['traits'])
+            summary.append(f"**Traits**: {traits_str}")
+        
+        if self.character_data.get('motivations'):
+            motivations_str = ', '.join(self.character_data['motivations'])
+            summary.append(f"**Motivations**: {motivations_str}")
+        
+        if not summary:
+            summary.append("No facts have been confirmed yet.")
+        
+        return summary
+
+    def save_draft(self):
+        try:
+            self.draft_saved = True
+            self.draft_id = self.session_id
+            self._log_session_event('draft_saved', {'character_data': self.character_data})
+            # Calculate % complete
+            total = len([k for k in self.fact_types if self.fact_types[k]['required']])
+            filled = len([k for k in self.fact_types if self.fact_types[k]['required'] and self.fact_types[k]['extracted']])
+            percent_complete = int((filled / total) * 100) if total else 0
+            metadata = {
+                'character_name': self.character_data.get('name', 'Adventurer'),
+                'status': 'draft',
+                'percent_complete': percent_complete,
+                'session_id': self.session_id,
+                'session_start_time': str(self.session_start_time),
+                'session_end_time': str(datetime.datetime.now()),
+                'fact_types': self.fact_types,
+                'character_data': self.character_data
+            }
+            draft_path = f"logs/character_creation_sessions/{self.session_id}.jsonl"
+            with open(draft_path, 'w') as f:
+                f.write('# ' + json.dumps(metadata) + '\n')
+            return True
+        except Exception as e:
+            logger.error(f"Error saving draft: {e}")
+            return False
+
+    def finalize_character(self):
+        try:
+            if not self.is_character_complete():
+                return {
+                    "success": False,
+                    "message": "Character is not complete. Please fill in all required fields."
+                }
+            if not self.in_review_mode:
+                return {
+                    "success": False,
+                    "message": "Character must be in review mode before finalization."
+                }
+            self.character_finalized = True
+            self.in_review_mode = False
+            # Memory storage disabled - removed vector memory system
+            pass
+            logger.info(f"Character finalized: {self.character_data['name']}")
+            return {
+                "success": True,
+                "message": f"Character {self.character_data['name']} is now finalized and ready for adventure!",
+                "character_data": self.character_data
+            }
+        except Exception as e:
+            logger.error(f"Error finalizing character: {e}")
+            return {
+                "success": False,
+                "message": "Error finalizing character."
+            }
+    
+    def _extract_multiple_facts(self, user_input: str) -> Dict[str, str]:
+        """Extract multiple facts from user input, prioritizing unconfirmed facts."""
+        logger.info(f"🔍 Extracting multiple facts from: '{user_input}'")
+        
+        extracted_facts = {}
+        user_input_lower = user_input.lower()
+        
+        # Get the order of steps we need to fill
+        steps_needed = self._get_unknown_facts_list()
+        logger.info(f"Steps still needed: {steps_needed}")
+        
+        # Extract race if needed
+        if "Race" in steps_needed:
+            extracted_race = extract_race_from_text(user_input)
+            if extracted_race:
+                extracted_facts["race"] = extracted_race
+                logger.info(f"✅ Race detected: {extracted_race}")
+        
+        # Extract class if needed
+        if "Class" in steps_needed:
+            extracted_class = extract_class_from_text(user_input)
+            if extracted_class:
+                extracted_facts["class"] = extracted_class
+                logger.info(f"✅ Class detected: {extracted_class}")
+        
+        # Extract name if needed
+        if "Name" in steps_needed:
+            extracted_name = extract_name_from_text(user_input)
+            if extracted_name:
+                extracted_facts["name"] = extracted_name
+                logger.info(f"✅ Name detected: {extracted_name}")
+        
+        # Extract background if needed
+        if "Background" in steps_needed:
+            extracted_background = extract_background_from_text(user_input)
+            if extracted_background:
+                extracted_facts["background"] = extracted_background
+                logger.info(f"✅ Background detected: {extracted_background}")
+            else:
+                # For custom backgrounds, check if the input looks like a background description
+                # and we haven't extracted other facts that would make this a name/race/class
+                if not extracted_facts and len(user_input.strip().split()) > 2:
+                    extracted_facts["background"] = user_input.strip()
+                    logger.info(f"✅ Custom background detected: {user_input.strip()}")
+        
+        # Extract personality if needed
+        if "Personality" in steps_needed:
+            # Only extract personality if we haven't extracted other facts
+            # and the input looks like a personality description
+            if not extracted_facts and len(user_input.strip().split()) > 1:
+                extracted_facts["personality"] = user_input.strip()
+                logger.info(f"✅ Personality detected: {user_input.strip()}")
+        
+        logger.info(f"📋 Total facts extracted: {extracted_facts}")
+        return extracted_facts
     
     def _extract_single_fact(self, user_input: str, step: str) -> Optional[str]:
         """Extract a single fact from user input for the current step."""
@@ -543,29 +1047,15 @@ class SimpleCharacterGenerator:
         """Make a real LLM call to Ollama."""
         try:
             import time
-            import signal
             
             # Add a small delay to avoid overwhelming the local model
             time.sleep(0.5)
             
             logger.info("🤖 Making LLM call to Ollama...")
             
-            # Set a timeout for the LLM call (30 seconds)
-            def timeout_handler(signum, frame):
-                raise TimeoutError("LLM call timed out after 30 seconds")
-            
-            # Set the timeout
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(30)
-            
-            try:
-                response_content = chat_completion(messages, temperature=0.7, max_tokens=500)
-                signal.alarm(0)  # Cancel the alarm
-                logger.info(f"✅ LLM response received: {response_content[:100]}...")
-                return response_content.strip()
-            except TimeoutError:
-                signal.alarm(0)  # Cancel the alarm
-                raise Exception("❌ LLM request timed out after 30 seconds. The model may be too slow or overloaded.")
+            response_content = chat_completion(messages, temperature=0.7, max_tokens=500)
+            logger.info(f"✅ LLM response received: {response_content[:100]}...")
+            return response_content.strip()
                 
         except Exception as e:
             logger.error(f"❌ LLM call failed: {e}")
@@ -577,9 +1067,9 @@ class SimpleCharacterGenerator:
                 raise Exception(f"Ollama LLM service error: {e}")
     
     def start_character_creation(self, description: str, campaign_name: str = "") -> Dict[str, Any]:
-        """Start step-by-step character creation."""
+        """Start conversational character creation using Ollama."""
         try:
-            logger.info(f"🎲 Starting character creation with description: {description[:100]}...")
+            logger.info(f"🎲 Starting conversational character creation with description: {description[:100]}...")
             logger.info(f"📝 Campaign name: {campaign_name}")
             
             # Reset to beginning
@@ -591,28 +1081,70 @@ class SimpleCharacterGenerator:
             
             logger.info("🔄 Reset character creation state")
             
-            # Get the first step prompt
-            logger.info("🤖 Generating first step prompt...")
-            first_prompt = self._get_next_step_prompt()
-            logger.info(f"✅ First prompt generated: {first_prompt[:100]}...")
+            # Extract what we can from the initial description
+            self._extract_and_stage_all_facts(description)
             
-            # Store initial conversation
+            # If we have pending facts, present them for confirmation first
+            if self.pending_facts:
+                confirmation_message = self._build_confirmation_prompt(self.pending_facts, [])
+                self.conversation_history = [
+                    {"role": "user", "content": description},
+                    {"role": "assistant", "content": confirmation_message}
+                ]
+                return {
+                    "success": True,
+                    "message": confirmation_message,
+                    "is_complete": False,
+                    "current_step": "fact_confirmation",
+                    "pending_facts": self.pending_facts
+                }
+            
+            # Create system prompt for conversational character creation
+            system_prompt = """You are a SoloHeart character creation assistant. Your role is to have a natural conversation with the player to help them create their character.
+
+IMPORTANT GUIDELINES:
+1. Have a natural, conversational tone - don't use rigid prompts
+2. Extract character details from what the player tells you
+3. Suggest appropriate D&D classes/races based on their descriptions
+4. Ask follow-up questions to gather missing information
+5. Be enthusiastic and engaging
+6. Don't ask for information the player has already provided
+7. When you have enough information, offer to complete the character
+
+CHARACTER DETAILS TO GATHER:
+- Name
+- Race (Human, Elf, Dwarf, Halfling, Dragonborn, Gnome, Half-Elf, Half-Orc, Tiefling)
+- Class (Barbarian, Bard, Cleric, Druid, Fighter, Monk, Paladin, Ranger, Rogue, Sorcerer, Warlock, Wizard)
+- Background (Acolyte, Criminal, Folk Hero, Noble, Sage, Soldier, or custom)
+- Personality traits
+- Any backstory elements
+
+Start by acknowledging their description and asking any clarifying questions needed."""
+            
+            # Add the player's initial description
             self.conversation_history = [
-                {"role": "system", "content": "You are a helpful SoloHeart character creation assistant guiding the player through each step one at a time."},
-                {"role": "assistant", "content": first_prompt}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": description}
             ]
+            
+            # Get Ollama's response
+            logger.info("🤖 Getting Ollama's initial response...")
+            ai_response = self._real_llm_call(self.conversation_history)
+            
+            # Store the AI response
+            self.conversation_history.append({"role": "assistant", "content": ai_response})
             
             logger.info("💾 Stored initial conversation")
             self._log('log_state', self.character_data)
             
             result = {
                 "success": True,
-                "message": first_prompt,
+                "message": ai_response,
                 "is_complete": False,
-                "current_step": self._get_current_step()
+                "current_step": "conversation"
             }
             
-            logger.info(f"✅ Character creation started successfully. Current step: {result['current_step']}")
+            logger.info(f"✅ Conversational character creation started successfully")
             return result
             
         except Exception as e:
@@ -625,79 +1157,154 @@ class SimpleCharacterGenerator:
                 "message": f"Error starting character creation: {str(e)}"
             }
     
+    def _build_emotional_and_arc_scaffolding(self, personality: str, backstory: str) -> str:
+        """Build emotional and narrative arc scaffolding based on character details."""
+        try:
+            # Get character name for personalization
+            char_name = self.character_data.get('name', 'your character')
+            if char_name == 'Adventurer':
+                char_name = 'your character'
+            
+            # Get detected motivations
+            motivations = self.character_data.get('motivations', [])
+            motivation_text = ""
+            if motivations:
+                if len(motivations) == 1:
+                    motivation_text = motivations[0].lower()
+                elif len(motivations) == 2:
+                    motivation_text = f"{motivations[0].lower()} and {motivations[1].lower()}"
+                else:
+                    motivation_text = f"{', '.join(motivations[:-1]).lower()}, and {motivations[-1].lower()}"
+            
+            # Build personalized prompt
+            if motivation_text:
+                prompt = f"It sounds like {char_name} carries a lot of {motivation_text}. "
+            else:
+                prompt = f"It sounds like {char_name} has been through some intense experiences. "
+            
+            prompt += "Do you imagine their story heading toward redemption, vengeance, transformation, or something else? Or would you rather discover it during play? (This is totally optional!)"
+            
+            logger.info(f"🎭 Generated emotional arc scaffolding for {char_name}")
+            return prompt
+            
+        except Exception as e:
+            logger.error(f"❌ Error building emotional scaffolding: {e}")
+            return "What direction do you see your character's story taking? Redemption, vengeance, transformation, or something else? Or would you rather discover it during play?"
+
     def continue_conversation(self, user_input: str) -> Dict[str, Any]:
-        """Continue step-by-step character creation with immediate fact commitment."""
+        """Continue conversational character creation using Ollama, with emotional and arc scaffolding."""
         try:
             self._log('log_user_input', user_input)
             self.conversation_history.append({"role": "user", "content": user_input})
-            
-            current_step = self._get_current_step()
-            logger.info(f"Current step: {current_step}")
             logger.info(f"Current character data: {self.character_data}")
-            
-            # Handle ability score assignment
-            if current_step == "ability_scores":
-                return self._handle_ability_score_assignment(user_input)
-            
-            # Handle completion
-            if current_step == "complete":
-                self.in_review_mode = True
-                self.is_complete = True
-                return {
-                    "success": True,
-                    "message": f"{self.get_character_summary()}\n\n🎯 **Character Creation Complete!**\n\nHere is your complete character sheet. Would you like to begin the campaign or make any changes?",
-                    "is_complete": True,
-                    "in_review_mode": True
-                }
-            
-            # Extract fact for current step
-            extracted_fact = self._extract_single_fact(user_input, current_step)
-            logger.info(f"Current step: {current_step}, Extracted fact: {extracted_fact}")
-            
-            if extracted_fact:
-                # Commit the fact immediately
-                self._commit_step_fact(current_step, extracted_fact)
-                logger.info(f"Committed {current_step}: {extracted_fact}")
-                logger.info(f"Character data after commit: {self.character_data}")
-                
-                # Generate confirmation and next step
-                confirmation = self._get_step_confirmation(current_step, extracted_fact)
-                next_step = self._get_current_step()
-                
-                if next_step == "complete":
-                    # Character creation is complete
-                    self.in_review_mode = True
-                    self.is_complete = True
-                    response = f"{confirmation}\n\n{self.get_character_summary()}\n\n🎯 **Character Creation Complete!**\n\nHere is your complete character sheet. Would you like to begin the campaign or make any changes?"
-                else:
-                    # Continue to next step
-                    next_prompt = self._get_next_step_prompt()
-                    response = f"{confirmation}\n\n{next_prompt}"
-                
+
+            # Handle 'what do we have so far' or similar
+            if any(phrase in user_input.lower() for phrase in ["what do we have so far", "what have we got", "current status", "show me what we have", "show me the character"]):
+                fact_summary = self.get_fact_summary()
+                response = f"Here's what we have so far:\n{fact_summary}\nWhat would you like to add or change?"
                 self.conversation_history.append({"role": "assistant", "content": response})
-                self._log('log_ai_response', response)
-                self._log('log_state', self.character_data)
-                
                 return {
                     "success": True,
                     "message": response,
-                    "is_complete": self.is_complete,
-                    "in_review_mode": self.in_review_mode,
-                    "current_step": next_step
+                    "is_complete": False,
+                    "current_step": "status_check"
                 }
-            else:
-                # Could not extract fact, ask for clarification
-                clarification = self._get_clarification_prompt(current_step, user_input)
-                self.conversation_history.append({"role": "assistant", "content": clarification})
-                self._log('log_ai_response', clarification)
-                
+
+            # If we are waiting for confirmation, check for confirmation phrases
+            confirmation_phrases = [
+                "yes", "that's right", "correct", "looks good", "that looks right", "you got it", "sounds right"
+            ]
+            if self.pending_facts:
+                if user_input.strip().lower() in confirmation_phrases:
+                    self.confirm_pending_facts()
+                    logger.info(f"✅ Facts confirmed and committed: {self.character_data}")
+                    # Only trigger arc scaffolding if personality, background, and either class or race are confirmed
+                    core_keys = [k for k in ["personality", "background"] if self.character_data.get(k) and self.character_data[k] not in ["Unknown", "A brave adventurer", None, ""]]
+                    class_or_race = any(self.character_data.get(k) and self.character_data[k] not in ["Unknown", None, ""] for k in ["class", "race"])
+                    if len(core_keys) == 2 and class_or_race and not hasattr(self, 'arc_scaffolding_asked'):
+                        self.arc_scaffolding_asked = True
+                        scaffolding = self._build_emotional_and_arc_scaffolding(
+                            self.character_data.get('personality', ''),
+                            self.character_data.get('background', '')
+                        )
+                        self.conversation_history.append({"role": "assistant", "content": scaffolding})
+                        return {
+                            "success": True,
+                            "message": scaffolding,
+                            "is_complete": False,
+                            "current_step": "arc_scaffolding"
+                        }
+                    response = "Great! I've saved those details. What else would you like to tell me about your character?"
+                    self.conversation_history.append({"role": "assistant", "content": response})
+                    return {
+                        "success": True,
+                        "message": response,
+                        "is_complete": False,
+                        "current_step": "conversation"
+                    }
+                else:
+                    # Treat as new info/correction, re-extract facts
+                    self._extract_and_stage_all_facts(user_input)
+                    confirmation_message = self._build_confirmation_prompt(self.pending_facts, [])
+                    self.conversation_history.append({"role": "assistant", "content": confirmation_message})
+                    return {
+                        "success": True,
+                        "message": confirmation_message,
+                        "is_complete": False,
+                        "current_step": "fact_confirmation",
+                        "pending_facts": self.pending_facts
+                    }
+
+            # Otherwise, extract facts from the user input
+            self._extract_and_stage_all_facts(user_input)
+            if self.pending_facts:
+                confirmation_message = self._build_confirmation_prompt(self.pending_facts, [])
+                self.conversation_history.append({"role": "assistant", "content": confirmation_message})
                 return {
                     "success": True,
-                    "message": clarification,
+                    "message": confirmation_message,
                     "is_complete": False,
-                    "current_step": current_step
+                    "current_step": "fact_confirmation",
+                    "pending_facts": self.pending_facts
                 }
-            
+
+            # If not enough facts, do not allow completion or fallback
+            if not self._enough_facts_for_progress():
+                response = "I need a bit more information before we can continue. Please tell me more about your character—maybe their name, race, class, background, or personality."
+                self.conversation_history.append({"role": "assistant", "content": response})
+                return {
+                    "success": True,
+                    "message": response,
+                    "is_complete": False,
+                    "current_step": "awaiting_more_info"
+                }
+
+            # If enough facts, continue with emotional scaffolding if not already done
+            core_keys = [k for k in ["personality", "background"] if self.character_data.get(k) and self.character_data[k] not in ["Unknown", "A brave adventurer", None, ""]]
+            class_or_race = any(self.character_data.get(k) and self.character_data[k] not in ["Unknown", None, ""] for k in ["class", "race"])
+            if len(core_keys) == 2 and class_or_race and not hasattr(self, 'arc_scaffolding_asked'):
+                self.arc_scaffolding_asked = True
+                scaffolding = self._build_emotional_and_arc_scaffolding(
+                    self.character_data.get('personality', ''),
+                    self.character_data.get('background', '')
+                )
+                self.conversation_history.append({"role": "assistant", "content": scaffolding})
+                return {
+                    "success": True,
+                    "message": scaffolding,
+                    "is_complete": False,
+                    "current_step": "arc_scaffolding"
+                }
+
+            # Otherwise, continue normal conversation
+            response = "What else would you like to tell me about your character?"
+            self.conversation_history.append({"role": "assistant", "content": response})
+            return {
+                "success": True,
+                "message": response,
+                "is_complete": False,
+                "current_step": "conversation"
+            }
         except Exception as e:
             self._log('log_error', str(e))
             logger.error(f"Error continuing conversation: {e}")
@@ -705,7 +1312,7 @@ class SimpleCharacterGenerator:
                 "success": False,
                 "message": "Error processing your input. Please try again."
             }
-    
+
     def _extract_character_data(self) -> Optional[Dict[str, Any]]:
         """Extract character data from conversation history."""
         try:
@@ -1048,28 +1655,36 @@ class SimpleCharacterGenerator:
         try:
             confirmed_facts = []
             unconfirmed_facts = []
-            if "name" in self.confirmed_facts:
-                confirmed_facts.append(f"Name: {self.character_data.get('name')}")
+            
+            # Check for committed facts in character_data
+            if self.character_data.get('name') and self.character_data['name'] != 'Adventurer':
+                confirmed_facts.append(f"Name: {self.character_data['name']}")
             else:
                 unconfirmed_facts.append("Name")
-            if "race" in self.confirmed_facts:
-                confirmed_facts.append(f"Race: {self.character_data.get('race')}")
+            
+            if self.character_data.get('race') and self.character_data['race'] != 'Unknown':
+                confirmed_facts.append(f"Race: {self.character_data['race']}")
             else:
                 unconfirmed_facts.append("Race")
-            if "class" in self.confirmed_facts:
-                confirmed_facts.append(f"Class: {self.character_data.get('class')}")
+            
+            if self.character_data.get('class') and self.character_data['class'] != 'Unknown':
+                confirmed_facts.append(f"Class: {self.character_data['class']}")
             else:
                 unconfirmed_facts.append("Class")
-            if "background" in self.confirmed_facts:
-                confirmed_facts.append(f"Background: {self.character_data.get('background')}")
+            
+            if self.character_data.get('background') and self.character_data['background'] != 'Unknown':
+                confirmed_facts.append(f"Background: {self.character_data['background']}")
             else:
                 unconfirmed_facts.append("Background")
-            if "personality" in self.confirmed_facts:
-                confirmed_facts.append(f"Personality: {self.character_data.get('personality')}")
+            
+            if self.character_data.get('personality') and self.character_data['personality'] != 'A brave adventurer':
+                confirmed_facts.append(f"Personality: {self.character_data['personality']}")
             else:
                 unconfirmed_facts.append("Personality")
+            
             if bullet_points:
                 return '\n'.join(f"- {fact}" for fact in confirmed_facts) if confirmed_facts else "- None yet"
+            
             state_summary = f"""
 CONFIRMED CHARACTER FACTS:
 {chr(10).join(f"- {fact}" for fact in confirmed_facts) if confirmed_facts else "- None yet"}
@@ -1087,7 +1702,21 @@ Level: {self.character_data.get('level', 1)}
     def _get_unknown_facts_list(self):
         """Return a list of unconfirmed fact types in order."""
         order = ["name", "race", "class", "background", "personality"]
-        return [fact.title() for fact in order if fact not in self.confirmed_facts]
+        unknown_facts = []
+        
+        for fact in order:
+            if fact == "name" and (not self.character_data.get('name') or self.character_data['name'] == 'Adventurer'):
+                unknown_facts.append("Name")
+            elif fact == "race" and (not self.character_data.get('race') or self.character_data['race'] == 'Unknown'):
+                unknown_facts.append("Race")
+            elif fact == "class" and (not self.character_data.get('class') or self.character_data['class'] == 'Unknown'):
+                unknown_facts.append("Class")
+            elif fact == "background" and (not self.character_data.get('background') or self.character_data['background'] == 'Unknown'):
+                unknown_facts.append("Background")
+            elif fact == "personality" and (not self.character_data.get('personality') or self.character_data['personality'] == 'A brave adventurer'):
+                unknown_facts.append("Personality")
+        
+        return unknown_facts
     
     def is_character_complete(self) -> bool:
         """Check if all required character fields are filled."""
@@ -1243,31 +1872,33 @@ Level: {self.character_data.get('level', 1)}
             }
     
     def finalize_character(self) -> Dict[str, Any]:
-        """Finalize the character and prevent further edits."""
-        if not self.is_character_complete():
+        try:
+            if not self.is_character_complete():
+                return {
+                    "success": False,
+                    "message": "Character is not complete. Please fill in all required fields."
+                }
+            if not self.in_review_mode:
+                return {
+                    "success": False,
+                    "message": "Character must be in review mode before finalization."
+                }
+            self.character_finalized = True
+            self.in_review_mode = False
+            # Memory storage disabled - removed vector memory system
+            pass
+            logger.info(f"Character finalized: {self.character_data['name']}")
+            return {
+                "success": True,
+                "message": f"Character {self.character_data['name']} is now finalized and ready for adventure!",
+                "character_data": self.character_data
+            }
+        except Exception as e:
+            logger.error(f"Error finalizing character: {e}")
             return {
                 "success": False,
-                "message": "Character is not complete. Please fill in all required fields."
+                "message": "Error finalizing character."
             }
-        
-        if not self.in_review_mode:
-            return {
-                "success": False,
-                "message": "Character must be in review mode before finalization."
-            }
-        
-        self.character_finalized = True
-        self.in_review_mode = False
-        
-        # Memory storage disabled - removed vector memory system
-        pass
-        
-        logger.info(f"Character finalized: {self.character_data['name']}")
-        return {
-            "success": True,
-            "message": f"Character {self.character_data['name']} is now finalized and ready for adventure!",
-            "character_data": self.character_data
-        }
 
     def _simple_extract_character_data(self, conversation_text: str) -> Dict[str, Any]:
         """Simple fallback character data extraction."""
@@ -1428,13 +2059,34 @@ Level: {self.character_data.get('level', 1)}
         return skills.get(character_class, ["Athletics", "Perception"])
     
     def get_character_data(self) -> Dict[str, Any]:
-        """Get the completed character data."""
+        """Get the completed character data with actual committed facts."""
         # Ensure created_date is set
         if not self.character_data.get("created_date"):
             self.character_data["created_date"] = datetime.datetime.now().isoformat()
         
-        return self.character_data
-    
+        # Generate ability scores if we have a class but no scores
+        if self.character_data.get('class') and not self.character_data.get('ability_scores'):
+            char_class = self.character_data['class']
+            self.character_data['ability_scores'] = self._generate_ability_scores(char_class)
+            self.character_data['hit_points'] = 10  # Default HP
+        
+        # Ensure all new fields are present
+        if 'combat_style' not in self.character_data:
+            self.character_data['combat_style'] = None
+        if 'traits' not in self.character_data:
+            self.character_data['traits'] = []
+        if 'motivations' not in self.character_data:
+            self.character_data['motivations'] = []
+        
+        # Return a copy to prevent external modification
+        return self.character_data.copy()
+
+    def _enough_facts_for_progress(self):
+        # Require at least 3 core facts to allow progress
+        char = self.character_data
+        core_keys = [k for k in ["personality", "background", "class", "race", "motivation"] if char.get(k) and char[k] not in ["Unknown", "A brave adventurer", None, ""]]
+        return len(core_keys) >= 3
+
     def save_character(self, campaign_id: str):
         """Save character data to file."""
         try:
@@ -1444,6 +2096,105 @@ Level: {self.character_data.get('level', 1)}
                 json.dump(self.character_data, f, indent=2)
         except Exception as e:
             logger.error(f"Error saving character: {e}")
+
+    def _log_session_event(self, event_type: str, data: Dict[str, Any]):
+        """Log a session event with timestamp."""
+        timestamp = datetime.datetime.now().isoformat()
+        log_entry = {
+            'event': event_type,
+            'data': data,
+            'timestamp': timestamp,
+            'session_id': self.session_id
+        }
+        self._write_log_entry(log_entry)
+        logger.info(f"📋 [SESSION] {event_type}: {data} @ {timestamp}")
+
+    def _present_fact_validation(self):
+        """Present the current pending facts for user validation with change type indication."""
+        if not self.pending_facts:
+            return "No new facts extracted."
+        
+        summary_parts = []
+        for k, v in self.pending_facts.items():
+            if v.get('is_removal'):
+                summary_parts.append(f"**Remove {k.title()}**: {v.get('old_value', 'current value')}")
+            elif v.get('is_correction'):
+                summary_parts.append(f"**Correct {k.title()}**: {v.get('old_value', 'current value')} → {v['value']}")
+            elif v.get('is_expansion'):
+                summary_parts.append(f"**Expand {k.title()}**: {v['value']}")
+            else:
+                summary_parts.append(f"**Add {k.title()}**: {v['value']}")
+        
+        summary_text = '\n'.join(summary_parts)
+        return f"Here's what I've got so far:\n{summary_text}\n\nIs this correct? You can correct, remove, or expand on any fact."
+
+    def _check_for_contradictions(self, new_facts: Dict[str, Any]) -> List[str]:
+        """Check for contradictions between new facts and existing character data."""
+        contradictions = []
+        for fact_type, fact_data in new_facts.items():
+            if fact_data.get('is_correction') or fact_data.get('is_expansion'):
+                old_value = self.character_data.get(fact_type)
+                new_value = fact_data['value']
+                if old_value and old_value != new_value and not fact_data.get('is_expansion'):
+                    contradictions.append(fact_type)
+        return contradictions
+
+    def _handle_contradictory_info(self, fact_type: str, new_value: str, old_value: str) -> str:
+        """Handle contradictory information by asking for clarification."""
+        clarification_prompts = {
+            "age": f"You mentioned {old_value} before, but now you've said {new_value}. Which age would you like to keep?",
+            "race": f"You mentioned {old_value} before, but now you've said {new_value}. Which race would you like to keep?",
+            "class": f"You mentioned {old_value} before, but now you've said {new_value}. Which class would you like to keep?",
+            "name": f"You mentioned {old_value} before, but now you've said {new_value}. Which name would you like to keep?",
+            "background": f"You mentioned {old_value} before, but now you've said {new_value}. Which background would you like to keep?",
+            "personality": f"You mentioned '{old_value}' before, but now you've said '{new_value}'. Which personality description would you like to keep?"
+        }
+        
+        return clarification_prompts.get(fact_type, f"You mentioned {old_value} before, but now you've said {new_value}. Which would you like to keep?")
+
+    def save_draft_with_metadata(self):
+        self.draft_saved = True
+        self.draft_id = self.session_id
+        self._log_session_event('draft_saved', {'character_data': self.character_data})
+        # Calculate % complete
+        total = len([k for k in self.fact_types if self.fact_types[k]['required']])
+        filled = len([k for k in self.fact_types if self.fact_types[k]['required'] and self.fact_types[k]['extracted']])
+        percent_complete = int((filled / total) * 100) if total else 0
+        metadata = {
+            'character_name': self.character_data.get('name', 'Adventurer'),
+            'status': 'draft',
+            'percent_complete': percent_complete,
+            'session_id': self.session_id,
+            'session_start_time': str(self.session_start_time),
+            'session_end_time': str(datetime.datetime.now()),
+            'fact_types': self.fact_types,
+            'character_data': self.character_data
+        }
+        draft_path = f"logs/character_creation_sessions/{self.session_id}.jsonl"
+        with open(draft_path, 'w') as f:
+            f.write('# ' + json.dumps(metadata) + '\n')
+        return True
+
+    def _update_fact_types(self, fact_type, value, source_text):
+        """Update fact_types tracking with new fact."""
+        self.fact_types[fact_type]['extracted'] = True
+        self.fact_types[fact_type]['value'] = value
+        self.fact_types[fact_type]['source_text'] = source_text
+        self.fact_types[fact_type]['timestamp'] = datetime.datetime.now().isoformat()
+        self._log_fact_extraction(fact_type, value, source_text)
+
+    def _log_fact_extraction(self, fact_type: str, value: str, source_text: str):
+        """Log a fact extraction with timestamp."""
+        timestamp = datetime.datetime.now().isoformat()
+        log_entry = {
+            'event': 'fact_extraction',
+            'fact_type': fact_type,
+            'value': value,
+            'source_text': source_text,
+            'timestamp': timestamp
+        }
+        self._write_log_entry(log_entry)
+        logger.info(f"🔍 [EXTRACTION] {fact_type}: {value} from '{source_text[:50]}...' @ {timestamp}")
 
 class SimpleNarrativeBridge:
     """Simple narrative bridge for SoloHeart (without complex Narrative Engine)."""
@@ -1705,7 +2456,7 @@ def vibe_code_creation():
 
 @app.route('/api/character/vibe-code/start', methods=['POST'])
 def start_vibe_code_creation():
-    """Start the vibe code character creation process."""
+    """Start the vibe code character creation process with conversational approach."""
     try:
         logger.info("🚀 Starting vibe code character creation...")
         data = request.get_json()
@@ -1724,28 +2475,24 @@ def start_vibe_code_creation():
         temp_bridge = SimpleNarrativeBridge()
         game.character_generator.narrative_bridge = temp_bridge
         
-        # Start character creation conversation
-        logger.info("🎲 Starting character creation conversation...")
+        # Start character creation session
+        game.character_generator._log_session_event('session_start', {'description': description, 'campaign_name': campaign_name})
+        
+        # Start conversational character creation
         result = game.character_generator.start_character_creation(description, campaign_name)
         
-        logger.info(f"✅ Character creation result: {result.get('success', False)}")
+        # Store the character generator state in session
+        session['character_creation_active'] = True
+        session['campaign_name'] = campaign_name
         
-        if result['success']:
-            # Store the character generator state in session
-            session['character_creation_active'] = True
-            session['campaign_name'] = campaign_name
-            
-            logger.info("💾 Session data stored successfully")
-            
-            return jsonify({
-                'success': True,
-                'message': result['message'],
-                'is_complete': result['is_complete']
-            })
-        else:
-            logger.error(f"❌ Character creation failed: {result.get('message', 'Unknown error')}")
-            return jsonify({'success': False, 'message': 'Failed to start character creation'})
-    
+        logger.info("💾 Session data stored successfully")
+        
+        return jsonify({
+            'success': result['success'],
+            'message': result['message'],
+            'is_complete': result.get('is_complete', False),
+            'current_step': result.get('current_step', 'conversation')
+        })
     except Exception as e:
         logger.error(f"❌ Error starting vibe code creation: {e}")
         import traceback
@@ -1766,43 +2513,82 @@ def continue_vibe_code_creation():
             logger.warning("❌ No user input provided")
             return jsonify({'success': False, 'message': 'User input is required'})
         
-        # Continue character creation conversation
-        logger.info("🤖 Processing user input...")
+        # Continue conversational character creation
         result = game.character_generator.continue_conversation(user_input)
         
-        logger.info(f"✅ Conversation result: {result.get('success', False)}")
-        logger.info(f"📊 Is complete: {result.get('is_complete', False)}")
-        
-        # Log extracted facts for debugging
-        current_character = game.character_generator.get_character_data()
-        logger.info(f"🎭 Current character state: {current_character.get('race', 'Unknown')} {current_character.get('class', 'Unknown')} named {current_character.get('name', 'Unknown')}")
-        
-        response_data = {
+        return jsonify({
             'success': result['success'],
             'message': result['message'],
-            'is_complete': result.get('is_complete', False)
-        }
-        
-        # Add review mode specific fields
-        if result.get('in_review_mode'):
-            response_data['in_review_mode'] = True
-            response_data['character_summary'] = game.character_generator.get_character_summary()
-            logger.info("📋 Character in review mode")
-        
-        # Add finalization specific fields
-        if result.get('character_finalized'):
-            response_data['character_finalized'] = True
-            response_data['character_data'] = result.get('character_data')
-            logger.info("✅ Character finalized")
-        
-        logger.info("📤 Sending response to client")
-        return jsonify(response_data)
-    
+            'is_complete': result.get('is_complete', False),
+            'current_step': result.get('current_step', 'conversation'),
+            'in_review_mode': result.get('in_review_mode', False)
+        })
     except Exception as e:
-        logger.error(f"❌ Error continuing vibe code creation: {e}")
-        import traceback
-        logger.error(f"📋 Full traceback: {traceback.format_exc()}")
-        return jsonify({'success': False, 'message': 'Error continuing character creation'})
+        logger.error(f"Error in continue_vibe_code_creation: {e}")
+        return jsonify({'success': False, 'message': 'Error continuing character creation.'})
+
+@app.route('/api/character/vibe-code/confirm', methods=['POST'])
+def confirm_vibe_code_facts():
+    """Confirm or correct pending facts."""
+    try:
+        data = request.get_json()
+        corrections = data.get('corrections', None)  # Dict of fact_type: new_value or None
+        # Commit all facts in pending_facts after confirmation
+        for k, v in game.character_generator.pending_facts.items():
+            if corrections and k in corrections:
+                new_value = corrections[k]
+                if new_value is None:
+                    # Remove fact
+                    old_value = game.character_generator.character_data.get(k)
+                    game.character_generator._log_fact_removal(k, old_value)
+                    if k in game.character_generator.character_data:
+                        del game.character_generator.character_data[k]
+                    if k in game.character_generator.fact_types:
+                        game.character_generator.fact_types[k]['extracted'] = False
+                        game.character_generator.fact_types[k]['value'] = None
+                else:
+                    # Update fact
+                    old_value = game.character_generator.character_data.get(k)
+                    if old_value and old_value != new_value:
+                        game.character_generator._log_fact_correction(k, old_value, new_value)
+                    v['value'] = new_value
+            # Commit fact
+            old_value = game.character_generator.character_data.get(k)
+            new_value = v['value']
+            if old_value and old_value != new_value:
+                game.character_generator._log_fact_correction(k, old_value, new_value)
+            else:
+                game.character_generator._log_fact_addition(k, new_value)
+            game.character_generator._update_fact_types(k, new_value, v['source_text'])
+            game.character_generator.character_data[k] = new_value
+        game.character_generator.pending_facts = {}
+        game.character_generator._log_session_event('fact_confirmation', {'facts': game.character_generator.character_data})
+        # After confirmation, check if more facts are needed
+        missing = [k for k, v in game.character_generator.fact_types.items() if v['required'] and not v['extracted']]
+        if missing:
+            return jsonify({'success': True, 'message': f"Thanks! I still need: {', '.join(missing)}. Please provide more details.", 'fact_types': game.character_generator.fact_types})
+        else:
+            summary = game.character_generator.get_fact_summary()
+            return jsonify({'success': True, 'message': summary + '\nAre you ready to start your adventure with this character?', 'fact_types': game.character_generator.fact_types})
+    except Exception as e:
+        logger.error(f"Error confirming facts: {e}")
+        return jsonify({'success': False, 'message': 'Error confirming facts.'})
+
+@app.route('/api/character/vibe-code/summary', methods=['GET'])
+def get_character_summary():
+    """Return a summary of all committed facts."""
+    summary = game.character_generator.get_fact_summary()
+    return jsonify({'success': True, 'summary': summary})
+
+@app.route('/api/character/vibe-code/save-draft', methods=['POST'])
+def save_character_draft():
+    """Save the current character as a draft."""
+    try:
+        game.character_generator.save_draft()
+        return jsonify({'success': True, 'message': 'Draft saved.'})
+    except Exception as e:
+        logger.error(f"Error saving draft: {e}")
+        return jsonify({'success': False, 'message': 'Error saving draft.'})
 
 @app.route('/api/character/vibe-code/complete', methods=['POST'])
 def complete_vibe_code_creation():
@@ -2093,6 +2879,39 @@ def get_current_game():
     except Exception as e:
         logger.error(f"Error getting current game: {e}")
         return jsonify({'success': False, 'message': 'Error getting game state'})
+
+@app.route('/api/character/vibe-code/load-draft', methods=['POST'])
+def load_character_draft():
+    """Load a saved character draft and resume the conversation flow."""
+    try:
+        data = request.get_json()
+        draft_id = data.get('draft_id', None)
+        if not draft_id:
+            return jsonify({'success': False, 'message': 'Draft ID required.'})
+        draft_path = f"logs/character_creation_sessions/{draft_id}.jsonl"
+        if not os.path.exists(draft_path):
+            return jsonify({'success': False, 'message': 'Draft not found.'})
+        # Read metadata and fact state
+        with open(draft_path, 'r') as f:
+            lines = f.readlines()
+        # First line is metadata block
+        metadata = json.loads(lines[0].strip().lstrip('# '))
+        # Remaining lines are fact logs (optional for future use)
+        # Restore fact_types and character_data
+        game.character_generator.fact_types = metadata['fact_types']
+        game.character_generator.character_data = metadata['character_data']
+        game.character_generator.session_id = draft_id
+        game.character_generator.session_start_time = metadata.get('session_start_time')
+        # Resume validation/conversation
+        missing = [k for k, v in game.character_generator.fact_types.items() if v['required'] and not v['extracted']]
+        if missing:
+            prompt = f"Draft loaded. I still need: {', '.join(missing)}. Please provide more details."
+        else:
+            prompt = game.character_generator.get_fact_summary() + '\nAre you ready to start your adventure with this character?'
+        return jsonify({'success': True, 'message': prompt, 'fact_types': game.character_generator.fact_types})
+    except Exception as e:
+        logger.error(f"Error loading draft: {e}")
+        return jsonify({'success': False, 'message': 'Error loading draft.'})
 
 if __name__ == '__main__':
     print("🎲 Starting Simple Unified SoloHeart Narrative Interface...")

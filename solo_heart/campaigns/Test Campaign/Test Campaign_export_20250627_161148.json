@@ -1,0 +1,28 @@
+This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License.
+
+{
+  "campaign_info": {
+    "name": "Test Campaign",
+    "settings": {
+      "campaign_name": "Test Campaign",
+      "created_date": "2025-06-27",
+      "dm_name": "",
+      "player_count": 0,
+      "starting_level": 1,
+      "world_name": "Forgotten Realms",
+      "difficulty": "medium",
+      "magic_level": "standard",
+      "ai_assistance_level": "moderate",
+      "session_duration": 180,
+      "auto_save": true,
+      "backup_frequency": "daily"
+    },
+    "export_date": "2025-06-27T16:11:48.202676"
+  },
+  "characters": {
+    "Alice": {
+      "name": "Aramil Liadon",
+      "race": "half-elf",
+      "character_class": "wizard",
+      "level": 1,
+      "ability_scores": {
