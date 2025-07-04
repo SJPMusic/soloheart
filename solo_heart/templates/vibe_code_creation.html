@@ -131,6 +131,7 @@
     <script>
         let isComplete = false;
         let isProcessing = false;
+        let hasStarted = false; // Track if we've already started character creation
 
         function goBack() {
             if (confirm('Are you sure you want to go back? Your character creation progress will be lost.')) {
@@ -166,13 +167,14 @@
                 let endpoint = '/api/character/vibe-code/';
                 let data = {};
 
-                if (!isComplete) {
+                if (!hasStarted) {
                     // First message - start character creation
                     endpoint += 'start';
                     data = {
                         description: message,
                         campaign_name: ''
                     };
+                    hasStarted = true; // Mark that we've started
                 } else {
                     // Continue conversation
                     endpoint += 'continue';

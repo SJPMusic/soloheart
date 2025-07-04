@@ -1,0 +1,134 @@
+# SoloHeart Cursor Rules Management Guide
+
+## Rule Structure Format
+
+Every cursor rule must follow this exact metadata and content structure:
+
+````markdown
+---
+description: Short description of the rule's purpose
+globs: optional/path/pattern/**/*
+alwaysApply: false
+---
+# Rule Title
+
+Main content explaining the rule with markdown formatting.
+
+1. Step-by-step instructions
+2. Code examples
+3. Guidelines
+
+Example:
+```python
+# Good
+def good_example():
+    # Correct implementation
+    pass
+
+# Bad example
+def bad_example():
+    # Incorrect implementation
+    pass
+```
+````
+
+## File Organization
+
+### Required Location
+
+All cursor rule files **must** be placed in:
+
+```
+PROJECT_ROOT/.cursor/rules/
+```
+
+### Directory Structure
+
+```
+PROJECT_ROOT/
+├── .cursor/
+│   └── rules/
+│       ├── your-rule-name.mdc
+│       ├── another-rule.mdc
+│       └── cursor-rules.mdc
+└── ...
+```
+
+### Naming Conventions
+
+- Use **kebab-case** for all filenames
+- Always use **.mdc** extension
+- Make names **descriptive** of the rule's purpose
+- Examples: `python-style.mdc`, `flask-patterns.mdc`, `narrative-engine.mdc`
+
+## Content Guidelines
+
+### Writing Effective Rules
+
+1. **Be specific and actionable** - Provide clear instructions
+2. **Include code examples** - Show both good and bad practices
+3. **Reference existing files** - Use `@filename.ext` format
+4. **Keep it focused** - One rule per concern/pattern
+5. **Add context** - Explain why the rule exists
+
+### Code Examples Format
+
+```python
+# ✅ Good: Clear and follows conventions
+def process_user(user_data: dict) -> dict:
+    return {
+        'id': user_data['id'],
+        'display_name': user_data['name']
+    }
+
+# ❌ Bad: Unclear parameter passing
+def process_user(id, name):
+    return {'id': id, 'display_name': name}
+```
+
+### File References
+
+When referencing project files in rules, use this pattern to mention other files:
+
+```markdown
+[file.py](mdc:path/to/file.py)
+```
+
+## Forbidden Locations
+
+**Never** place rule files in:
+- Project root directory
+- Any subdirectory outside `.cursor/rules/`
+- Component directories
+- Source code folders
+- Documentation folders
+
+## Rule Categories
+
+Organize rules by purpose:
+- **Code Style**: `python-style.mdc`, `flask-conventions.mdc`
+- **Architecture**: `narrative-engine.mdc`, `folder-structure.mdc`
+- **Documentation**: `api-documentation.mdc`, `readme-format.mdc`
+- **Tools**: `testing-patterns.mdc`, `deployment-config.mdc`
+- **Meta**: `cursor-rules.mdc`, `self-improve.mdc`
+
+## Best Practices
+
+### Rule Creation Checklist
+- [ ] File placed in `.cursor/rules/` directory
+- [ ] Filename uses kebab-case with `.mdc` extension
+- [ ] Includes proper metadata section
+- [ ] Contains clear title and sections
+- [ ] Provides both good and bad examples
+- [ ] References relevant project files
+- [ ] Follows consistent formatting
+
+### Maintenance
+- **Review regularly** - Keep rules up to date with codebase changes
+- **Update examples** - Ensure code samples reflect current patterns
+- **Cross-reference** - Link related rules together
+- **Document changes** - Update rules when patterns evolve
+description:
+globs:
+alwaysApply: false
+---

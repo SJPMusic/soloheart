@@ -18,6 +18,8 @@ from utils.character_fact_extraction import (
     extract_background_from_text,
     extract_name_from_text
 )
+# Temporarily disable Narrative Engine integration for basic functionality
+# from narrative_engine_integration import SoloHeartNarrativeEngine
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1444,10 +1446,11 @@ Level: {self.character_data.get('level', 1)}
             logger.error(f"Error saving character: {e}")
 
 class SimpleNarrativeBridge:
-    """Simple narrative bridge for basic SoloHeart functionality."""
+    """Simple narrative bridge for SoloHeart (without complex Narrative Engine)."""
     
     def __init__(self):
         self.ensure_directories()
+        self.current_campaign_id = None
     
     def ensure_directories(self):
         """Ensure necessary directories exist."""
@@ -1460,23 +1463,19 @@ class SimpleNarrativeBridge:
             campaign_id = str(uuid.uuid4())[:8]
             campaign_name = campaign_name or f"Campaign {campaign_id}"
             
-            # Generate setting introduction
-            setting_intro = self.generate_setting_introduction(character_data, campaign_name)
-            
+            # Create simple campaign data
             campaign_data = {
                 "id": campaign_id,
                 "name": campaign_name,
                 "created_date": datetime.datetime.now().isoformat(),
                 "last_modified": datetime.datetime.now().isoformat(),
                 "active_character": character_data,
-                "setting_introduction": setting_intro,
+                "opening_scene": self._generate_simple_opening_scene(character_data),
                 "session_count": 1,
-                "conversation_history": [
-                    {"role": "guide", "content": setting_intro, "timestamp": datetime.datetime.now().isoformat()}
-                ]
+                "narrative_engine_initialized": False
             }
             
-            # Save campaign
+            # Save campaign data to file
             campaign_file = f"campaign_saves/{campaign_id}.json"
             with open(campaign_file, 'w') as f:
                 json.dump(campaign_data, f, indent=2)
@@ -1486,79 +1485,78 @@ class SimpleNarrativeBridge:
             with open(character_file, 'w') as f:
                 json.dump(character_data, f, indent=2)
             
-            logger.info(f"Initialized campaign: {campaign_id}")
+            self.current_campaign_id = campaign_id
+            logger.info(f"✅ Initialized simple campaign: {campaign_id}")
             return campaign_data
             
         except Exception as e:
-            logger.error(f"Error initializing campaign: {e}")
+            logger.error(f"❌ Error initializing campaign: {e}")
             return None
     
-    def generate_setting_introduction(self, character_data: Dict[str, Any], campaign_name: str) -> str:
-        """Generate an immersive setting introduction."""
-        try:
-            prompt = f"""
-            Create an immersive opening scene for a SoloHeart solo adventure featuring:
-            
-            Character: {character_data.get('name', 'Adventurer')} - a {character_data.get('race', 'Human')} {character_data.get('class', 'Fighter')}
-            Campaign: {campaign_name}
-            
-            The scene should include:
-            - A vivid description of the starting location
-            - Atmospheric details (weather, lighting, sounds, smells)
-            - A sense of mystery or adventure
-            - The character's current situation
-            
-            Write in third person, present tense, as if narrating the scene to the player.
-            """
-            
-            response_content = chat_completion([
-                {"role": "system", "content": "You are a master SoloHeart storyteller creating immersive opening scenes."},
-                {"role": "user", "content": prompt}
-            ], temperature=0.8, max_tokens=300)
-            
-            return response_content.strip()
-            
-        except Exception as e:
-            logger.error(f"Error generating setting introduction: {e}")
-            return f"You find yourself in a mysterious land, ready to begin your adventure as {character_data.get('name', 'a hero')}..."
+    def _generate_simple_opening_scene(self, character_data: Dict[str, Any]) -> str:
+        """Generate a simple opening scene."""
+        name = character_data.get('name', 'Adventurer')
+        race = character_data.get('race', 'Human')
+        char_class = character_data.get('class', 'Fighter')
+        
+        return f"You are {name}, a {race} {char_class}. Your adventure begins in a bustling tavern where rumors of ancient treasures and dark threats whisper through the air. What would you like to do?"
+    
+
     
     def load_campaign(self, campaign_id: str) -> bool:
         """Load an existing campaign."""
         try:
             campaign_file = f"campaign_saves/{campaign_id}.json"
             if not os.path.exists(campaign_file):
-                logger.error(f"Campaign file not found: {campaign_file}")
+                logger.error(f"❌ Campaign file not found: {campaign_file}")
                 return False
             
-            logger.info(f"Loaded campaign: {campaign_id}")
+            self.current_campaign_id = campaign_id
+            logger.info(f"✅ Loaded simple campaign: {campaign_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Error loading campaign: {e}")
+            logger.error(f"❌ Error loading campaign: {e}")
             return False
     
     def process_player_input(self, player_input: str, campaign_id: str) -> str:
         """Process player input and return SoloHeart Guide response."""
         try:
-            prompt = f"""
-            You are a SoloHeart Guide running a solo SoloHeart adventure. The player has just said: "{player_input}"
+            # Get campaign context
+            campaign_context = self.get_campaign_data(campaign_id)
+            if not campaign_context:
+                return "I'm sorry, but I can't find your campaign data. Please try starting a new campaign."
             
-            Respond as a SoloHeart Guide would, describing what happens next, asking for clarification if needed, 
-            and moving the story forward. Be descriptive, atmospheric, and engaging.
+            # Create a simple prompt for the LLM
+            character = campaign_context.get('active_character', {})
+            name = character.get('name', 'Adventurer')
+            race = character.get('race', 'Human')
+            char_class = character.get('class', 'Fighter')
             
-            Keep your response to 2-3 paragraphs maximum. Focus on the immediate consequences and 
-            what the player sees/hears/experiences.
-            """
+            system_prompt = f"""You are a SoloHeart Guide, an AI companion for immersive solo narrative adventures. 
+
+The player is {name}, a {race} {char_class}. 
+
+Your role is to:
+1. Create immersive, atmospheric scenes
+2. Respond to player actions and choices
+3. Maintain narrative continuity
+4. Provide meaningful consequences for player decisions
+5. Ask clarifying questions when needed
+
+Write in third person, present tense. Be descriptive and engaging. Keep responses concise but vivid."""
+
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": player_input}
+            ]
             
-            response_content = chat_completion([
-                {"role": "system", "content": "You are an experienced SoloHeart Guide running a solo SoloHeart adventure. Be descriptive, atmospheric, and engaging."},
-                {"role": "user", "content": prompt}
-            ], temperature=0.8, max_tokens=400)
-            
-            return response_content.strip()
+            # Use the LLM service
+            response = chat_completion(messages, temperature=0.8, max_tokens=300)
+            return response.strip()
             
         except Exception as e:
-            logger.error(f"Error processing player input: {e}")
+            logger.error(f"❌ Error processing player input: {e}")
             return "I'm sorry, but I'm having trouble processing that right now. Please try again."
     
     def save_campaign(self, campaign_id: str) -> bool:
@@ -1575,11 +1573,11 @@ class SimpleNarrativeBridge:
                 with open(campaign_file, 'w') as f:
                     json.dump(campaign_data, f, indent=2)
             
-            logger.info(f"Saved campaign: {campaign_id}")
+            logger.info(f"✅ Saved simple campaign: {campaign_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Error saving campaign: {e}")
+            logger.error(f"❌ Error saving campaign: {e}")
             return False
     
     def get_campaign_data(self, campaign_id: str) -> Optional[Dict[str, Any]]:

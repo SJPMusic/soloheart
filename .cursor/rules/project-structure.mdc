@@ -1,0 +1,289 @@
+# SoloHeart Project Structure
+
+This rule outlines the directory structure and organization of the SoloHeart project - an immersive solo narrative adventure platform built with Python, Flask, and The Narrative Engine.
+
+## Project Overview
+
+**SoloHeart** is a comprehensive narrative adventure platform that provides:
+- Interactive solo narrative experiences
+- Advanced character creation and development
+- Modular Narrative Engine for story continuity
+- Persistent memory and campaign management
+- Web-based interface for immersive storytelling
+
+## Root Directory Structure
+
+```
+SoloHeart/
+├── solo_heart/           # 🎮 Main SoloHeart application
+├── narrative_engine/     # 🧠 The Narrative Engine (modular core)
+├── the-narrative-engine/ # 📦 Standalone Narrative Engine repository
+├── solo-heart-ui/        # 🎨 React-based UI components
+├── docs/                 # 📚 Documentation
+├── tests/                # 🧪 Test suite
+├── requirements.txt      # 📋 Python dependencies
+├── setup.py             # 🔧 Package configuration
+├── README.md            # 📖 Project documentation
+└── LICENSE.txt          # ⚖️ MIT license
+```
+
+## SoloHeart Application (`/solo_heart/`)
+
+**Purpose**: Main Flask application with character creation, campaign management, and narrative interface.
+
+```
+solo_heart/
+├── __init__.py          # 🚀 Flask app initialization
+├── simple_unified_interface.py # 🎯 Main unified interface
+├── narrative_engine_integration.py # 🔗 Narrative Engine bridge
+├── ollama_llm_service.py # 🤖 LLM service integration
+├── templates/           # 🎨 HTML templates
+│   ├── character_creation.html
+│   ├── game_screen.html
+│   ├── narrative_focused.html
+│   └── base.html
+├── static/              # 🌐 Static assets
+│   ├── css/
+│   └── js/
+├── utils/               # 🛠️ Utility functions
+│   ├── character_fact_extraction.py
+│   └── __init__.py
+├── campaign_saves/      # 💾 Campaign data storage
+├── character_saves/     # 👤 Character data storage
+└── live_inputs/         # 📝 Live input testing
+```
+
+## Narrative Engine (`/narrative_engine/`)
+
+**Purpose**: Modular, domain-agnostic narrative system with memory and LLM integration.
+
+```
+narrative_engine/
+├── __init__.py          # 📦 Package initialization
+├── core/                # 🧠 Core engine components
+│   ├── engine_core.py   # Main orchestration engine
+│   ├── ai_dm_engine.py  # AI-driven narrative engine
+│   └── ai_content_generator.py
+├── memory/              # 🧠 Memory management system
+│   ├── memory_manager.py
+│   ├── enhanced_memory_system.py
+│   └── emotional_memory.py
+├── llm_interface/       # 🤖 LLM provider interfaces
+│   ├── ollama_provider.py
+│   └── base_provider.py
+├── context/             # 📋 Context management
+│   ├── contextual_drift_guard.py
+│   └── world_state_simulator.py
+├── journaling/          # 📝 Player journal system
+│   ├── player_journal.py
+│   └── journal_exporter.py
+├── shared/              # 🔧 Shared types and utilities
+│   ├── types.py         # Core data types
+│   └── constants.py
+├── tests/               # 🧪 Engine-specific tests
+├── demos/               # 🎪 Demo and example scripts
+├── docs/                # 📚 Engine documentation
+├── setup.py             # 🔧 Package configuration
+└── README.md            # 📖 Engine documentation
+```
+
+## The Narrative Engine Repository (`/the-narrative-engine/`)
+
+**Purpose**: Standalone repository for The Narrative Engine, maintained separately.
+
+```
+the-narrative-engine/
+├── core/                # 🧠 Core engine components
+├── memory/              # 🧠 Memory system
+├── llm_interface/       # 🤖 LLM providers
+├── context/             # 📋 Context management
+├── journaling/          # 📝 Journal system
+├── shared/              # 🔧 Shared utilities
+├── tests/               # 🧪 Test suite
+├── demos/               # 🎪 Demo scripts
+├── docs/                # 📚 Documentation
+├── setup.py             # 🔧 Package configuration
+└── README.md            # 📖 Documentation
+```
+
+## SoloHeart UI (`/solo-heart-ui/`)
+
+**Purpose**: React-based UI components for enhanced user experience.
+
+```
+solo-heart-ui/
+├── public/              # 🌐 Public assets
+├── src/                 # 🎨 Source code
+│   ├── App.tsx          # Main application component
+│   ├── components/      # React components
+│   ├── pages/           # Page components
+│   ├── styles/          # Styling
+│   └── utils/           # Utility functions
+├── package.json         # 📦 Node.js dependencies
+└── README.md            # 📖 UI documentation
+```
+
+## Documentation (`/docs/`)
+
+**Purpose**: Comprehensive project documentation and guides.
+
+```
+docs/
+├── API.md               # 🔌 API documentation
+├── Game Flow.docx       # 🎮 Game flow documentation
+├── Linux-commands-cheat-sheet-2023-Red-Hat-Developer.pdf
+└── README.md            # 📖 Documentation index
+```
+
+## Test Suite (`/tests/`)
+
+**Purpose**: Comprehensive testing for all project components.
+
+```
+tests/
+├── __init__.py          # 📦 Test package initialization
+├── test_basic.py        # 🧪 Basic functionality tests
+├── test_combat_system.py # ⚔️ Combat system tests
+├── test_narrative_engine_integration.py # 🔗 Integration tests
+└── manual_ui_test.md    # 📝 Manual testing guide
+```
+
+## Configuration Files
+
+### Package Management
+- `requirements.txt` - Python dependencies
+- `setup.py` - Package configuration and metadata
+- `package.json` - Node.js dependencies (for UI)
+
+### Development Configuration
+- `.gitignore` - Git ignore patterns
+- `.complianceignore` - Compliance ignore patterns
+- `env.template` - Environment variables template
+
+### Build & Deployment
+- `Dockerfile` - Container configuration (if applicable)
+- `docker-compose.yml` - Multi-service deployment (if applicable)
+
+## Key Configuration Files
+
+### Python Configuration
+```python
+# setup.py - Package configuration
+from setuptools import setup, find_packages
+
+setup(
+    name="solo-heart",
+    version="1.0.0",
+    packages=find_packages(),
+    install_requires=[
+        "flask>=3.0.0",
+        "requests>=2.31.0",
+        "python-dotenv>=1.0.0",
+    ],
+    extras_require={
+        "dev": ["pytest", "black", "flake8", "mypy"],
+    }
+)
+```
+
+### Flask Configuration
+```python
+# solo_heart/__init__.py - Flask app configuration
+from flask import Flask
+from pathlib import Path
+
+def create_app():
+    app = Flask(__name__)
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default')
+    app.config['CAMPAIGN_SAVES_DIR'] = Path(__file__).parent / "campaign_saves"
+    return app
+```
+
+## Component Organization Patterns
+
+### SoloHeart Application (`/solo_heart/`)
+- **Unified Interface**: Single entry point for all functionality
+- **Modular Integration**: Clean separation between UI and Narrative Engine
+- **Template-based**: Jinja2 templates for server-side rendering
+- **Static Assets**: Organized CSS and JavaScript files
+
+### Narrative Engine (`/narrative_engine/`)
+- **Modular Architecture**: Clear separation of concerns
+- **Type Safety**: Comprehensive type hints throughout
+- **Memory System**: Persistent narrative memory
+- **LLM Integration**: Provider-agnostic LLM interface
+
+### File Naming Conventions
+
+### Python Files
+- **snake_case**: `narrative_engine_integration.py`
+- **Descriptive**: Purpose clearly indicated in name
+- **Consistent prefixes**: `test_*`, `demo_*`, etc.
+
+### Directories
+- **snake_case**: `narrative_engine`, `campaign_saves`
+- **Descriptive**: Clear purpose indication
+- **Grouped logically**: Related components together
+
+### Template Structure
+```python
+# Flask template organization
+templates/
+├── base.html           # Base template with common layout
+├── character_creation.html # Character creation interface
+├── game_screen.html    # Main game interface
+└── narrative_focused.html # Narrative-focused interface
+```
+
+## Integration Patterns
+
+### Narrative Engine Integration
+```python
+# ✅ Good: Clean integration pattern
+from narrative_engine_integration import SoloHeartNarrativeEngine
+
+class SimpleNarrativeBridge:
+    def __init__(self):
+        self.narrative_engine = None
+        self.current_campaign_id = None
+    
+    def initialize_campaign(self, character_data, campaign_name=None):
+        # Initialize Narrative Engine for campaign
+        self.narrative_engine = SoloHeartNarrativeEngine(campaign_id=campaign_id)
+        return self.narrative_engine.initialize_campaign(character_data, campaign_name)
+```
+
+### Data Flow Patterns
+```python
+# ✅ Good: Clear data flow
+def process_player_input(self, player_input: str, campaign_id: str) -> str:
+    # 1. Ensure Narrative Engine is initialized
+    if not self.narrative_engine:
+        self.narrative_engine = SoloHeartNarrativeEngine(campaign_id=campaign_id)
+    
+    # 2. Get campaign context
+    campaign_context = self.get_campaign_data(campaign_id)
+    
+    # 3. Process through Narrative Engine
+    response = self.narrative_engine.process_player_input(player_input, campaign_context)
+    
+    return response
+```
+
+## Best Practices
+
+### Code Organization
+- **Single Responsibility**: Each module has a clear, single purpose
+- **Dependency Injection**: Use dependency injection for testability
+- **Error Handling**: Comprehensive error handling throughout
+- **Logging**: Structured logging for debugging and monitoring
+
+### File Structure
+- **Logical Grouping**: Related files are grouped together
+- **Clear Hierarchy**: Clear parent-child relationships
+- **Consistent Naming**: Consistent naming conventions throughout
+- **Documentation**: Each major component has documentation
+description:
+globs:
+alwaysApply: false
+---

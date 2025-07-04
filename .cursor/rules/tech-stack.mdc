@@ -1,0 +1,246 @@
+# SoloHeart Tech Stack & Dependencies Guide
+
+## Project Overview
+
+**SoloHeart** is an immersive solo narrative adventure platform built on modern Python/Flask stack with:
+- **Web Application**: Flask-based interactive narrative interface
+- **Narrative Engine**: Modular, domain-agnostic LLM-based narrative system
+- **Character System**: Advanced character creation and development tools
+- **Memory System**: Persistent narrative memory and continuity
+
+## Core Framework Stack
+
+### **Flask 3.x** (Web Framework)
+- **Framework**: Lightweight Python web framework
+- **Features Used**: Blueprints, templates, static files, session management
+- **Best Practice**: Use Flask blueprints for modular organization, avoid monolithic app structure
+
+### **Python 3.11+**
+- **Language**: Modern Python with type hints and async support
+- **Features**: Type hints, dataclasses, pathlib, asyncio
+- **Best Practice**: Use type hints consistently, leverage modern Python features
+
+### **Type Hints & MyPy**
+- **Configuration**: Strict type checking for better code quality
+- **Best Practice**: Use type hints for all function signatures and complex data structures
+
+## Narrative Engine System
+
+### **The Narrative Engine** (Custom Module)
+Complete modular narrative system with memory and LLM integration:
+
+**Core Components**:
+- `core.engine_core.NarrativeEngine`: Main orchestration engine
+- `memory.memory_manager.MemoryManager`: Persistent memory system
+- `llm_interface.ollama_provider.OllamaProvider`: LLM integration
+- `context.contextual_drift_guard.ContextualDriftGuard`: Context management
+- `journaling.player_journal.PlayerJournal`: Player journal system
+
+**Best Practices**:
+- Use modular architecture with clear separation of concerns
+- Implement proper error handling and fallbacks
+- Maintain type safety throughout the engine
+- Use dependency injection for testability
+
+## LLM Integration
+
+### **Ollama** (Local LLM)
+- **Provider**: Local LLM server with llama3 model
+- **Configuration**: HTTP API integration via `ollama_llm_service.py`
+- **Best Practice**: Implement proper error handling and fallback mechanisms
+
+```python
+# ✅ Good: Proper error handling
+try:
+    response = chat_completion(messages, temperature=0.8)
+    return response.strip()
+except Exception as e:
+    logger.error(f"LLM call failed: {e}")
+    return "I'm sorry, but I'm having trouble processing that right now."
+```
+
+### **System Prompts**
+- **Domain-specific**: SoloHeart-specific prompts for immersive storytelling
+- **Memory-aware**: Prompts that leverage narrative memory
+- **Best Practice**: Keep prompts focused and maintainable
+
+## Data Management
+
+### **JSON-based Storage**
+- **Campaign Data**: `campaign_saves/` directory with JSON files
+- **Character Data**: `character_saves/` directory with JSON files
+- **Memory Data**: `narrative_engine/memory_data/` with structured JSON
+- **Best Practice**: Use consistent file naming and data structures
+
+### **Memory System**
+```python
+# ✅ Good: Structured memory entries
+memory_entry = MemoryEntry(
+    memory_type=MemoryType.CHARACTER,
+    content=f"Character: {character_name} - {character_race} {character_class}",
+    metadata={
+        "character_data": character_data,
+        "campaign_name": campaign_name,
+        "campaign_id": campaign_id
+    },
+    timestamp=datetime.datetime.now().isoformat()
+)
+```
+
+## Frontend & UI
+
+### **HTML Templates** (Flask Templates)
+- **Location**: `templates/` directory
+- **Engine**: Jinja2 templating
+- **Best Practice**: Use template inheritance and macros for consistency
+
+### **Static Assets**
+- **CSS**: `static/css/` for styling
+- **JavaScript**: `static/js/` for interactivity
+- **Best Practice**: Use modern CSS and vanilla JavaScript for simplicity
+
+### **Responsive Design**
+- **Framework**: Tailwind CSS (if used) or custom CSS
+- **Approach**: Mobile-first responsive design
+- **Best Practice**: Ensure accessibility and cross-browser compatibility
+
+## Development Experience
+
+### **Code Quality Tools**
+```python
+# Development dependencies
+pytest  # Testing framework
+black   # Code formatting
+flake8  # Linting
+mypy    # Type checking
+```
+
+**Best Practices**:
+- Run tests before commits
+- Use consistent code formatting
+- Implement proper logging throughout the application
+
+### **Testing Strategy**
+```python
+# ✅ Good: Comprehensive test structure
+def test_narrative_engine_integration():
+    """Test that SoloHeart can use The Narrative Engine."""
+    engine = SoloHeartNarrativeEngine(campaign_id="test")
+    assert engine.initialized == True
+```
+
+## Configuration Management
+
+### **Environment Variables**
+```python
+# ✅ Good: Centralized configuration
+import os
+from pathlib import Path
+
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'default-key')
+    OLLAMA_BASE_URL = os.environ.get('OLLAMA_BASE_URL', 'http://localhost:11434')
+    DEBUG = os.environ.get('FLASK_ENV') == 'development'
+```
+
+### **File Paths**
+```python
+# ✅ Good: Use pathlib for cross-platform compatibility
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent
+CAMPAIGN_SAVES_DIR = BASE_DIR / "campaign_saves"
+CHARACTER_SAVES_DIR = BASE_DIR / "character_saves"
+```
+
+## Error Handling & Logging
+
+### **Logging Configuration**
+```python
+# ✅ Good: Structured logging
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+```
+
+### **Error Handling Patterns**
+```python
+# ✅ Good: Graceful error handling
+try:
+    result = risky_operation()
+    return result
+except SpecificException as e:
+    logger.error(f"Specific error occurred: {e}")
+    return fallback_value
+except Exception as e:
+    logger.error(f"Unexpected error: {e}")
+    return None
+```
+
+## Security Considerations
+
+### **Input Validation**
+- **Form Validation**: Use Flask-WTF or similar for form validation
+- **Data Sanitization**: Sanitize all user inputs
+- **File Uploads**: Validate file types and sizes
+
+### **Session Management**
+```python
+# ✅ Good: Secure session configuration
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+```
+
+## Performance Optimization
+
+### **Caching Strategy**
+- **Memory Caching**: Cache frequently accessed narrative data
+- **File Caching**: Cache generated content where appropriate
+- **Best Practice**: Implement cache invalidation strategies
+
+### **Database Optimization** (if using database)
+- **Indexing**: Proper database indexing for queries
+- **Connection Pooling**: Efficient database connection management
+- **Query Optimization**: Minimize database round trips
+
+## Deployment & DevOps
+
+### **Containerization**
+```dockerfile
+# ✅ Good: Multi-stage Docker build
+FROM python:3.11-slim as builder
+COPY requirements.txt .
+RUN pip install --user -r requirements.txt
+
+FROM python:3.11-slim
+COPY --from=builder /root/.local /root/.local
+COPY . /app
+WORKDIR /app
+CMD ["python", "app.py"]
+```
+
+### **Environment Management**
+- **Development**: Use virtual environments
+- **Production**: Use container orchestration
+- **Best Practice**: Separate configuration from code
+
+## Monitoring & Analytics
+
+### **Application Monitoring**
+- **Logging**: Structured logging for debugging
+- **Metrics**: Application performance metrics
+- **Error Tracking**: Error monitoring and alerting
+
+### **User Analytics** (if applicable)
+- **Privacy-compliant**: Respect user privacy
+- **Performance**: Minimal impact on application performance
+- **Best Practice**: Implement proper consent management
+description:
+globs:
+alwaysApply: false
+---
