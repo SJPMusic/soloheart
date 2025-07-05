@@ -5,6 +5,40 @@ This document tracks all development changes, decisions, and implementations for
 
 ## Change Log
 
+### 2025-07-05 15:30:00 - Critical Fix: Narrative Engine Fabrication Issue
+
+**Context**: User reported that the game was generating completely fabricated scenarios (e.g., "Baroness Elara", "Brindlemark", "party members") that didn't match the actual game state. This violated the domain-agnostic integrity principle by making up story content.
+
+**Problem Analysis**:
+- LLM was being given generic prompts encouraging it to "remember past events"
+- System wasn't properly tracking actual conversation history
+- Campaign data wasn't being properly saved/loaded
+- Character data from character creation wasn't flowing correctly to campaign initialization
+
+**Implementation**:
+- **Fixed System Prompts**: Updated prompts to explicitly forbid making up content
+- **Added Conversation History Persistence**: Campaign saves now include actual conversation history
+- **Enhanced Campaign Loading**: Restored conversation history when loading campaigns
+- **Improved New Campaign Detection**: System now detects new campaigns and provides appropriate prompts
+- **Added Explicit Constraints**: Prompts now include "NEVER make up story content, NPCs, or events"
+
+**Key Changes**:
+1. `process_player_input()`: Added new campaign detection and honest prompts
+2. `save_campaign()`: Now saves conversation history to campaign file
+3. `load_campaign()`: Now restores conversation history from campaign file
+4. System prompts: Added explicit constraints against fabrication
+
+**Impact**:
+- Eliminates fabricated story content
+- Maintains narrative integrity based on actual player interactions
+- Preserves conversation history across sessions
+- Ensures honest communication about what the system knows vs. doesn't know
+
+**References**:
+- Narrative Engine domain-agnostic integrity rule
+- User report of fabricated content issue
+- SoloHeart conversation memory system
+
 ### 2025-07-05 02:00:00 - Inspiration Points and Saving Throws Implementation
 
 **Context**: User requested support for inspiration points and saving throws in the SoloHeart integration layer while maintaining domain-agnostic integrity of the Narrative Engine.

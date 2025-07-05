@@ -1037,6 +1037,16 @@ class SimpleNarrativeBridge:
                 logger.error(f"❌ Campaign file not found: {campaign_file}")
                 return False
             
+            # Load campaign data and restore conversation history
+            with open(campaign_file, 'r') as f:
+                campaign_data = json.load(f)
+            
+            # Restore conversation history if it exists
+            if "conversation_history" in campaign_data:
+                self.conversation_history[campaign_id] = campaign_data["conversation_history"]
+            else:
+                self.conversation_history[campaign_id] = []
+            
             self.current_campaign_id = campaign_id
             logger.info(f"✅ Loaded campaign: {campaign_id}")
             return True
@@ -1072,19 +1082,37 @@ class SimpleNarrativeBridge:
             race = character.get('race', 'Human')
             char_class = character.get('class', 'Fighter')
             
-            # Create system prompt with character info
-            system_prompt = f"""You are a SoloHeart Guide, an AI companion for immersive solo narrative adventures. 
+            # Check if this is a new campaign with minimal history
+            is_new_campaign = len(self.conversation_history[campaign_id]) <= 2
+            
+            if is_new_campaign:
+                # For new campaigns, be honest about starting fresh
+                system_prompt = f"""You are a SoloHeart Guide, an AI companion for immersive solo narrative adventures. 
+
+The player is {name}, a {race} {char_class}. 
+
+This appears to be the beginning of a new adventure. You should:
+1. Start with a simple, grounded opening scene
+2. Ask the player what they would like to do
+3. Don't reference events that haven't happened yet
+4. Be honest about what you know and don't know
+5. NEVER make up story content, NPCs, or events that haven't been discussed
+
+Write in third person, present tense. Be descriptive and engaging. Keep responses concise but vivid."""
+            else:
+                # For ongoing campaigns, reference actual history
+                system_prompt = f"""You are a SoloHeart Guide, an AI companion for immersive solo narrative adventures. 
 
 The player is {name}, a {race} {char_class}. 
 
 Your role is to:
-1. Create immersive, atmospheric scenes
-2. Respond to player actions and choices
-3. Maintain narrative continuity and remember past events
-4. Provide meaningful consequences for player decisions
-5. Ask clarifying questions when needed
+1. Respond to player actions and choices
+2. Reference ONLY the actual conversation history provided
+3. Don't make up events that aren't in the history
+4. Ask clarifying questions when needed
+5. NEVER invent NPCs, locations, or events that haven't been discussed
 
-IMPORTANT: Remember what has happened before and reference past events when relevant.
+IMPORTANT: Only reference events that have actually been discussed in the conversation history. If the player asks about something that hasn't been established, say you don't know about that yet.
 
 Write in third person, present tense. Be descriptive and engaging. Keep responses concise but vivid."""
 
@@ -1120,6 +1148,10 @@ Write in third person, present tense. Be descriptive and engaging. Keep response
                 
                 campaign_data["last_modified"] = datetime.datetime.now().isoformat()
                 campaign_data["session_count"] = campaign_data.get("session_count", 0) + 1
+                
+                # Save conversation history
+                if campaign_id in self.conversation_history:
+                    campaign_data["conversation_history"] = self.conversation_history[campaign_id]
                 
                 with open(campaign_file, 'w') as f:
                     json.dump(campaign_data, f, indent=2)
