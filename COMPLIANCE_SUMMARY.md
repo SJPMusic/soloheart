@@ -1,6 +1,6 @@
-# SRD 5.1 Compliance Summary
+# SRD 5.2 Compliance Summary
 
-This document summarizes the compliance measures implemented to ensure adherence to the System Reference Document 5.1 license and content restrictions.
+This document summarizes the compliance measures implemented to ensure adherence to the System Reference Document 5.2 license and content restrictions.
 
 ## Overview
 
@@ -14,7 +14,7 @@ The project is designed to be 5E-compatible while strictly adhering to the Creat
 - **Attribution**: All SRD-derived files include required attribution text
 
 ### 2. Attribution Requirements
-**Required Text**: "This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License."
+**Required Text**: "This work includes material from the System Reference Document 5.2 and is licensed under the Creative Commons Attribution 4.0 International License."
 
 **Files Requiring Attribution**:
 - All files in `srd_data/` directory
@@ -96,7 +96,7 @@ The following proprietary SRD publisher content is **NOT PERMITTED**:
 - Example: `python cli/compliance_check.py || exit 1`
 
 ### For Content Creation
-- Only use SRD 5.1 content from the `srd_data/` directory
+- Only use SRD 5.2 content from the `srd_data/` directory
 - Always include required attribution text
 - Avoid any proprietary SRD publisher IP
 - Use 5E-compatible terminology instead of system-neutral roleplaying framework branding
@@ -126,7 +126,7 @@ The project is 5E-compatible but is not affiliated with or endorsed by SRD publi
 
 ---
 
-**Last Updated**: June 28, 2025  
+**Last Updated**: July 5, 2025  
 **Compliance Tools Version**: 1.0  
-**SRD Version**: 5.1  
+**SRD Version**: 5.2  
 **License**: Creative Commons Attribution 4.0 International

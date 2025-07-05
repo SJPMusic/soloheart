@@ -1,4 +1,4 @@
-This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License.
+This work includes material from the System Reference Document 5.2 and is licensed under the Creative Commons Attribution 4.0 International License.
 
 # Feature Summary: Enhanced Character Creation Demo
 
@@ -23,11 +23,11 @@ This work includes material from the System Reference Document 5.1 and is licens
 ### 💬 Natural Language Interface
 - **Freeform Character Creation**: Describe your character concept in detail without constraints
 - **AI-Driven Conversation**: LLM guides character development through natural dialogue
-- **Real-Time Validation**: Character data validated against SRD 5.1 schema
+- **Real-Time Validation**: Character data validated against SRD 5.2 schema
 - **Structured Output**: Character data saved in standardized JSON format with symbolic metadata
 - **Error Handling**: Graceful handling of invalid inputs and edge cases
 
-### 📋 SRD 5.1 Compliant Character System
+### 📋 SRD 5.2 Compliant Character System
 - **Complete Character Schema**: All standard DnD 5E character fields included
 - **Legal Compliance**: Uses only open-source SRD content
 - **Validation System**: Ensures all character data meets game requirements

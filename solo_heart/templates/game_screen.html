@@ -13,9 +13,10 @@
             font-family: 'Georgia', serif;
         }
         .game-container {
-            height: calc(100vh - 120px);
+            height: calc(100vh - 200px);
             overflow-y: auto;
             scroll-behavior: smooth;
+            padding-bottom: 20px;
         }
         .message {
             margin-bottom: 1.5rem;
@@ -55,6 +56,8 @@
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(10px);
             border-top: 1px solid rgba(148, 163, 184, 0.2);
+            z-index: 100;
+            box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -166,7 +169,7 @@
         </div>
 
         <!-- Game Messages -->
-        <div id="messagesContainer">
+        <div id="messagesContainer" style="margin-bottom: 20px;">
             <!-- Messages will be added here -->
         </div>
 
@@ -207,12 +210,20 @@
             loadGameState();
             document.getElementById('playerInput').focus();
             document.getElementById('playerInput').addEventListener('keydown', handleKeyPress);
+            
+            // Scroll to bottom on page load
+            setTimeout(() => {
+                const gameContainer = document.getElementById('gameContainer');
+                gameContainer.scrollTop = gameContainer.scrollHeight;
+            }, 100);
         });
 
         async function loadGameState() {
             try {
                 const response = await fetch('/api/game/current');
                 const data = await response.json();
+                
+                console.log('Game state response:', data);
                 
                 if (data.success) {
                     // Update campaign name
@@ -235,12 +246,51 @@
                             }, 1000);
                         }, 5000);
                     }
+                    
+                    // Wait a moment for the page to fully load, then get campaign recap
+                    setTimeout(async () => {
+                        await loadCampaignRecap();
+                    }, 500);
                 } else {
+                    console.log('No active campaign or error:', data);
                     showError('Failed to load game state. Please refresh the page.');
                 }
             } catch (error) {
                 console.error('Error loading game state:', error);
                 showError('Error loading game state. Please refresh the page.');
+            }
+        }
+
+        async function loadCampaignRecap() {
+            try {
+                console.log('Loading campaign recap...');
+                
+                // Try to get campaign_id from URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const campaignId = urlParams.get('campaign_id');
+                
+                let recapUrl = '/api/game/recap';
+                if (campaignId) {
+                    recapUrl += `?campaign_id=${campaignId}`;
+                }
+                
+                const response = await fetch(recapUrl);
+                const data = await response.json();
+                
+                console.log('Recap response:', data);
+                
+                if (data.success && data.recap) {
+                    console.log('Displaying recap:', data.recap);
+                    // Add a small delay to ensure the page is fully loaded
+                    setTimeout(() => {
+                        addMessage(data.recap, 'dm');
+                    }, 1000);
+                } else {
+                    console.log('No recap available or error:', data);
+                }
+            } catch (error) {
+                console.error('Error loading campaign recap:', error);
+                // Don't show error for recap failure - it's not critical
             }
         }
 
@@ -308,17 +358,29 @@
             messageDiv.appendChild(contentDiv);
             container.appendChild(messageDiv);
             
-            // Scroll to bottom
-            const gameContainer = document.getElementById('gameContainer');
-            gameContainer.scrollTop = gameContainer.scrollHeight;
+            // Scroll to bottom with a small delay to ensure content is rendered
+            setTimeout(() => {
+                const gameContainer = document.getElementById('gameContainer');
+                gameContainer.scrollTop = gameContainer.scrollHeight;
+            }, 10);
         }
 
         function showTypingIndicator() {
             document.getElementById('typingIndicator').classList.add('show');
+            // Scroll to bottom when showing typing indicator
+            setTimeout(() => {
+                const gameContainer = document.getElementById('gameContainer');
+                gameContainer.scrollTop = gameContainer.scrollHeight;
+            }, 10);
         }
 
         function hideTypingIndicator() {
             document.getElementById('typingIndicator').classList.remove('show');
+            // Scroll to bottom when hiding typing indicator
+            setTimeout(() => {
+                const gameContainer = document.getElementById('gameContainer');
+                gameContainer.scrollTop = gameContainer.scrollHeight;
+            }, 10);
         }
 
         function disableInput() {
@@ -346,8 +408,11 @@
             `;
             container.appendChild(errorDiv);
             
-            const gameContainer = document.getElementById('gameContainer');
-            gameContainer.scrollTop = gameContainer.scrollHeight;
+            // Scroll to bottom with a small delay to ensure content is rendered
+            setTimeout(() => {
+                const gameContainer = document.getElementById('gameContainer');
+                gameContainer.scrollTop = gameContainer.scrollHeight;
+            }, 10);
         }
 
         function retryLastAction() {

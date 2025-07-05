@@ -2,7 +2,7 @@
 
 ## Project Goals
 
-The Solo Narrative Engine Demo is a proof-of-concept that showcases an immersive, LLM-powered solo DnD 5E experience. Our goal is to demonstrate how AI can create compelling, personalized storytelling experiences while maintaining SRD 5.1 compliance and legal safety.
+The Solo Narrative Engine Demo is a proof-of-concept that showcases an immersive, LLM-powered solo DnD 5E experience. Our goal is to demonstrate how AI can create compelling, personalized storytelling experiences while maintaining SRD 5.2 compliance and legal safety.
 
 ## Getting Started
 

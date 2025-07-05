@@ -1055,6 +1055,70 @@ class SimpleNarrativeBridge:
             logger.error(f"❌ Error loading campaign: {e}")
             return False
     
+    def generate_campaign_recap(self, campaign_id: str) -> str:
+        """Generate a recap of the campaign's current state."""
+        try:
+            campaign_data = self.get_campaign_data(campaign_id)
+            if not campaign_data:
+                return "Welcome back! Your adventure awaits."
+            
+            character = campaign_data.get('active_character', {})
+            name = character.get('name', 'Adventurer')
+            race = character.get('race', 'Human')
+            char_class = character.get('class', 'Fighter')
+            
+            # Get conversation history
+            history = self.conversation_history.get(campaign_id, [])
+            
+            if len(history) <= 2:
+                # Very new campaign
+                return f"Welcome back, {name}! You are a {race} {char_class} just beginning your adventure. What would you like to do?"
+            
+            # Generate recap from recent history
+            recent_messages = history[-6:]  # Last 6 messages (3 exchanges)
+            
+            # Build context for recap generation
+            context_messages = [
+                {
+                    "role": "system",
+                    "content": f"""You are a SoloHeart Guide providing a brief campaign recap. 
+
+The player is {name}, a {race} {char_class}.
+
+Your task is to provide a concise, engaging recap of the recent adventure events based on the conversation history. Focus on:
+1. The most recent significant events or discoveries
+2. Current situation or location
+3. Any important NPCs, items, or objectives mentioned
+4. What the player was last doing
+
+Keep it brief (2-3 sentences) and engaging. Don't make up details that aren't in the history."""
+                }
+            ]
+            
+            # Add recent conversation history
+            for msg in recent_messages:
+                context_messages.append({"role": msg["role"], "content": msg["content"]})
+            
+            # Add instruction for recap
+            context_messages.append({
+                "role": "user", 
+                "content": "Please provide a brief recap of where we left off in this adventure."
+            })
+            
+            # Generate recap using LLM
+            try:
+                recap = chat_completion(context_messages, temperature=0.7, max_tokens=150)
+                logger.info(f"✅ Generated recap for campaign {campaign_id}: {recap[:100]}...")
+                return recap.strip()
+            except Exception as llm_error:
+                logger.error(f"❌ LLM error generating recap: {llm_error}")
+                # Fallback to simple recap
+                return f"Welcome back, {name}! You are a {race} {char_class} continuing your adventure. What would you like to do?"
+            
+        except Exception as e:
+            logger.error(f"❌ Error generating campaign recap: {e}")
+            return f"Welcome back, {name}! Your adventure continues..."
+    
     def process_player_input(self, player_input: str, campaign_id: str) -> str:
         """Process player input and return SoloHeart Guide response with memory tracking."""
         try:
@@ -1269,7 +1333,7 @@ def load_campaign(campaign_id):
         success = game.narrative_bridge.load_campaign(campaign_id)
         if success:
             session['campaign_id'] = campaign_id
-            return jsonify({'success': True, 'redirect': '/game'})
+            return jsonify({'success': True, 'redirect': f'/game?campaign_id={campaign_id}'})
         else:
             return jsonify({'success': False, 'message': 'Failed to load campaign'})
     except Exception as e:
@@ -1751,6 +1815,40 @@ def get_current_game():
     except Exception as e:
         logger.error(f"Error getting current game: {e}")
         return jsonify({'success': False, 'message': 'Error getting game state'})
+
+@app.route('/api/game/recap')
+def get_campaign_recap():
+    """Get a recap of the current campaign state."""
+    try:
+        # Try to get campaign_id from query parameter first (more reliable)
+        campaign_id = request.args.get('campaign_id')
+        
+        # If not in query parameter, try session
+        if not campaign_id:
+            campaign_id = session.get('campaign_id')
+        
+        logger.info(f"🔍 Campaign recap requested for campaign_id: {campaign_id}")
+        
+        if not campaign_id:
+            logger.warning("❌ No campaign_id in query parameter or session")
+            return jsonify({'success': False, 'message': 'No active campaign'})
+        
+        # Load the campaign if not already loaded
+        if not game.narrative_bridge.load_campaign(campaign_id):
+            logger.error(f"❌ Failed to load campaign {campaign_id}")
+            return jsonify({'success': False, 'message': 'Failed to load campaign'})
+        
+        recap = game.narrative_bridge.generate_campaign_recap(campaign_id)
+        logger.info(f"✅ Generated recap: {recap[:100]}...")
+        
+        return jsonify({
+            'success': True,
+            'recap': recap
+        })
+    
+    except Exception as e:
+        logger.error(f"Error getting campaign recap: {e}")
+        return jsonify({'success': False, 'message': 'Error generating recap'})
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

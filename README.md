@@ -104,7 +104,7 @@ Freeform Description → Context Understanding → Fact Extraction → No Stagin
 - **Pattern Matching**: Robust regex patterns for fallback extraction
 - **Frontend**: HTML5, CSS3, JavaScript (mobile-responsive)
 - **Narrative Engine**: Domain-agnostic memory and context system
-- **Compliance**: SRD 5.1 compliant, fully rebranded as SoloHeart
+- **Compliance**: SRD 5.2 compliant, fully rebranded as SoloHeart
 
 ## Quick Start
 
@@ -293,9 +293,9 @@ We're actively seeking contributors to enhance the character creation system, im
 
 ## Attribution
 
-This project uses content from the Systems Reference Document 5.1 (SRD 5.1) by Wizards of the Coast LLC, available under the Creative Commons Attribution 4.0 International License (CC BY 4.0).
+This project uses content from the Systems Reference Document 5.2 (SRD 5.2) by Wizards of the Coast LLC, available under the Creative Commons Attribution 4.0 International License (CC BY 4.0).
 
-- SRD 5.1: https://dnd.wizards.com/resources/systems-reference-document
+- SRD 5.2: https://dnd.wizards.com/resources/systems-reference-document
 - License: https://creativecommons.org/licenses/by/4.0/
 
 ## License

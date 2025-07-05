@@ -5,6 +5,74 @@ This document tracks all development changes, decisions, and implementations for
 
 ## Change Log
 
+### 2025-07-05 15:45:00 - Campaign Recap Feature Implementation
+
+**Context**: User requested a quality-of-life feature to automatically provide a recap of the current campaign state when loading a saved campaign, without requiring the player to prompt for it.
+
+**Implementation**:
+- **Added Campaign Recap Generation**: Created `generate_campaign_recap()` method in `SimpleNarrativeBridge` class
+- **Smart Recap Logic**: Analyzes recent conversation history (last 6 messages) to generate contextual recap
+- **New API Endpoint**: Added `/api/game/recap` endpoint to serve campaign recaps
+- **Automatic Display**: Modified game screen to automatically request and display recap on page load
+- **LLM-Powered Summaries**: Uses Ollama to generate natural, engaging recaps based on actual conversation history
+
+**Key Features**:
+1. **Intelligent Context Analysis**: Reviews recent conversation history to identify key events
+2. **Character-Aware Recaps**: Includes character name, race, and class in recap context
+3. **New Campaign Detection**: Provides appropriate welcome message for very new campaigns
+4. **Automatic Integration**: Recap appears automatically when loading a saved campaign
+5. **Error Resilience**: Graceful fallback if recap generation fails
+
+**Technical Implementation**:
+```python
+def generate_campaign_recap(self, campaign_id: str) -> str:
+    # Analyzes conversation history
+    # Uses LLM to generate natural recap
+    # Handles new vs. ongoing campaigns differently
+    # Returns engaging, contextual summary
+```
+
+**Frontend Integration**:
+```javascript
+async function loadCampaignRecap() {
+    // Requests recap from API
+    // Displays as DM message
+    // Handles errors gracefully
+}
+```
+
+**Impact**:
+- **Improved User Experience**: Players can immediately understand where they left off
+- **Reduced Cognitive Load**: No need to remember or ask for context
+- **Enhanced Immersion**: Natural, narrative-style recaps maintain story flow
+- **Quality of Life**: Seamless campaign resumption
+
+**References**:
+- User request for automatic campaign recap
+- SoloHeart conversation memory system
+- Game screen template and JavaScript integration
+
+### 2025-07-05 15:55:00 - Campaign Recap Session Fix
+
+**Context**: Campaign recap feature was not working due to session persistence problems. The campaign_id was not being maintained between requests, causing the recap endpoint to return "No active campaign".
+
+**Root Cause**: Flask session was not properly maintaining the campaign_id between the campaign loading request and the recap request.
+
+**Solution**:
+- **Modified Recap Endpoint**: Changed `/api/game/recap` to prioritize query parameter over session
+- **Added Campaign Loading**: Recap endpoint now automatically loads campaign if not already loaded
+- **Enhanced Frontend**: Modified `loadCampaignRecap()` to pass campaign_id as query parameter
+- **Improved Error Handling**: Added better logging and fallback mechanisms
+
+**Technical Changes**:
+- Recap endpoint now accepts `campaign_id` as query parameter
+- Added automatic campaign loading in recap endpoint
+- Enhanced debugging with detailed logging
+- Modified frontend to extract campaign_id from URL parameters
+- Updated campaign loading to include campaign_id in redirect URL
+
+**Result**: Campaign recap now works reliably, providing contextual summaries based on actual conversation history.
+
 ### 2025-07-05 15:30:00 - Critical Fix: Narrative Engine Fabrication Issue
 
 **Context**: User reported that the game was generating completely fabricated scenarios (e.g., "Baroness Elara", "Brindlemark", "party members") that didn't match the actual game state. This violated the domain-agnostic integrity principle by making up story content.
@@ -227,6 +295,47 @@ throws = integration.get_saving_throws("Thorin")
 **References**:
 - narrative_core/narrative_engine.py
 - solo_heart/narrative_engine_integration.py
+
+### 2025-07-05: SRD 5.2 Implementation
+
+#### Overview
+Updated the entire project from SRD 5.1 to SRD 5.2 compliance, including all documentation, code references, and attribution text.
+
+#### Changes Made
+- **Core SRD Data**: Updated attribution in all `srd_data/` files (classes.json, rules.json, monsters.json, ATTRIBUTION.md)
+- **Documentation**: Updated all README files, API docs, and project documentation to reference SRD 5.2
+- **Code References**: Updated comments and docstrings in utility files to reference SRD 5.2
+- **Compliance Tools**: Updated compliance checker and pre-commit hook to reference SRD 5.2
+- **Branding Status**: Updated milestone documentation to reflect SRD 5.2
+
+#### Files Updated
+- `srd_data/ATTRIBUTION.md`: Updated from 5.1 to 5.2
+- `srd_data/classes.json`: Updated attribution line
+- `srd_data/rules.json`: Updated attribution line  
+- `srd_data/monsters.json`: Updated attribution line
+- `README.md`: Updated all SRD references
+- `solo_heart/README.md`: Updated all SRD references
+- `solo_heart/ATTRIBUTION.md`: Updated attribution text
+- `COMPLIANCE_SUMMARY.md`: Updated compliance documentation
+- `docs/API.md`: Updated attribution
+- `investor_docs/FEATURE_SUMMARY.md`: Updated feature descriptions
+- `CONTRIBUTING.md`: Updated project goals
+- `solo_heart/utils/guided_character_completion.py`: Updated comments
+- `cli/compliance_check.py`: Updated tool description and messages
+- `.hooks/pre-commit-template`: Updated hook description
+- `branding_status/compliance_milestone_srd_exemption.md`: Updated milestone documentation
+
+#### Technical Details
+- All attribution text updated to reference "System Reference Document 5.2"
+- Compliance tools now check for SRD 5.2 attribution
+- Documentation consistently references SRD 5.2 throughout
+- No functional changes to game mechanics - purely documentation update
+
+#### Impact
+- Project now fully compliant with SRD 5.2
+- All documentation reflects current SRD version
+- Compliance tools updated to enforce SRD 5.2 requirements
+- Maintains legal compliance with updated attribution
 
 ## Current Status
 
