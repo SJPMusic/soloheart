@@ -4,437 +4,417 @@ This work includes material from the System Reference Document 5.1 and is licens
 
 ## Overview
 
-The Narrative Engine provides a comprehensive API for creating, analyzing, and adapting narratives across multiple domains. This document covers the core API components and usage patterns.
+The Narrative Engine provides a domain-agnostic memory and context system for narrative continuity across multiple applications. This document covers the core API components and usage patterns for the current implementation.
 
 ## Core Components
 
 ### NarrativeEngine
 
-The main orchestrator class that manages narratives, memory, and domain adapters.
+The main orchestrator class that manages characters, memory, and context without domain-specific logic.
 
 ```python
-from core.narrative_engine import NarrativeEngine
+from narrative_core.narrative_engine import NarrativeEngine
 
-engine = NarrativeEngine()
+engine = NarrativeEngine(campaign_name="test_campaign")
 ```
 
 #### Methods
 
-##### `create_narrative(title, description, domain, story_structure)`
+##### `add_character(character_data)`
 
-Creates a new narrative with the specified parameters.
+Adds a character to the narrative without domain-specific filtering.
 
 **Parameters:**
-- `title` (str): The narrative title
-- `description` (str): Narrative description
-- `domain` (NarrativeDomain): The narrative domain (GAMING, THERAPY, EDUCATION, etc.)
-- `story_structure` (StoryStructure): The story structure type
+- `character_data` (dict): Character information (any structure accepted)
 
-**Returns:** `Narrative` object
+**Returns:** Character ID (str)
 
 **Example:**
 ```python
-narrative = engine.create_narrative(
-    title="Epic Adventure",
-    description="A hero's journey through mystical realms",
-    domain=NarrativeDomain.GAMING,
-    story_structure=StoryStructure.HERO_JOURNEY
-)
-```
-
-##### `add_character(narrative_id, character_data)`
-
-Adds a character to a narrative.
-
-**Parameters:**
-- `narrative_id` (str): The narrative ID
-- `character_data` (dict): Character information
-
-**Returns:** `Character` object
-
-**Example:**
-```python
-character = engine.add_character(narrative.id, {
+character_id = engine.add_character({
+    'id': 'char_123',
     'name': 'Aria',
-    'role': CharacterRole.PROTAGONIST,
     'description': 'A brave warrior',
     'traits': ['brave', 'curious'],
     'goals': ['Save the world'],
-    'conflicts': ['Internal struggle']
+    'conflicts': ['Internal struggle'],
+    'current_state': {
+        'race': 'Human',
+        'class': 'Fighter',
+        'level': 5,
+        'hit_points': 45
+    }
 })
 ```
 
-##### `generate_plot_point(narrative_id, context)`
+##### `get_character_by_name(name)`
 
-Generates a plot point for a narrative.
+Retrieves a character by name.
 
 **Parameters:**
-- `narrative_id` (str): The narrative ID
-- `context` (dict): Plot point context and parameters
+- `name` (str): Character name
 
-**Returns:** `PlotPoint` object
+**Returns:** Character object or None
 
 **Example:**
 ```python
-plot_point = engine.generate_plot_point(narrative.id, {
-    'type': PlotPointType.INCITING_INCIDENT,
-    'title': 'The Call to Adventure',
-    'description': 'Hero receives a quest',
-    'narrative_significance': 0.9,
-    'thematic_elements': ['destiny', 'adventure']
+character = engine.get_character_by_name("Aria")
+if character:
+    print(f"Found character: {character.name}")
+```
+
+##### `update_character_state(name, new_state)`
+
+Updates a character's current state.
+
+**Parameters:**
+- `name` (str): Character name
+- `new_state` (dict): New state data
+
+**Example:**
+```python
+engine.update_character_state("Aria", {
+    'hit_points': 40,
+    'inspiration_points': 2,
+    'saving_throws': {'dexterity': 2, 'wisdom': 1}
 })
 ```
 
-##### `analyze_narrative(narrative_id)`
+##### `get_context_for_llm(character_name)`
 
-Analyzes a narrative for structure, coherence, and themes.
+Provides narrative context to LLM for character interactions.
 
 **Parameters:**
-- `narrative_id` (str): The narrative ID
+- `character_name` (str): Character name
 
-**Returns:** `NarrativeAnalysis` object
+**Returns:** Context string for LLM
 
 **Example:**
 ```python
-analysis = engine.analyze_narrative(narrative.id)
-print(f"Coherence: {analysis.coherence_score}")
-print(f"Themes: {analysis.themes}")
+context = engine.get_context_for_llm("Aria")
+# Use context in LLM prompt
 ```
 
-##### `adapt_narrative(narrative_id, new_context)`
+##### `add_memory(memory_data)`
 
-Adapts a narrative based on new context or requirements.
+Adds a memory to the narrative system.
 
 **Parameters:**
-- `narrative_id` (str): The narrative ID
-- `new_context` (dict): New context for adaptation
+- `memory_data` (dict): Memory information
 
-**Returns:** `Narrative` object
+**Returns:** Memory ID (str)
 
 **Example:**
 ```python
-adapted_narrative = engine.adapt_narrative(narrative.id, {
-    'player_level': 5,
-    'world_changes': {'dark_army_defeated': True}
+memory_id = engine.add_memory({
+    'type': 'episodic',
+    'content': 'Aria defeated the dragon',
+    'emotional_weight': 0.8,
+    'character_connections': ['Aria']
 })
 ```
 
-##### `recall_narrative_context(query, domain, limit)`
+##### `get_memories(query=None, limit=10)`
 
-Recalls narrative-related memories.
+Retrieves memories based on query.
 
 **Parameters:**
 - `query` (str, optional): Search query
-- `domain` (NarrativeDomain, optional): Domain filter
-- `limit` (int): Maximum number of memories to return
+- `limit` (int): Maximum number of memories
 
-**Returns:** List of `MemoryNode` objects
-
-**Example:**
-```python
-memories = engine.recall_narrative_context(
-    query="hero journey",
-    domain=NarrativeDomain.GAMING,
-    limit=10
-)
-```
-
-##### `get_narrative_stats()`
-
-Gets comprehensive statistics about all narratives.
-
-**Returns:** Dictionary with statistics
+**Returns:** List of memory objects
 
 **Example:**
 ```python
-stats = engine.get_narrative_stats()
-print(f"Total narratives: {stats['total_narratives']}")
-print(f"Narratives by domain: {stats['narratives_by_domain']}")
+memories = engine.get_memories(query="dragon", limit=5)
 ```
 
-##### `export_narrative(narrative_id)`
+##### `save_campaign()`
 
-Exports a narrative with all its components.
+Saves the current campaign state.
+
+**Example:**
+```python
+engine.save_campaign()
+```
+
+##### `load_campaign(campaign_name)`
+
+Loads a campaign state.
 
 **Parameters:**
-- `narrative_id` (str): The narrative ID
-
-**Returns:** Dictionary with export data
+- `campaign_name` (str): Campaign name
 
 **Example:**
 ```python
-export_data = engine.export_narrative(narrative.id)
-# Save to file
-with open('narrative_export.json', 'w') as f:
-    json.dump(export_data, f, indent=2)
+engine.load_campaign("test_campaign")
 ```
 
-##### `import_narrative(export_data)`
+## SoloHeart Integration Layer
 
-Imports a narrative from export data.
+### SoloHeartNarrativeEngine
+
+The integration layer that provides game-specific features while maintaining domain-agnostic core.
+
+```python
+from solo_heart.narrative_engine_integration import SoloHeartNarrativeEngine
+
+integration = SoloHeartNarrativeEngine(campaign_name="test_campaign")
+```
+
+#### Methods
+
+##### `record_character_creation(character_data)`
+
+Records character creation with proper field separation.
 
 **Parameters:**
-- `export_data` (dict): Export data from `export_narrative`
+- `character_data` (dict): Character data from character creation
 
-**Returns:** Narrative ID
+**Returns:** Character ID (str)
 
 **Example:**
 ```python
-with open('narrative_export.json', 'r') as f:
-    export_data = json.load(f)
-narrative_id = engine.import_narrative(export_data)
+char_id = integration.record_character_creation({
+    'name': 'Thorin',
+    'race': 'Human',
+    'class': 'Fighter',
+    'level': 1,
+    'hit_points': 12,
+    'inspiration_points': 0
+})
 ```
 
-##### `register_domain_adapter(domain, adapter)`
+##### `record_character_facts(facts, character_name)`
 
-Registers a domain-specific adapter.
+Records additional character facts.
 
 **Parameters:**
-- `domain` (NarrativeDomain): The domain
-- `adapter` (DomainAdapter): The domain adapter
+- `facts` (dict): Character facts
+- `character_name` (str): Character name
+
+**Returns:** Success status
 
 **Example:**
 ```python
-from domains.gaming import GamingAdapter
-gaming_adapter = GamingAdapter()
-engine.register_domain_adapter(NarrativeDomain.GAMING, gaming_adapter)
+integration.record_character_facts({
+    'combat_style': 'Sword and shield',
+    'motivations': ['Revenge', 'Justice']
+}, "Thorin")
 ```
 
-## Data Structures
+##### `set_inspiration_points(character_name, points)`
 
-### Narrative
+Sets inspiration points for a character.
 
-Represents a complete narrative with all its components.
+**Parameters:**
+- `character_name` (str): Character name
+- `points` (int): Number of inspiration points
 
-**Attributes:**
-- `id` (str): Unique identifier
-- `title` (str): Narrative title
-- `description` (str): Narrative description
-- `domain` (NarrativeDomain): Narrative domain
-- `story_structure` (StoryStructure): Story structure type
-- `characters` (dict): Character dictionary
-- `plot_points` (dict): Plot point dictionary
-- `themes` (list): Narrative themes
-- `world_state` (dict): World state information
-- `narrative_arc` (list): Plot point IDs in order
-- `metadata` (dict): Additional metadata
-- `created_at` (datetime): Creation timestamp
-- `updated_at` (datetime): Last update timestamp
+**Example:**
+```python
+integration.set_inspiration_points("Thorin", 2)
+```
 
-### Character
+##### `get_inspiration_points(character_name)`
 
-Represents a character in the narrative.
+Gets inspiration points for a character.
 
-**Attributes:**
-- `id` (str): Unique identifier
-- `name` (str): Character name
-- `role` (CharacterRole): Character role
-- `description` (str): Character description
-- `traits` (list): Character traits
-- `goals` (list): Character goals
-- `conflicts` (list): Character conflicts
-- `relationships` (dict): Character relationships
-- `development_arc` (list): Development moments
-- `current_state` (dict): Current character state
-- `background` (dict): Character background
-- `personality_matrix` (dict): Personality traits
+**Parameters:**
+- `character_name` (str): Character name
 
-### PlotPoint
+**Returns:** Number of inspiration points (int)
 
-Represents a plot point in the narrative.
+**Example:**
+```python
+points = integration.get_inspiration_points("Thorin")
+print(f"Thorin has {points} inspiration points")
+```
 
-**Attributes:**
-- `id` (str): Unique identifier
-- `plot_point_type` (PlotPointType): Type of plot point
-- `title` (str): Plot point title
-- `description` (str): Plot point description
-- `characters_involved` (list): Involved character IDs
-- `emotional_impact` (dict): Emotional impact on characters
-- `narrative_significance` (float): Significance score (0.0-1.0)
-- `thematic_elements` (list): Thematic elements
-- `world_state_changes` (dict): World state changes
-- `timestamp` (datetime): Creation timestamp
-- `prerequisites` (list): Prerequisite plot point IDs
-- `consequences` (list): Consequent plot point IDs
+##### `set_saving_throws(character_name, saving_throws)`
 
-### NarrativeAnalysis
+Sets saving throw modifiers for a character.
 
-Results of narrative analysis.
+**Parameters:**
+- `character_name` (str): Character name
+- `saving_throws` (dict): Saving throw modifiers
 
-**Attributes:**
-- `coherence_score` (float): Narrative coherence (0.0-1.0)
-- `thematic_consistency` (float): Thematic consistency (0.0-1.0)
-- `character_development` (dict): Character development scores
-- `plot_complexity` (float): Plot complexity score
-- `emotional_arc` (dict): Emotional arcs for characters
-- `pacing_analysis` (dict): Pacing analysis results
-- `structural_integrity` (float): Structural integrity score
-- `themes` (list): Identified themes
-- `motifs` (list): Identified motifs
-- `conflicts` (list): Conflict analysis
-- `recommendations` (list): Improvement recommendations
+**Example:**
+```python
+saving_throws = {
+    'dexterity': 2,
+    'wisdom': 1,
+    'constitution': 3
+}
+integration.set_saving_throws("Thorin", saving_throws)
+```
 
-## Enums
+##### `get_saving_throws(character_name)`
 
-### NarrativeDomain
+Gets saving throw modifiers for a character.
 
-Available narrative domains:
-- `GAMING`: Gaming narratives
-- `THERAPY`: Therapeutic narratives
-- `EDUCATION`: Educational narratives
-- `ORGANIZATIONAL`: Organizational narratives
-- `CREATIVE_WRITING`: Creative writing
-- `JOURNALISM`: Journalistic narratives
-- `MARKETING`: Marketing narratives
+**Parameters:**
+- `character_name` (str): Character name
 
-### StoryStructure
+**Returns:** Dictionary of saving throw modifiers
 
-Available story structures:
-- `HERO_JOURNEY`: Hero's journey structure
-- `THREE_ACT`: Three-act structure
-- `FIVE_ACT`: Five-act structure
-- `CIRCULAR`: Circular structure
-- `EPISODIC`: Episodic structure
-- `FRAME`: Frame narrative
-- `PARALLEL`: Parallel narratives
-- `IN_MEDIA_RES`: In medias res
+**Example:**
+```python
+throws = integration.get_saving_throws("Thorin")
+print(f"Thorin's saving throws: {throws}")
+```
 
-### CharacterRole
+## Character Data Structure
 
-Available character roles:
-- `PROTAGONIST`: Main character
-- `ANTAGONIST`: Opposing character
-- `SUPPORTING`: Supporting character
-- `MENTOR`: Mentor character
-- `FOIL`: Foil character
-- `LOVE_INTEREST`: Love interest
-- `COMIC_RELIEF`: Comic relief
-- `CATALYST`: Catalyst character
+### Universal Fields (Top Level)
 
-### PlotPointType
+These fields are stored at the top level of the Character dataclass:
 
-Available plot point types:
-- `INCITING_INCIDENT`: Inciting incident
-- `FIRST_TURNING_POINT`: First turning point
-- `MIDPOINT`: Midpoint
-- `SECOND_TURNING_POINT`: Second turning point
-- `CLIMAX`: Climax
-- `RESOLUTION`: Resolution
-- `SUBPLOT`: Subplot
-- `CHARACTER_DEVELOPMENT`: Character development
+```python
+CHARACTER_FIELDS = {
+    'id', 'name', 'description', 'traits', 'goals', 'conflicts', 
+    'relationships', 'development_arc', 'current_state', 'background',
+    'personality_matrix', 'emotional_state', 'memory_ids', 'last_updated'
+}
+```
+
+### Domain-Specific Fields (current_state)
+
+These fields are stored in the `current_state` dictionary:
+
+```python
+domain_specific_fields = [
+    'race', 'class', 'background', 'alignment', 'age', 'gender',
+    'level', 'hit_points', 'armor_class', 'initiative', 'experience',
+    'combat_style', 'gear', 'spells', 'abilities', 'skills',
+    'personality_traits', 'motivations', 'emotional_themes', 'traumas',
+    'relational_history', 'backstory', 'inspiration_points', 'saving_throws'
+]
+```
 
 ## Memory System
 
-### LayeredMemorySystem
+### Memory Types
 
-The memory system provides layered memory storage with emotional context.
+The Narrative Engine supports multiple memory layers:
 
-**Methods:**
+1. **Episodic Memory**: Specific events and experiences
+2. **Semantic Memory**: Facts and knowledge
+3. **Procedural Memory**: Skills and procedures
+4. **Emotional Memory**: Emotional context and reactions
 
-##### `add_memory(content, memory_type, layer, user_id, session_id, ...)`
+### Memory Structure
 
-Adds a memory to the system.
-
-**Example:**
 ```python
-memory_id = engine.memory_system.add_memory(
-    content={'event': 'Character creation', 'character': 'Aria'},
-    memory_type=MemoryType.CHARACTER_DEVELOPMENT,
-    layer=MemoryLayer.MID_TERM,
-    user_id='user123',
-    session_id='session456',
-    emotional_weight=0.7,
-    emotional_context=[EmotionalContext.JOY],
-    thematic_tags=['character_creation', 'gaming']
-)
+{
+    'id': 'mem_123',
+    'type': 'episodic',  # episodic, semantic, procedural, emotional
+    'content': 'Memory content',
+    'emotional_weight': 0.8,
+    'character_connections': ['character_name'],
+    'timestamp': '2025-07-05T10:30:00',
+    'tags': ['combat', 'victory']
+}
 ```
 
-##### `recall(query, emotional, thematic, user_id, layer, min_significance, limit)`
+## Usage Examples
 
-Recalls memories based on various criteria.
+### Basic Character Creation
 
-**Example:**
 ```python
-memories = engine.memory_system.recall(
-    query="hero journey",
-    emotional=EmotionalContext.JOY,
-    thematic=['gaming'],
-    limit=10
-)
+from solo_heart.narrative_engine_integration import SoloHeartNarrativeEngine
+
+# Initialize integration
+integration = SoloHeartNarrativeEngine("test_campaign")
+
+# Create character
+char_data = {
+    'name': 'Thorin',
+    'race': 'Human',
+    'class': 'Fighter',
+    'level': 1,
+    'hit_points': 12,
+    'inspiration_points': 0,
+    'motivations': ['Revenge', 'Justice'],
+    'traits': ['Brave', 'Loyal']
+}
+
+char_id = integration.record_character_creation(char_data)
 ```
 
-##### `get_memory_stats()`
+### Managing Game State
 
-Gets memory system statistics.
-
-**Example:**
 ```python
-stats = engine.memory_system.get_memory_stats()
-print(f"Total memories: {stats['created']}")
-print(f"Short-term: {stats['short_term_count']}")
-print(f"Mid-term: {stats['mid_term_count']}")
-print(f"Long-term: {stats['long_term_count']}")
+# Set inspiration points
+integration.set_inspiration_points("Thorin", 2)
+
+# Set saving throws
+saving_throws = {
+    'dexterity': 2,
+    'wisdom': 1,
+    'constitution': 3
+}
+integration.set_saving_throws("Thorin", saving_throws)
+
+# Get current state
+points = integration.get_inspiration_points("Thorin")
+throws = integration.get_saving_throws("Thorin")
 ```
 
-## Domain Adapters
-
-### Creating Custom Domain Adapters
-
-To create a custom domain adapter, inherit from `DomainAdapter`:
+### Memory Management
 
 ```python
-from core.narrative_engine import DomainAdapter, NarrativeDomain, Narrative, NarrativeAnalysis
+from narrative_core.narrative_engine import NarrativeEngine
 
-class CustomAdapter(DomainAdapter):
-    def __init__(self):
-        super().__init__(NarrativeDomain.CUSTOM)
-    
-    def analyze_narrative(self, narrative: Narrative) -> NarrativeAnalysis:
-        # Implement domain-specific analysis
-        pass
-    
-    def generate_plot_point(self, narrative: Narrative, context: Dict[str, Any]) -> PlotPoint:
-        # Implement domain-specific plot point generation
-        pass
-    
-    def adapt_narrative(self, narrative: Narrative, new_context: Dict[str, Any]) -> Narrative:
-        # Implement domain-specific adaptation
-        pass
+engine = NarrativeEngine("test_campaign")
+
+# Add memory
+memory_data = {
+    'type': 'episodic',
+    'content': 'Thorin defeated the bandit leader',
+    'emotional_weight': 0.9,
+    'character_connections': ['Thorin'],
+    'tags': ['combat', 'victory', 'revenge']
+}
+
+memory_id = engine.add_memory(memory_data)
+
+# Retrieve memories
+memories = engine.get_memories(query="combat", limit=5)
 ```
 
 ## Error Handling
 
-The Narrative Engine uses standard Python exceptions:
+### Common Errors
 
-- `ValueError`: Invalid parameters or data
-- `KeyError`: Missing keys in dictionaries
-- `TypeError`: Incorrect data types
-
-**Example:**
+1. **Character Not Found**
 ```python
 try:
-    narrative = engine.create_narrative(
-        title="Test",
-        description="Test narrative",
-        domain=NarrativeDomain.GAMING
-    )
-except ValueError as e:
-    print(f"Error creating narrative: {e}")
+    points = integration.get_inspiration_points("Unknown")
+except Exception as e:
+    print(f"Character not found: {e}")
+```
+
+2. **Invalid Data Structure**
+```python
+try:
+    char_id = engine.add_character(invalid_data)
+except Exception as e:
+    print(f"Invalid data: {e}")
 ```
 
 ## Best Practices
 
-1. **Always check return values** for None or empty results
-2. **Use appropriate memory layers** for different types of information
-3. **Provide rich context** when generating plot points
-4. **Regularly analyze narratives** to maintain quality
-5. **Export important narratives** for backup and sharing
-6. **Use domain adapters** for specialized functionality
-7. **Monitor memory statistics** to prevent memory bloat
+1. **Domain Separation**: Always use the integration layer for game-specific features
+2. **Memory Management**: Use appropriate memory types for different information
+3. **Error Handling**: Always handle potential errors gracefully
+4. **State Consistency**: Ensure character state is updated atomically
+5. **Context Provision**: Use `get_context_for_llm()` for LLM interactions
 
-## Performance Considerations
+## Architecture Notes
 
-- Large narratives may impact analysis performance
-- Memory system can grow large over time; use `forget()` method
-- Export/import operations can be memory-intensive
-- Consider caching analysis results for frequently accessed narratives 
+- **Domain-Agnostic Core**: The Narrative Engine core contains no game-specific logic
+- **Integration Layer**: Game-specific features are implemented in the integration layer
+- **Memory Layers**: Multiple memory types support rich narrative context
+- **State Encapsulation**: All game-specific data is stored in `current_state`
+- **Clean Separation**: Universal metadata vs domain-specific state properly separated 
