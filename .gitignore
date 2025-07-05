@@ -188,3 +188,67 @@ logs/
 *.temp
 temp/
 tmp/
+
+# Ollama models and data
+ollama_models/
+ollama_data/
+
+# Character creation session data
+session_data/
+character_sessions/
+
+# LLM response cache
+llm_cache/
+response_cache/
+
+# Development server files
+server.pid
+*.pid
+
+# Memory and vector database files
+vector_db/
+memory_cache/
+*.vec
+*.index
+
+# Campaign state files
+campaign_states/
+*.campaign
+
+# Character state files
+character_states/
+*.character
+
+# Test data and fixtures
+test_data/
+fixtures/
+*.test_data
+
+# Documentation builds
+docs/_build/
+docs/build/
+
+# Coverage reports
+coverage/
+.coverage.*
+
+# Performance profiling
+*.prof
+*.profile
+
+# Security files
+*.key
+*.pem
+*.crt
+*.p12
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+database/
+
+# Environment specific
+.env.production
+.env.staging
+.env.test
