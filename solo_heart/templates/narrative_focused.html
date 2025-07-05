@@ -33,6 +33,14 @@
             font-size: 1.5rem;
             color: #ffd700;
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+            display: flex;
+            align-items: center;
+        }
+
+        .header-logo {
+            height: 2rem;
+            margin-right: 0.75rem;
+            object-fit: contain;
         }
 
         .header-controls {
@@ -232,7 +240,10 @@
 </head>
 <body>
     <div class="header">
-                    <h1>🎲 SoloHeart - Narrative Experience</h1>
+        <h1>
+            <img src="/static/images/SoloHeart_logo_v1.png" alt="SoloHeart Logo" class="header-logo">
+            SoloHeart - Narrative Experience
+        </h1>
         <div class="header-controls">
             <button class="btn" onclick="saveGame()">💾 Save</button>
             <button class="btn" onclick="returnToStart()">🏠 Return to Start</button>
