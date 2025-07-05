@@ -1,55 +1,100 @@
-# The Narrative Engine
+# SoloHeart - Enhanced Natural Language DnD 5E Character Creation
 
-> **A memory-driven, context-aware storytelling framework that simulates and evolves complex narratives across domains like games, therapy, education, and strategic planning.**
+> **A solo tabletop RPG featuring enhanced natural language character creation that extracts and commits facts immediately from freeform player input, powered by Ollama LLM integration.**
 
-![Demo Status](https://img.shields.io/badge/status-Proof%20of%20Concept%20%E2%80%93%20Actively%20Developing-blue)
+![Demo Status](https://img.shields.io/badge/status-Enhanced%20Character%20Creation%20%E2%80%93%20Actively%20Developing-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Python](https://img.shields.io/badge/python-3.9+-blue)
+![LLM](https://img.shields.io/badge/LLM-Ollama%20llama3-orange)
 
-## What is The Narrative Engine?
+## What is SoloHeart?
 
-The Narrative Engine treats narrative as a simulation of memory, emotion, decision history, and real-time contextual input—rather than just linear storytelling. It's designed to create AI co-architects that understand context, remember choices, and evolve stories based on layered memory systems.
+SoloHeart is a solo tabletop RPG that demonstrates advanced natural language character creation. Unlike traditional character creation systems that ask linear questions, SoloHeart extracts multiple character facts from freeform player input without requiring explicit prompts or default values.
 
-**Current Proof-of-Concept: SoloHeart**  
-SoloHeart is a solo tabletop RPG that demonstrates The Narrative Engine's capabilities in a gaming context. It features:
+**Key Innovations:**
+- **Immediate Fact Commitment**: Facts are committed to character sheet immediately, avoiding staging states
+- **LLM-Powered Extraction**: Uses Ollama's llama3 model for semantic understanding of character descriptions
+- **Natural Language Processing**: Robust pattern-matching with LLM fallback for complex extractions
+- **DnD 5E Compliance**: Tracks all required character sheet fields automatically
+- **Live Character Sheet**: Real-time character sheet updates as you describe your character
+- **Guided Completion**: Intelligent fallback to guided questions only when truly ambiguous
 
-- **Context-aware memory retrieval** that recalls past choices and their emotional weight
-- **Emotionally responsive narratives** that adapt to player decisions and character development
-- **Persistent character and campaign state** that maintains continuity across sessions
-- **Natural language character creation** through "Vibe Code" conversations with the AI
+## Enhanced Character Creation System
 
-## Beyond Gaming: The Broader Vision
-
-While SoloHeart showcases the system in entertainment, The Narrative Engine is designed for much broader applications:
-
-- **Therapy & Mental Health**: AI companions that remember therapeutic progress and adapt interventions
-- **Education**: Personalized learning narratives that evolve based on student engagement and comprehension
-- **Leadership Development**: Simulation environments that track decision patterns and leadership growth
-- **Strategic Planning**: Scenario modeling that maintains context across complex, multi-session planning
-
-The core innovation is treating narrative as a **simulation of human memory and reasoning**—not just story generation, but a system that understands context, learns from interactions, and maintains coherent continuity across time.
-
-## How It Works
+### How It Works
 
 ```
-User Input → Context Analysis → Memory Retrieval → Narrative Response → State Update
+Player Input → LLM Extraction → Pattern Matching → Immediate Commitment → Live Character Sheet
      ↓              ↓                ↓                    ↓                ↓
-Natural Language → Emotional Tagging → Layered Recall → Adaptive Story → Persistent Save
+Natural Language → Semantic Analysis → Regex Patterns → Character State → Real-time Updates
      ↓              ↓                ↓                    ↓                ↓
-Character Creation → Memory Systems → Contextual Reasoning → Campaign Progression → Continuity
+Freeform Description → Context Understanding → Fact Extraction → No Staging → Instant Feedback
 ```
 
-### Core Architecture
-- **Layered Memory System**: Short-term, mid-term, and long-term memory with emotional tagging
-- **Contextual Drift Prevention**: Advanced algorithms that maintain narrative coherence
-- **Emotional Intelligence**: AI that understands and responds to emotional context
-- **Domain-Agnostic Design**: Modular architecture that can be adapted to any narrative domain
+### Example Character Creation
 
-## Quick Start: SoloHeart Demo
+**Player Input:**
+> "My character is Kaelen Thorne. He's a 35-year-old former blacksmith who lost everything when his forge was burned down in a raid. He has a badly scarred left arm and a deep distrust of authority. Kaelen carries a massive hammer—his own creation—and wears a leather apron like armor. He doesn't call himself a warrior, but when things go bad, he's the first to step in. He's loyal to those who earn it, and he's searching for the raiders who destroyed his home, hoping for justice… or revenge."
+
+**System Extracts:**
+- **Name**: Kaelen Thorne
+- **Age**: 35
+- **Race**: Human
+- **Class**: Fighter
+- **Background**: Soldier
+- **Gender**: Male
+- **Combat Style**: Massive hammer, leather apron armor
+- **Personality**: Loyal, distrustful of authority
+- **Motivations**: Justice, revenge
+- **Trauma**: Lost forge in raid, scarred arm
+- **Gear**: Massive hammer, leather apron
+
+### Core Features
+
+#### 1. LLM-Powered Semantic Extraction
+- **Primary Method**: Uses Ollama's llama3 model for semantic understanding
+- **Structured Output**: LLM extracts facts into JSON format
+- **Context Awareness**: Understands relationships between facts
+- **Ambiguity Detection**: Identifies when facts need confirmation
+
+#### 2. Robust Pattern Matching
+- **Fallback System**: Pattern-matching when LLM extraction fails
+- **Confidence Scoring**: Only commits high-confidence facts
+- **Multiple Fact Types**: Extracts race, class, background, gear, motivations, trauma
+- **Context Clues**: Uses surrounding text to infer missing information
+
+#### 3. Immediate Fact Commitment
+- **No Staging**: Facts committed directly to character sheet
+- **Live Updates**: Character sheet updates in real-time
+- **Ambiguity Handling**: Only asks for confirmation when truly ambiguous
+- **Confidence Thresholds**: Configurable confidence levels for different fact types
+
+#### 4. Live Character Sheet
+- **Real-time Display**: Character sheet updates as you type
+- **Visual Feedback**: See what facts have been captured
+- **Missing Fields**: Clear indication of what's still needed
+- **Responsive Design**: Works on desktop and mobile
+
+#### 5. Guided Completion System
+- **Intelligent Fallback**: Only transitions to guided questions when necessary
+- **Context Preservation**: Maintains all extracted facts during guided completion
+- **Natural Flow**: Seamless transition from natural language to guided questions
+- **Completion Tracking**: Automatically tracks required DnD 5E fields
+
+## Technology Stack
+
+- **Backend**: Python, Flask, Ollama (local LLM)
+- **Character Creation**: Enhanced fact extraction with immediate commitment
+- **LLM Integration**: Ollama llama3 model for semantic understanding
+- **Pattern Matching**: Robust regex patterns for fallback extraction
+- **Frontend**: HTML5, CSS3, JavaScript (mobile-responsive)
+- **Compliance**: SRD 5.1 compliant, fully rebranded as SoloHeart
+
+## Quick Start
 
 ### Prerequisites
 - Python 3.9+
-- OpenAI API key or Ollama (local LLM)
+- Ollama with llama3 model (local LLM)
 
 ### Installation
 1. **Clone the repository**:
@@ -63,10 +108,16 @@ Character Creation → Memory Systems → Contextual Reasoning → Campaign Prog
    pip install -r requirements.txt
    ```
 
-3. **Set up your API key**:
+3. **Set up Ollama**:
    ```bash
-   cp env.template .env
-   # Add your OpenAI API key to .env
+   # Install Ollama (macOS)
+   brew install ollama
+   
+   # Start Ollama service
+   brew services start ollama
+   
+   # Pull the llama3 model
+   ollama pull llama3
    ```
 
 ### Running SoloHeart
@@ -76,51 +127,127 @@ python simple_unified_interface.py
 
 Access the game at: [http://localhost:5001](http://localhost:5001)
 
-## Demo Walkthrough
+## Character Creation Walkthrough
 
-### 1. Character Creation
-- Use "Vibe Code" to describe your character concept in natural language
-- The AI asks clarifying questions and builds your character sheet
-- All data is SRD 5.1 compliant and legally safe
+### 1. Natural Language Input
+- Describe your character concept in detail using natural language
+- Include race, class, background, personality, motivations, gear, trauma
+- No need to follow specific prompts or answer linear questions
+- System extracts multiple facts simultaneously
 
-### 2. Narrative Gameplay
-- Seamless transition into immersive storytelling
-- Your choices are remembered and influence future encounters
-- Emotional context is tracked and affects narrative responses
+### 2. Immediate Fact Commitment
+- Facts are committed to character sheet immediately
+- No staging or pending states
+- Live character sheet shows what's been captured
+- Only requests confirmation for truly ambiguous facts
 
-### 3. Persistent Continuity
-- Campaign state is automatically saved
-- Return to continue your story with full context preserved
-- Memory systems ensure the AI remembers your journey
+### 3. LLM-Powered Understanding
+- Primary extraction uses Ollama's llama3 model
+- Semantic understanding of character descriptions
+- Context-aware fact extraction
+- Handles complex, multi-sentence descriptions
 
-## Technology Stack
+### 4. Pattern Matching Fallback
+- Robust regex patterns when LLM extraction fails
+- Confidence scoring for all extracted facts
+- Context clues for inferring missing information
+- Multiple extraction strategies for different fact types
 
-- **Backend**: Python, Flask, OpenAI API/Ollama
-- **Memory System**: Vector-based similarity search with emotional tagging
-- **Frontend**: HTML5, CSS3, JavaScript (mobile-responsive)
-- **Compliance**: SRD 5.1 compliant, fully rebranded as SoloHeart
+### 5. Guided Completion
+- Intelligent transition to guided questions only when needed
+- Preserves all extracted facts during guided completion
+- Tracks missing DnD 5E required fields
+- Natural flow from freeform to guided input
+
+## Key Innovations
+
+### Enhanced Fact Extraction
+- **LLM Primary**: Semantic understanding with Ollama llama3
+- **Pattern Fallback**: Robust regex patterns for reliability
+- **Multi-Fact Extraction**: Extracts multiple facts simultaneously
+- **Context Awareness**: Uses surrounding text for inference
+- **Confidence Scoring**: Only commits high-confidence facts
+
+### Immediate Commitment System
+- **No Staging**: Facts committed directly to character sheet
+- **Live Updates**: Real-time character sheet updates
+- **Ambiguity Detection**: Only asks for confirmation when truly ambiguous
+- **Confidence Thresholds**: Configurable for different fact types
+
+### Live Character Sheet
+- **Real-time Display**: Updates as you describe your character
+- **Visual Feedback**: Clear indication of captured facts
+- **Missing Fields**: Shows what's still needed
+- **Responsive Design**: Works on all devices
+
+### Guided Completion
+- **Intelligent Transition**: Only when truly ambiguous
+- **Context Preservation**: Maintains all extracted facts
+- **Natural Flow**: Seamless from freeform to guided
+- **Completion Tracking**: Tracks DnD 5E required fields
+
+## Project Structure
+
+```
+SoloHeart Project/
+├── solo_heart/                      # Main application
+│   ├── simple_unified_interface.py  # Main Flask application
+│   ├── templates/                   # UI templates
+│   ├── utils/                       # Utility functions
+│   │   ├── character_fact_extraction.py  # Fact extraction
+│   │   ├── guided_character_completion.py # Guided completion
+│   │   └── ollama_llm_service.py   # LLM integration
+│   └── character_generator.py       # Character generation
+├── docs/                           # Documentation
+├── tests/                          # Test suite
+├── requirements.txt                 # Dependencies
+├── README.md                       # This file
+└── archive_2025-07-04/            # Archived redundant files
+```
+
+## Recent Improvements
+
+### Project Cleanup (2025-07-04)
+- **Archived Redundant Files**: 50+ files and 4 duplicate directories
+- **Simplified Structure**: Cleaner project hierarchy
+- **Preserved History**: All files safely archived for recovery
+- **Better Maintainability**: Clear separation of active vs archived code
+
+### Enhanced Character Creation
+- **LLM Integration**: Ollama llama3 for semantic understanding
+- **Immediate Commitment**: No staging states, direct character sheet updates
+- **Live Character Sheet**: Real-time visual feedback
+- **Robust Fallback**: Pattern matching when LLM extraction fails
+
+### UI Improvements
+- **Simplified Flow**: Removed "Vibe Code" terminology from user interface
+- **Campaign Start**: Only asks for campaign name and character creation
+- **Live Updates**: Character sheet updates in real-time
+- **Responsive Design**: Works on desktop and mobile
 
 ## Contributing
 
 We welcome contributors interested in:
-- **The Narrative Engine**: Core memory systems, contextual reasoning, domain adaptation
-- **SoloHeart**: Game mechanics, UI/UX, character systems
-- **New Domains**: Therapy, education, leadership, or other narrative applications
+- **Enhanced Character Creation**: LLM integration, fact extraction, guided completion
+- **UI/UX Improvements**: Web interface, mobile responsiveness, user experience
+- **DnD 5E Integration**: Game mechanics, character sheets, compliance
+- **LLM Integration**: Ollama optimization, prompt engineering, semantic understanding
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Documentation
 
-- [The Narrative Engine Roadmap](NarrativeEngine_Roadmap.txt) - Development phases and vision
-- [Investor Documentation](investor_docs/) - Project overview and future potential
+- [How to Play](HOW_TO_PLAY.md) - Game instructions and character creation guide
 - [Compliance Summary](COMPLIANCE_SUMMARY.md) - Legal and branding compliance
+- [Cleanup Summary](CLEANUP_SUMMARY.md) - Project cleanup and archive details
+- [Character Fact Extraction](solo_heart/utils/character_fact_extraction.py) - Fact extraction implementation
 
 ## Vision & Future
 
-The Narrative Engine represents a new approach to AI interaction—one that prioritizes memory, context, and emotional intelligence over simple response generation. SoloHeart is just the beginning.
+SoloHeart represents a new approach to character creation—one that prioritizes natural language understanding and immediate feedback over rigid form-filling. The enhanced character creation system with LLM integration demonstrates the potential for more intuitive and engaging game experiences.
 
-**Interested in collaborating or investing?**  
-We're actively seeking partners to explore applications in therapy, education, leadership development, and beyond. The technology is real, demonstrable, and ready for broader deployment.
+**Interested in collaborating or contributing?**  
+We're actively seeking contributors to enhance the character creation system, improve the UI/UX, and expand the game mechanics.
 
 ## Attribution
 

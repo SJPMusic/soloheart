@@ -2,6 +2,74 @@
 
 This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License.
 
+## [Enhanced Character Creation] - 2025-07-04
+
+### Added
+- **Symbolic Meaning Framework**: Complete implementation of Jordan B. Peterson's *Maps of Meaning* principles
+  - Archetypal tagging system with 20+ Jungian archetypes (Father, Shadow, Journey, etc.)
+  - Chaos/order tension tracking with dynamic state management
+  - Narrative decay detection for contradictions and avoidance patterns
+  - Symbolic coherence assessment for meaningful character development
+  - Integration with character fact extraction and memory systems
+- **Enhanced Character Creation**: Immediate fact commitment without staging
+  - Robust fact extraction from complex, multi-sentence descriptions
+  - Immediate commitment of facts to character sheet (no pending states)
+  - Ambiguity detection with intelligent confirmation requests
+  - Confidence scoring for extracted facts
+  - DnD 5E compliance tracking for missing required fields
+- **Advanced Fact Extraction**: Comprehensive character fact extraction
+  - Name, age, race, class, background extraction with pattern matching
+  - Personality traits, motivations, emotional themes extraction
+  - Combat style, experience, gear, and relational history extraction
+  - Trauma and backstory extraction with emotional context
+  - Gender and alignment detection from natural language
+- **Symbolic Integration**: Facts tagged with archetypal meaning
+  - Automatic archetypal tagging of all character facts
+  - Chaos/order impact assessment for each fact
+  - Narrative decay detection from contradictions
+  - Symbolic coherence scoring for character development
+  - Archetypal state persistence across sessions
+
+### Changed
+- **Character Creation Flow**: Replaced linear questioning with immediate fact commitment
+  - No more staged fact collection or pending states
+  - Facts committed immediately upon extraction
+  - Only requests confirmation for truly ambiguous information
+  - Seamless transition from character creation to gameplay
+- **Memory System Integration**: Enhanced with symbolic meaning
+  - Emotional memory now includes archetypal context
+  - Chaos/order tension influences memory relevance
+  - Symbolic coherence affects narrative responses
+  - Archetypal state maintained across campaign sessions
+- **API Endpoints**: Updated for enhanced character creation
+  - New `/api/character/vibe-code/start` with immediate fact extraction
+  - Enhanced `/api/character/vibe-code/continue` with symbolic analysis
+  - New `/api/character/vibe-code/symbolic` for archetypal state
+  - Updated character summary with symbolic meaning display
+
+### Technical Improvements
+- **Fact Extraction Engine**: Centralized utilities in `utils/character_fact_extraction.py`
+  - 15+ extraction functions for different character aspects
+  - Pattern matching with regex and word boundary detection
+  - Confidence scoring and ambiguity detection
+  - Integration with symbolic meaning framework
+- **Symbolic Framework**: New `utils/symbolic_meaning_framework.py`
+  - ArchetypalTags enum with 20+ archetypes
+  - ChaosOrderState enum for tension tracking
+  - SymbolicMeaningFramework class with full functionality
+  - Narrative response generation based on symbolic state
+- **Error Handling**: Enhanced error management
+  - Graceful handling of extraction failures
+  - Symbolic data initialization and validation
+  - Character data reset and recovery mechanisms
+  - Comprehensive logging for debugging
+
+### Performance
+- **Immediate Processing**: Facts processed and committed in real-time
+- **Efficient Symbolic Analysis**: Archetypal tagging without performance impact
+- **Optimized Memory Usage**: Symbolic data stored efficiently
+- **Fast Response Times**: Enhanced extraction without latency increase
+
 ## [Unreleased] - 2025-07-02
 
 ### Fixed

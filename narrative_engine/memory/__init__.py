@@ -1,1 +1,0 @@
-# Vector memory module package 

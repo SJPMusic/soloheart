@@ -67,6 +67,7 @@ poetry.lock
 
 # Logs
 logs/
+*.log
 
 # Flask session
 instance/
@@ -105,4 +106,36 @@ backups/
 # Ignore archive_unused
 archive_unused/
 
+# Database files
 shared/dnd_game.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+temp/
+tmp/
+
+# IDE files
+.idea/
+*.iml
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+
+# Archive directories
+archive_2025-07-04/
+
+# Development artifacts
+*.pid
+*.lock
+
+# Python cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local configuration
+config.local.py
+settings.local.py

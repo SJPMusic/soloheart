@@ -357,4 +357,47 @@ def extract_motivations(text: str) -> List[str]:
     else:
         logger.debug(f"⚠️ No motivations detected in text: '{text[:100]}...'")
     
-    return unique_motivations 
+    return unique_motivations
+
+def extract_alignment_from_text(text: str) -> Optional[str]:
+    """
+    Extract alignment from text.
+    Handles responses like "good", "neutral", "chaotic", "lawful", etc.
+    """
+    if not text:
+        return None
+    text_lower = text.lower().strip()
+    logger.debug(f"🔍 Extracting alignment from text: '{text[:100]}...'")
+    
+    # Alignment mapping
+    alignment_map = {
+        "good": "Good",
+        "neutral": "Neutral", 
+        "evil": "Evil",
+        "lawful": "Lawful",
+        "chaotic": "Chaotic",
+        "lawful good": "Lawful Good",
+        "neutral good": "Neutral Good",
+        "chaotic good": "Chaotic Good",
+        "lawful neutral": "Lawful Neutral",
+        "true neutral": "True Neutral",
+        "chaotic neutral": "Chaotic Neutral",
+        "lawful evil": "Lawful Evil",
+        "neutral evil": "Neutral Evil",
+        "chaotic evil": "Chaotic Evil"
+    }
+    
+    # Check for exact matches
+    for alignment_key, alignment_value in alignment_map.items():
+        if text_lower == alignment_key:
+            logger.debug(f"✅ Alignment detected: {alignment_value}")
+            return alignment_value
+    
+    # Check for partial matches
+    for alignment_key, alignment_value in alignment_map.items():
+        if alignment_key in text_lower:
+            logger.debug(f"✅ Alignment detected (partial): {alignment_value}")
+            return alignment_value
+    
+    logger.debug(f"⚠️ No alignment detected in text: '{text[:100]}...'")
+    return None 

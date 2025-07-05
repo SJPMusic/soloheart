@@ -8,6 +8,11 @@ from .character_fact_extraction import (
     extract_class_from_text,
     extract_background_from_text,
     extract_name_from_text,
+    extract_combat_style,
+    extract_traits,
+    extract_motivations,
+    extract_emotional_themes,
+    extract_alignment_from_text,
     RACES,
     CLASSES,
     BACKGROUNDS
@@ -18,6 +23,11 @@ __all__ = [
     'extract_class_from_text', 
     'extract_background_from_text',
     'extract_name_from_text',
+    'extract_combat_style',
+    'extract_traits',
+    'extract_motivations',
+    'extract_emotional_themes',
+    'extract_alignment_from_text',
     'RACES',
     'CLASSES',
     'BACKGROUNDS'

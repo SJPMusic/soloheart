@@ -116,28 +116,15 @@
             <div id="characterCreationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                 <div class="glass rounded-2xl p-8 max-w-2xl w-full">
                     <h3 class="text-2xl font-bold mb-6 text-center">
-                        <i class="fas fa-magic mr-2"></i>Vibe Code Character Creation
+                        <i class="fas fa-magic mr-2"></i>Start a New Campaign
                     </h3>
                     
                     <div class="space-y-6">
                         <!-- Campaign Name -->
                         <div>
-                            <label class="block text-sm font-semibold mb-2">Campaign Name (Optional)</label>
-                            <input type="text" id="campaignName" placeholder="The Lost Mines of Phandelver" 
+                            <label class="block text-sm font-semibold mb-2">Campaign Name</label>
+                            <input type="text" id="campaignName" placeholder="The Lost Crown of the West" 
                                    class="w-full px-4 py-3 rounded-lg bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200">
-                        </div>
-
-                        <!-- Character Creation Option -->
-                        <div class="text-center">
-                            <!-- Vibe Code Option -->
-                            <div class="glass rounded-xl p-6 text-center cursor-pointer hover:bg-white hover:bg-opacity-10 transition-all bg-white bg-opacity-10" 
-                                 onclick="selectCreationMethod('vibe_code')">
-                                <div class="text-3xl mb-3">
-                                    <i class="fas fa-magic text-purple-400"></i>
-                                </div>
-                                <h4 class="text-lg font-bold mb-2">Vibe Code Character Creation</h4>
-                                <p class="text-sm text-blue-100">Describe your character in natural language and let AI guide you through the process</p>
-                            </div>
                         </div>
                     </div>
 
@@ -145,8 +132,8 @@
                         <button onclick="hideCharacterCreation()" class="btn-secondary py-2 px-6 rounded-lg">
                             <i class="fas fa-times mr-2"></i>Cancel
                         </button>
-                        <button id="createCharacterBtn" onclick="createCharacter()" class="btn-primary py-2 px-6 rounded-lg hidden">
-                            <i class="fas fa-magic mr-2"></i>Start Vibe Code Creation
+                        <button id="createCharacterBtn" onclick="createCharacter()" class="btn-primary py-2 px-6 rounded-lg">
+                            <i class="fas fa-magic mr-2"></i>Begin Character Creation
                         </button>
                     </div>
                 </div>
@@ -176,32 +163,18 @@
 
         function showCharacterCreation() {
             document.getElementById('characterCreationModal').classList.remove('hidden');
-            // Auto-select vibe code since it's the only option
-            selectedCreationMethod = 'vibe_code';
             document.getElementById('createCharacterBtn').classList.remove('hidden');
         }
 
         function hideCharacterCreation() {
             document.getElementById('characterCreationModal').classList.add('hidden');
-            selectedCreationMethod = null;
             document.getElementById('createCharacterBtn').classList.add('hidden');
-        }
-
-        function selectCreationMethod(method) {
-            selectedCreationMethod = method;
-            document.getElementById('createCharacterBtn').classList.remove('hidden');
-            
-            // Update visual selection
-            document.querySelectorAll('#characterCreationModal .glass').forEach(el => {
-                el.classList.remove('bg-white', 'bg-opacity-10');
-            });
-            event.currentTarget.classList.add('bg-white', 'bg-opacity-10');
         }
 
         function createCharacter() {
             const campaignName = document.getElementById('campaignName').value.trim();
-            // Always redirect to vibe code creation since it's the only option
-            window.location.href = '/vibe-code-creation';
+            // Pass campaign name to character creation page (could use query param or session)
+            window.location.href = `/character-creation?campaign_name=${encodeURIComponent(campaignName)}`;
         }
 
         async function loadCampaigns() {
