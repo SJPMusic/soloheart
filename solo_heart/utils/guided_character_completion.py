@@ -40,6 +40,8 @@ class GuidedCharacterCompletion:
         self.consecutive_low_confidence = 0
         self.guided_questions_asked = 0
         self.max_guided_questions = 10
+        self.last_question_asked = None
+        self.repeated_question_count = 0
         
         # SRD 5.1 compliant options
         self.races = ["Human", "Elf", "Dwarf", "Halfling", "Dragonborn", "Gnome", "Half-Elf", "Half-Orc", "Tiefling"]
@@ -53,21 +55,21 @@ class GuidedCharacterCompletion:
                                   character_data: Dict[str, Any]) -> bool:
         """
         Determine if we should transition from creative input to guided questions.
-        Much less aggressive - only transition if we have very few facts or explicit completion request.
+        Very conservative - only transition on explicit request or if completely stuck.
         """
         # Check for explicit completion phrases
         completion_phrases = [
             "i'm done", "that's all", "that's my character", "that's everything",
             "i'm finished", "that's it", "complete", "finish", "ready to start",
             "let's begin", "start the game", "what else do i need", "help me finish",
-            "fill in the rest", "complete my character"
+            "fill in the rest", "complete my character", "i need help", "guide me"
         ]
         
         if any(phrase in user_input.lower() for phrase in completion_phrases):
             logger.info("🎯 Transition triggered: explicit completion request")
             return True
         
-        # Count how many core facts we have - check both extracted_facts and character_data
+        # Only transition if we have NO facts at all (completely stuck)
         core_facts = ["name", "race", "class", "background", "age", "gender"]
         context_facts = ["personality_traits", "traits", "motivations", "emotional_themes", "gear", "combat_style"]
         
@@ -85,12 +87,12 @@ class GuidedCharacterCompletion:
                (fact in character_data and character_data[fact] and character_data[fact] not in [None, "Unknown", "", []]):
                 context_count += 1
         
-        # Only transition if we have very few facts (less than 2 core facts)
-        if core_count < 2:
+        # Only transition if we have absolutely no facts (completely stuck)
+        if core_count == 0 and context_count == 0:
             logger.info(f"🎯 Transition triggered: only {core_count} core facts extracted")
             return True
         
-        # If we have good facts, don't transition - let the user continue naturally
+        # Let Ollama handle the conversation naturally
         logger.info(f"✅ Continuing natural input: {core_count} core facts, {context_count} context facts")
         return False
     
@@ -120,31 +122,27 @@ class GuidedCharacterCompletion:
         return self._format_question(next_field, character_data)
     
     def _get_missing_fields(self, character_data: Dict[str, Any]) -> List[str]:
-        """Get missing fields in priority order."""
+        """Get missing fields in priority order. Only ask for essential information."""
         missing = []
         
-        # High priority fields
+        # Only ask for the most essential fields - name and race
+        if not character_data.get('name') or character_data['name'] in [None, "Unknown", ""]:
+            missing.append('name')
+        
         if not character_data.get('race') or character_data['race'] in [None, "Unknown", ""]:
             missing.append('race')
-        if not character_data.get('class') or character_data['class'] in [None, "Unknown", ""]:
+        
+        # Only ask for class if we have name and race, and only if it's completely missing
+        has_basic_info = (character_data.get('name') and character_data.get('race'))
+        if (not character_data.get('class') or character_data['class'] in [None, "Unknown", ""]) and has_basic_info:
             missing.append('class')
-        if not character_data.get('background') or character_data['background'] in [None, "Unknown", ""]:
-            missing.append('background')
         
-        # Medium priority fields
-        if not character_data.get('alignment') or character_data['alignment'] in [None, "Unknown", ""]:
-            missing.append('alignment')
-        if not character_data.get('age') or character_data['age'] in [None, "Unknown", 0]:
+        # Only ask for age if we have the basic info and it's completely missing
+        if has_basic_info and (not character_data.get('age') or character_data['age'] in [None, "Unknown", 0]):
             missing.append('age')
-        if not character_data.get('gender') or character_data['gender'] in [None, "Unknown", ""]:
-            missing.append('gender')
         
-        # Lower priority fields - check both personality_traits and traits
-        if (not character_data.get('personality_traits') or character_data['personality_traits'] == []) and \
-           (not character_data.get('traits') or character_data['traits'] == []):
-            missing.append('personality_traits')
-        if not character_data.get('motivations') or character_data['motivations'] == []:
-            missing.append('motivations')
+        # Don't ask for other fields - let the user provide them naturally through conversation
+        # The system can work with just name, race, class, and age
         
         return missing
     
@@ -154,18 +152,20 @@ class GuidedCharacterCompletion:
         if not char_name or char_name == "Unknown":
             char_name = "your character"
         
+        # More natural, conversational questions that encourage storytelling
         questions = {
-            'race': f"What kind of being is {char_name}? Are they human, elf, dwarf, or something else?",
-            'class': f"What kind of person is {char_name}—do they sneak around, cast spells, or fight up close?",
-            'background': f"What was {char_name}'s life like before becoming an adventurer? Were they a soldier, scholar, criminal, or something else?",
-            'alignment': f"How does {char_name} typically behave? Are they generally good, neutral, or do they follow their own rules?",
+            'name': f"What is your character's name?",
+            'race': f"I'm curious about {char_name}'s heritage. What kind of being are they?",
+            'class': f"What does {char_name} do when trouble comes? How do they handle themselves?",
+            'background': f"What was {char_name}'s life like before all this? What did they do?",
+            'alignment': f"How does {char_name} see the world? What guides their choices?",
             'age': f"How old is {char_name}?",
             'gender': f"What gender is {char_name}?",
-            'personality_traits': f"What are some personality traits that describe {char_name}?",
-            'motivations': f"What drives {char_name}? What do they want most?"
+            'personality_traits': f"What kind of person is {char_name}? How would others describe them?",
+            'motivations': f"What keeps {char_name} going? What matters most to them?"
         }
         
-        return questions.get(field, f"Tell me about {char_name}'s {field}.")
+        return questions.get(field, f"Tell me more about {char_name}.")
     
     def should_start_stat_assignment(self, character_data: Dict[str, Any]) -> bool:
         """Determine if we should start ability score assignment."""

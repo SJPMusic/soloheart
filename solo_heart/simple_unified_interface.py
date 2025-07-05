@@ -26,11 +26,9 @@ from utils.character_fact_extraction import (
 )
 from utils.symbolic_meaning_framework import SymbolicMeaningFramework
 from utils.guided_character_completion import GuidedCharacterCompletion, CompletionPhase, StatAssignmentMode
-# Temporarily disable Narrative Engine integration due to missing modules
-# from narrative_engine_integration import SoloHeartNarrativeEngine
-
-# Enable Narrative Engine integration for persistent memory and context tracking
-# from narrative_engine_integration import SoloHeartNarrativeEngine
+from utils.srd_requirements import SRDRequirements, FieldPriority
+# Enable SoloHeart Narrative Engine integration for sophisticated memory and context tracking
+from narrative_engine_integration import SoloHeartNarrativeEngine
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -98,37 +96,69 @@ class SimpleCharacterGenerator:
     def __init__(self, playtest_mode: bool = None):
         self.conversation_history = []
         self.character_data = {
+            # Core Identity (CRITICAL)
             "name": None,
             "race": None,
             "class": None,
             "level": 1,
-            "background": None,
-            "alignment": None,
-            "personality_traits": [],
-            "age": None,
-            "gender": None,
-            "ability_scores": {
-                "strength": 10, "dexterity": 10, "constitution": 10,
-                "intelligence": 10, "wisdom": 10, "charisma": 10
-            },
+            
+            # Ability Scores (CRITICAL)
+            "strength": 10,
+            "dexterity": 10,
+            "constitution": 10,
+            "intelligence": 10,
+            "wisdom": 10,
+            "charisma": 10,
+            
+            # Combat Stats (CRITICAL)
             "hit_points": 10,
             "armor_class": 10,
+            "initiative": 0,
+            "speed": 30,
+            
+            # Background & Identity (HIGH)
+            "background": None,
+            "alignment": None,
+            "age": None,
+            "gender": None,
+            
+            # Proficiencies (HIGH)
+            "proficiencies": [],
+            "languages": [],
+            
+            # Equipment (HIGH)
+            "equipment": [],
+            "weapons": [],
+            "armor": None,
+            
+            # Personality & Story (MEDIUM)
+            "personality_traits": [],
+            "ideals": [],
+            "bonds": [],
+            "flaws": [],
+            "motivations": [],
+            "backstory": "",
+            
+            # Combat & Abilities (MEDIUM)
+            "combat_style": None,
+            "spells": [],
+            "features": [],
+            
+            # Flavor & Details (LOW)
+            "appearance": None,
+            "emotional_themes": [],
+            "traumas": [],
+            "relational_history": {},
+            "traits": [],
+            
+            # Legacy fields for backward compatibility
             "saving_throws": [],
             "skills": [],
             "feats": [],
-            "weapons": [],
             "gear": [],
-            "spells": [],
+            "combat_experience": None,
             "background_freeform": "",
             "created_date": None,
-            "motivations": [],
-            "emotional_themes": [],
-            "combat_style": None,
-            "combat_experience": None,
-            "traits": [],
-            "traumas": [],
-            "relational_history": {},
-            "backstory": "",
             "_symbolic_data": {}  # Store archetypal tags and symbolic meaning
         }
         
@@ -137,11 +167,14 @@ class SimpleCharacterGenerator:
         self.is_complete = False
         self.character_finalized = False
         self.in_review_mode = False
-        self.narrative_bridge = None
+        self.narrative_bridge = None  # Will be set in start_character_creation
         self.fact_history = []
         
         # Initialize guided completion system
         self.guided_completion = GuidedCharacterCompletion()
+        
+        # Initialize SRD requirements system
+        self.srd_requirements = SRDRequirements()
         
         # Enhanced fact tracking for DnD 5E compliance
         self.fact_types = {
@@ -219,11 +252,15 @@ Player description:
 Return only valid JSON:"""
 
             # Call Ollama LLM using the correct format
+            from ollama_llm_service import chat_completion
             messages = [{"role": "user", "content": prompt}]
             response = chat_completion(messages)
             
+            if not response or not response.strip():
+                logger.error("❌ LLM returned empty response")
+                return {}
+            
             # Parse the JSON response
-            import json
             import re
             
             # Try to extract JSON from the response (in case LLM adds extra text)
@@ -233,7 +270,18 @@ Return only valid JSON:"""
             else:
                 json_str = response
             
-            facts = json.loads(json_str)
+            # Clean up common JSON issues
+            json_str = json_str.replace('\n', ' ').replace('\r', ' ')
+            json_str = re.sub(r'//.*?(?=\n|$)', '', json_str)  # Remove comments
+            json_str = re.sub(r',\s*}', '}', json_str)  # Remove trailing commas
+            json_str = re.sub(r',\s*]', ']', json_str)  # Remove trailing commas in arrays
+            
+            try:
+                facts = json.loads(json_str)
+            except json.JSONDecodeError as e:
+                logger.error(f"❌ LLM extraction failed: {e}")
+                logger.error(f"LLM response was: {response}")
+                return {}
             
             # Clean up the extracted facts and respect already committed facts
             cleaned_facts = {}
@@ -250,7 +298,6 @@ Return only valid JSON:"""
             
         except Exception as e:
             logger.error(f"❌ LLM extraction failed: {e}")
-            logger.error(f"LLM response was: {response if 'response' in locals() else 'No response'}")
             return {}
     
     def _extract_and_commit_facts_immediately(self, text: str) -> Dict[str, Any]:
@@ -571,6 +618,7 @@ Return only valid JSON:"""
     def start_character_creation(self, description: str, campaign_name: str = "") -> Dict[str, Any]:
         """Start player-led character creation with immediate fact extraction."""
         try:
+            campaign_context = None  # Always define campaign_context for all branches
             logger.info(f"🎲 Starting player-led character creation with description: {description[:100]}...")
             logger.info(f"📝 Campaign name: {campaign_name}")
             
@@ -605,26 +653,40 @@ Return only valid JSON:"""
             # Extract facts from initial description
             extraction_result = self._extract_and_commit_facts_immediately(description)
             
-            # Check if we should transition to guided completion
-            if self.guided_completion.should_transition_to_guided(description, extraction_result["committed"], self.character_data):
-                self.guided_completion.creative_phase_complete = True
-                response = self.guided_completion.get_transition_message()
-                
-                # Get the first guided question
-                next_question = self.guided_completion.get_next_guided_question(self.character_data)
-                if next_question:
-                    response += f"\n\n{next_question}"
+                        # Initialize SoloHeart Narrative Engine
+            self.narrative_bridge = SoloHeartNarrativeEngine(campaign_id=campaign_name or "default")
+            
+            # Initialize campaign_context to None first
+            campaign_context = None
+
+            # Get campaign context for Ollama (must be defined before use)
+            try:
+                campaign_context = self.narrative_bridge.get_memory_context_for_ollama(
+                    user_id='player'
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ Could not get campaign context: {e}")
+                campaign_context = None
+
+            # Record character creation in Narrative Engine
+            try:
+                self.narrative_bridge.record_character_creation(self.character_data)
+            except Exception as e:
+                logger.error(f"❌ Error recording character creation: {e}")
+                # Continue anyway - don't fail the entire process
+            
+            # Generate natural response using Ollama with context
+            if extraction_result["committed"]:
+                # Use Ollama to generate a natural response about what was captured
+                response = self._generate_natural_response_with_context(
+                    description, 
+                    extraction_result, 
+                    "Character creation started", 
+                    campaign_context
+                )
             else:
-                # Build response based on what was extracted
-                if extraction_result["committed"]:
-                    response = "I've captured what you've told me about your character. "
-                    if extraction_result["ambiguous"]:
-                        response += "I noticed some details that might need clarification. "
-                        for fact_type, value in extraction_result["ambiguous"].items():
-                            response += f"Did you mean {value} for {fact_type}? "
-                    response += "What else would you like to tell me about them?"
-                else:
-                    response = "I'm listening. Tell me about your character."
+                # Simple acknowledgment for empty input
+                response = "I'm listening. Tell me about your character."
             
             # Store conversation
             self.conversation_history = [
@@ -659,75 +721,53 @@ Return only valid JSON:"""
             logger.info(f"📝 Processing user input: '{user_input[:100]}...'")
             self.conversation_history.append({"role": "user", "content": user_input})
             
-            # Handle status requests
-            if any(phrase in user_input.lower() for phrase in [
-                "what do we have so far", "what have we got", "current status", 
-                "show me what we have", "show me the character", "what's my character",
-                "character summary", "what do you know about my character"
-            ]):
-                summary = self._get_character_summary()
-                response = f"Here's what we have so far:\n\n{summary}\n\nWhat would you like to add or change?"
-                self.conversation_history.append({"role": "assistant", "content": response})
-                return {
-                    "success": True,
-                    "message": response,
-                    "is_complete": False,
-                    "current_step": "status_check"
-                }
-
-            # Handle completion requests
-            if any(phrase in user_input.lower() for phrase in [
-                "that's it", "that's everything", "i'm done", "complete", "finish",
-                "ready to start", "let's begin", "start the game"
-            ]):
-                # Check if we need to start stat assignment
-                if self.guided_completion.should_start_stat_assignment(self.character_data):
-                    response = self.guided_completion.get_stat_assignment_prompt()
-                    self.conversation_history.append({"role": "assistant", "content": response})
-                    return {
-                        "success": True,
-                        "message": response,
-                        "is_complete": False,
-                        "current_step": "stat_assignment"
-                    }
-                else:
-                    # Character is complete
-                    self.is_complete = True
-                    summary = self.guided_completion.get_completion_summary(self.character_data)
-                    response = summary
-                self.conversation_history.append({"role": "assistant", "content": response})
-                return {
-                    "success": True,
-                    "message": response,
-                    "is_complete": True,
-                    "current_step": "complete"
-                }
-            
-            # Extract facts from user input
+            # Extract facts from user input first
             extraction_result = self._extract_and_commit_facts_immediately(user_input)
             
-            # Handle guided completion phase
-            if self.guided_completion.creative_phase_complete:
-                # Check if we should start stat assignment
-                if self.guided_completion.should_start_stat_assignment(self.character_data):
-                    response = self.guided_completion.get_stat_assignment_prompt()
-                else:
-                    # Get next guided question
-                    next_question = self.guided_completion.get_next_guided_question(self.character_data)
-                    if next_question:
-                        response = f"Got it! {next_question}"
-                    else:
-                        # All questions answered, ready for stat assignment
-                        response = self.guided_completion.get_stat_assignment_prompt()
+            # Record player action in Narrative Engine with extracted facts
+            if hasattr(self, 'narrative_bridge') and self.narrative_bridge:
+                try:
+                    # Record player action in Narrative Engine
+                    self.narrative_bridge.record_player_action(
+                        user_input, 
+                        {
+                            "character_name": self.character_data.get('name'),
+                            "location": "character_creation",
+                            "emotional_impact": extraction_result.get("committed", {}),
+                            "consequences": [],
+                            "unresolved": True
+                        }
+                    )
+                    
+                    # Record character facts if any were extracted
+                    if extraction_result.get("committed"):
+                        self.narrative_bridge.record_character_facts(
+                            extraction_result["committed"], 
+                            self.character_data.get('name', 'Unknown')
+                        )
+                    
+                    # Get campaign context for Ollama
+                    campaign_context = self.narrative_bridge.get_memory_context_for_ollama(
+                        user_id='player'
+                    )
+                except Exception as e:
+                    logger.warning(f"⚠️ Narrative Engine error: {e}")
+                    campaign_context = None
             else:
-                # Check if we should transition to guided completion
-                if self.guided_completion.should_transition_to_guided(user_input, extraction_result["committed"], self.character_data):
-                    logger.info("🎯 Transitioning to guided character completion")
-                    return self.guided_completion.get_next_question(self.character_data)
-                
-                # Generate natural response using Ollama instead of scripted responses
-                response = self._generate_ollama_response(user_input, extraction_result, self.character_data)
-                logger.info(f"💬 Ollama response: {response}")
+                campaign_context = None
+            
+            # Check if character sheet is incomplete using SRD requirements
+            missing_summary = self.srd_requirements.get_missing_fields_summary(self.character_data)
+            if not self.srd_requirements.is_character_complete(self.character_data):
+                logger.info(f"📋 Character sheet incomplete: {missing_summary}")
+                # Inform Ollama about what's missing but let it handle the conversation naturally
+                missing_context = f"Note: {missing_summary} Help the player complete their character through natural conversation, focusing on the most critical missing information first."
+                response = self._generate_natural_response_with_context(user_input, extraction_result, missing_context, campaign_context)
+                logger.info(f"💬 Guided Ollama response: {response}")
+            else:
+                # Character sheet is complete, continue with natural conversation
+                response = self._generate_ollama_response(user_input, extraction_result, self.character_data, campaign_context)
+                logger.info(f"💬 Natural Ollama response: {response}")
             
             # Check if we should trigger emotional scaffolding
             if self._should_trigger_emotional_scaffolding():
@@ -832,18 +872,23 @@ Return only valid JSON:"""
         logger.info(f"↩️ Undid {fact_type}: {new_value} → {old_value}")
         return (fact_type, new_value, old_value)
 
-    def _generate_ollama_response(self, user_input: str, extraction_result: Dict[str, Any], character_data: Dict[str, Any]) -> str:
+    def _generate_ollama_response(self, user_input: str, extraction_result: Dict[str, Any], character_data: Dict[str, Any], campaign_context: Dict[str, Any] = None) -> str:
         """
-        Generate a natural response using Ollama instead of scripted responses.
-        This creates a more human-like conversation flow.
+        Generate a natural response using Ollama with Narrative Engine context.
+        This creates a more human-like conversation flow informed by campaign memory.
         """
         try:
             # Build context for Ollama
             character_summary = self._get_character_summary()
             extracted_facts = extraction_result.get("committed", {}) if isinstance(extraction_result, dict) else {}
             
-            # Create a natural conversation prompt
-            prompt = f"""You are a helpful D&D character creation assistant. The player is creating their character and has just told you something new.
+            # Add enhanced Narrative Engine context if available
+            context_info = ""
+            if campaign_context:
+                context_info = f"\n{campaign_context}"
+            
+            # Create a natural conversation prompt with memory context
+            prompt = f"""You are a helpful D&D character creation assistant with access to campaign memory and context. The player is creating their character and has just told you something new.
 
 Current character information:
 {character_summary}
@@ -852,6 +897,7 @@ Player's latest input: "{user_input}"
 
 If facts were extracted from their input, here they are:
 {extracted_facts}
+{context_info}
 
 Respond naturally as a helpful assistant. Acknowledge what you learned about their character, ask thoughtful questions, or encourage them to tell you more. Be conversational and engaging, not robotic. Keep your response under 2-3 sentences.
 
@@ -870,6 +916,58 @@ Response:"""
         except Exception as e:
             logger.error(f"❌ Error generating Ollama response: {e}")
             return "I'm listening. Tell me more about your character."
+
+    def _generate_natural_response_with_context(self, user_input: str, extraction_result: Dict[str, Any], additional_context: str, campaign_context: Dict[str, Any] = None) -> str:
+        """
+        Generate a natural conversational response using Ollama with additional context about what's missing.
+        """
+        try:
+            # Build context about what we learned
+            committed_facts = extraction_result.get("committed", {}) if isinstance(extraction_result, dict) else {}
+            character_summary = self._get_character_summary()
+            
+            if committed_facts:
+                fact_summary = []
+                for fact_type, value in committed_facts.items():
+                    if value:
+                        fact_summary.append(f"{fact_type}: {value}")
+                
+                context = f"I learned: {', '.join(fact_summary)}. "
+            else:
+                context = ""
+            
+            # Add campaign context if available
+            context_info = ""
+            if campaign_context:
+                context_info = f"\n{campaign_context}"
+            
+            # Create a conversational prompt with completion guidance
+            prompt = f"""You are a helpful game master helping a player create their D&D character. 
+The player just said: "{user_input}"
+
+Current character information:
+{character_summary}
+
+{context}{additional_context}{context_info}
+
+Respond naturally and conversationally. The player is creating their character and you should help them develop their story. If there's missing information, guide them conversationally to share more about their character. Don't be pushy or scripted - make it feel like natural conversation. Be encouraging and help them develop their character's story.
+
+Keep your response under 2-3 sentences and focus on one aspect at a time."""
+            
+            # Get response from Ollama
+            from ollama_llm_service import chat_completion
+            messages = [{"role": "user", "content": prompt}]
+            response = chat_completion(messages)
+            
+            if response and response.strip():
+                logger.info(f"💬 Guided natural response: {response}")
+                return response.strip()
+            else:
+                return "Tell me more about your character."
+            
+        except Exception as e:
+            logger.error(f"❌ Error generating guided natural response: {e}")
+            return "Tell me more about your character."
 
 class SimpleNarrativeBridge:
     """Narrative bridge for SoloHeart with memory tracking."""

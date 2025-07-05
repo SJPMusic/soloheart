@@ -1,6 +1,6 @@
 # SoloHeart - Enhanced Natural Language DnD 5E Character Creation
 
-> **A solo tabletop RPG featuring enhanced natural language character creation that extracts and commits facts immediately from freeform player input, powered by Ollama LLM integration.**
+> **A solo tabletop RPG featuring enhanced natural language character creation that extracts and commits facts immediately from freeform player input, powered by Ollama LLM integration and a domain-agnostic Narrative Engine.**
 
 ![Demo Status](https://img.shields.io/badge/status-Enhanced%20Character%20Creation%20%E2%80%93%20Actively%20Developing-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -9,7 +9,7 @@
 
 ## What is SoloHeart?
 
-SoloHeart is a solo tabletop RPG that demonstrates advanced natural language character creation. Unlike traditional character creation systems that ask linear questions, SoloHeart extracts multiple character facts from freeform player input without requiring explicit prompts or default values.
+SoloHeart is a solo tabletop RPG that demonstrates advanced natural language character creation and a domain-agnostic Narrative Engine. Unlike traditional character creation systems that ask linear questions, SoloHeart extracts multiple character facts from freeform player input without requiring explicit prompts or default values.
 
 **Key Innovations:**
 - **Immediate Fact Commitment**: Facts are committed to character sheet immediately, avoiding staging states
@@ -18,6 +18,8 @@ SoloHeart is a solo tabletop RPG that demonstrates advanced natural language cha
 - **DnD 5E Compliance**: Tracks all required character sheet fields automatically
 - **Live Character Sheet**: Real-time character sheet updates as you describe your character
 - **Guided Completion**: Intelligent fallback to guided questions only when truly ambiguous
+- **Domain-Agnostic Narrative Engine**: Modular memory and context system for narrative continuity
+- **Game-Specific Features**: Support for inspiration points and saving throws in integration layer
 
 ## Enhanced Character Creation System
 
@@ -81,6 +83,19 @@ Freeform Description → Context Understanding → Fact Extraction → No Stagin
 - **Natural Flow**: Seamless transition from natural language to guided questions
 - **Completion Tracking**: Automatically tracks required DnD 5E fields
 
+#### 6. Domain-Agnostic Narrative Engine
+- **Modular Design**: Core engine independent of game mechanics
+- **Layered Memory**: Episodic, semantic, procedural, and emotional memory layers
+- **Context Surfacing**: Provides relevant narrative context to LLM
+- **Memory Management**: Intelligent memory storage and retrieval
+- **Integration Layer**: Clean separation between core engine and game-specific features
+
+#### 7. Game-Specific Features
+- **Inspiration Points**: Track and manage character inspiration
+- **Saving Throws**: Store and retrieve saving throw modifiers
+- **Domain Encapsulation**: All game-specific data stored in `current_state`
+- **Clean Integration**: Game features don't affect core Narrative Engine
+
 ## Technology Stack
 
 - **Backend**: Python, Flask, Ollama (local LLM)
@@ -88,6 +103,7 @@ Freeform Description → Context Understanding → Fact Extraction → No Stagin
 - **LLM Integration**: Ollama llama3 model for semantic understanding
 - **Pattern Matching**: Robust regex patterns for fallback extraction
 - **Frontend**: HTML5, CSS3, JavaScript (mobile-responsive)
+- **Narrative Engine**: Domain-agnostic memory and context system
 - **Compliance**: SRD 5.1 compliant, fully rebranded as SoloHeart
 
 ## Quick Start
@@ -186,6 +202,19 @@ Access the game at: [http://localhost:5001](http://localhost:5001)
 - **Natural Flow**: Seamless from freeform to guided
 - **Completion Tracking**: Tracks DnD 5E required fields
 
+### Domain-Agnostic Narrative Engine
+- **Modular Design**: Core engine independent of game mechanics
+- **Layered Memory**: Episodic, semantic, procedural, emotional layers
+- **Context Surfacing**: Provides relevant narrative context to LLM
+- **Memory Management**: Intelligent storage and retrieval
+- **Integration Layer**: Clean separation between core and game-specific features
+
+### Game-Specific Features
+- **Inspiration Points**: Track and manage character inspiration
+- **Saving Throws**: Store and retrieve saving throw modifiers
+- **Domain Encapsulation**: All game-specific data in `current_state`
+- **Clean Integration**: Game features don't affect core engine
+
 ## Project Structure
 
 ```
@@ -197,7 +226,10 @@ SoloHeart Project/
 │   │   ├── character_fact_extraction.py  # Fact extraction
 │   │   ├── guided_character_completion.py # Guided completion
 │   │   └── ollama_llm_service.py   # LLM integration
+│   ├── narrative_engine_integration.py # SoloHeart integration layer
 │   └── character_generator.py       # Character generation
+├── narrative_core/                  # Domain-agnostic Narrative Engine
+│   └── narrative_engine.py         # Core memory and context system
 ├── docs/                           # Documentation
 ├── tests/                          # Test suite
 ├── requirements.txt                 # Dependencies
@@ -206,6 +238,13 @@ SoloHeart Project/
 ```
 
 ## Recent Improvements
+
+### Narrative Engine Domain-Agnostic Integrity (2025-07-05)
+- **Core Engine Cleanup**: Removed all domain-specific logic from Narrative Engine core
+- **Integration Layer**: Proper separation of universal vs game-specific fields
+- **Memory Layers**: Established episodic, semantic, procedural, and emotional memory layers
+- **Game Features**: Added inspiration points and saving throws support in integration layer
+- **Architectural Integrity**: Maintained clean separation between core engine and game features
 
 ### Project Cleanup (2025-07-04)
 - **Archived Redundant Files**: 50+ files and 4 duplicate directories
@@ -232,6 +271,7 @@ We welcome contributors interested in:
 - **UI/UX Improvements**: Web interface, mobile responsiveness, user experience
 - **DnD 5E Integration**: Game mechanics, character sheets, compliance
 - **LLM Integration**: Ollama optimization, prompt engineering, semantic understanding
+- **Narrative Engine**: Memory systems, context management, domain-agnostic design
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
@@ -240,14 +280,16 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 - [How to Play](HOW_TO_PLAY.md) - Game instructions and character creation guide
 - [Compliance Summary](COMPLIANCE_SUMMARY.md) - Legal and branding compliance
 - [Cleanup Summary](CLEANUP_SUMMARY.md) - Project cleanup and archive details
+- [Development Log](DEVELOPMENT_LOG.md) - Comprehensive development history
 - [Character Fact Extraction](solo_heart/utils/character_fact_extraction.py) - Fact extraction implementation
+- [Narrative Engine](narrative_core/narrative_engine.py) - Domain-agnostic memory and context system
 
 ## Vision & Future
 
-SoloHeart represents a new approach to character creation—one that prioritizes natural language understanding and immediate feedback over rigid form-filling. The enhanced character creation system with LLM integration demonstrates the potential for more intuitive and engaging game experiences.
+SoloHeart represents a new approach to character creation and narrative systems—one that prioritizes natural language understanding, immediate feedback, and domain-agnostic design over rigid form-filling. The enhanced character creation system with LLM integration and the modular Narrative Engine demonstrate the potential for more intuitive and engaging game experiences.
 
 **Interested in collaborating or contributing?**  
-We're actively seeking contributors to enhance the character creation system, improve the UI/UX, and expand the game mechanics.
+We're actively seeking contributors to enhance the character creation system, improve the UI/UX, expand the game mechanics, and develop the domain-agnostic Narrative Engine for broader applications.
 
 ## Attribution
 

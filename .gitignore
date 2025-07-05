@@ -139,3 +139,52 @@ htmlcov/
 # Local configuration
 config.local.py
 settings.local.py
+
+# Narrative Engine specific
+narrative_core/__pycache__/
+narrative_core/*.pyc
+
+# SoloHeart specific
+solo_heart/__pycache__/
+solo_heart/*.pyc
+
+# Utils specific
+utils/__pycache__/
+utils/*.pyc
+
+# Test cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local development files
+*.local
+.env.local
+.env.development
+
+# Backup files
+*.backup
+*.old
+*.orig
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/

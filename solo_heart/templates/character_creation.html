@@ -276,7 +276,7 @@
         <!-- Chat Section -->
         <div class="chat-section">
             <!-- Chat Container -->
-            <div class="chat-container" id="chatContainer">
+            <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
                 <div class="message ai">
                     <div class="message-content">
                         <p><strong>Welcome to Character Creation!</strong></p>
@@ -312,7 +312,7 @@
         </div>
         
         <!-- Begin Adventure Button (hidden by default) -->
-        <div id="beginAdventureContainer" class="mt-4 text-center" style="display: none;">
+        <div id="beginAdventureContainer" class="mt-4 text-center fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50" style="display: none;">
             <button onclick="beginAdventure()" 
                     class="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 font-bold text-lg shadow-lg">
                 <i class="fas fa-play mr-2"></i>Begin Adventure
@@ -334,13 +334,6 @@
         function goBack() {
             if (confirm('Are you sure you want to go back? Your character creation progress will be lost.')) {
                 window.location.href = '/';
-            }
-        }
-
-        function handleKeyPress(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
             }
         }
 
@@ -415,6 +408,7 @@
             // Add player message to chat
             addMessage(message, 'player');
             input.value = '';
+            input.focus(); // Focus after sending
 
             // Show typing indicator
             showTypingIndicator();
@@ -535,8 +529,13 @@
             messageDiv.appendChild(contentDiv);
             container.appendChild(messageDiv);
             
-            // Scroll to bottom
-            container.scrollTop = container.scrollHeight;
+            // Auto-scroll to bottom with smooth animation
+            setTimeout(() => {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
         }
 
         function showTypingIndicator() {
@@ -616,9 +615,39 @@
             }
         }
 
-        // Focus input on page load
+        // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('playerInput').focus();
+            console.log('DOM loaded - setting up event listeners');
+            
+            const input = document.getElementById('playerInput');
+            if (!input) {
+                console.error('❌ Player input element not found!');
+                return;
+            }
+            
+            // Focus on input when page loads
+            input.focus();
+            console.log('✅ Input focused');
+            
+            // Add event listener for Enter key
+            input.addEventListener('keydown', function(event) {
+                console.log('Key pressed:', event.key, 'Shift:', event.shiftKey, 'Ctrl:', event.ctrlKey);
+                
+                if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
+                    event.preventDefault();
+                    console.log('Enter key pressed - sending message');
+                    sendMessage();
+                }
+            });
+            
+            // Also add a global keydown listener as backup
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && document.activeElement === input) {
+                    event.preventDefault();
+                    console.log('Global Enter key handler - sending message');
+                    sendMessage();
+                }
+            });
         });
     </script>
 </body>

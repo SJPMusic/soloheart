@@ -206,6 +206,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadGameState();
             document.getElementById('playerInput').focus();
+            document.getElementById('playerInput').addEventListener('keydown', handleKeyPress);
         });
 
         async function loadGameState() {
@@ -261,6 +262,7 @@
             // Add player action to chat
             addMessage(action, 'player');
             input.value = '';
+            input.focus();
             input.style.height = 'auto';
 
             // Show typing indicator
