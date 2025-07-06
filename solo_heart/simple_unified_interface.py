@@ -276,11 +276,16 @@ Return only valid JSON:"""
             json_str = re.sub(r',\s*}', '}', json_str)  # Remove trailing commas
             json_str = re.sub(r',\s*]', ']', json_str)  # Remove trailing commas in arrays
             
+            # Additional cleanup for common LLM JSON issues
+            json_str = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*):', r'"\1":', json_str)  # Quote unquoted keys
+            json_str = re.sub(r':\s*([^"][^,}\]]*?)(?=\s*[,}\]])', r': "\1"', json_str)  # Quote unquoted string values
+            
             try:
                 facts = json.loads(json_str)
             except json.JSONDecodeError as e:
                 logger.error(f"❌ LLM extraction failed: {e}")
                 logger.error(f"LLM response was: {response}")
+                logger.error(f"Cleaned JSON was: {json_str}")
                 return {}
             
             # Clean up the extracted facts and respect already committed facts
@@ -926,6 +931,27 @@ Response:"""
             committed_facts = extraction_result.get("committed", {}) if isinstance(extraction_result, dict) else {}
             character_summary = self._get_character_summary()
             
+            # Track what information we already have to avoid repetitive questions
+            existing_info = []
+            if self.character_data.get('name'):
+                existing_info.append("name")
+            if self.character_data.get('age'):
+                existing_info.append("age")
+            if self.character_data.get('gender'):
+                existing_info.append("gender")
+            if self.character_data.get('race'):
+                existing_info.append("race")
+            if self.character_data.get('class'):
+                existing_info.append("class")
+            if self.character_data.get('background'):
+                existing_info.append("background")
+            if self.character_data.get('personality_traits'):
+                existing_info.append("personality")
+            if self.character_data.get('combat_style'):
+                existing_info.append("combat style")
+            if self.character_data.get('backstory'):
+                existing_info.append("backstory")
+            
             if committed_facts:
                 fact_summary = []
                 for fact_type, value in committed_facts.items():
@@ -948,9 +974,15 @@ The player just said: "{user_input}"
 Current character information:
 {character_summary}
 
+Information already provided: {', '.join(existing_info) if existing_info else 'none'}
+
 {context}{additional_context}{context_info}
 
-Respond naturally and conversationally. The player is creating their character and you should help them develop their story. If there's missing information, guide them conversationally to share more about their character. Don't be pushy or scripted - make it feel like natural conversation. Be encouraging and help them develop their character's story.
+Respond naturally and conversationally. The player is creating their character and you should help them develop their story. 
+
+IMPORTANT: Don't ask about information they've already told you. If they've already described their appearance, don't ask about it again. If they've already mentioned their background, don't ask about it again. Focus on what's missing or help them develop what they've already shared.
+
+If there's missing information, guide them conversationally to share more about their character. Don't be pushy or scripted - make it feel like natural conversation. Be encouraging and help them develop their character's story.
 
 Keep your response under 2-3 sentences and focus on one aspect at a time."""
             

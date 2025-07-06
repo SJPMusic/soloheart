@@ -106,8 +106,11 @@ class SoloHeartNarrativeEngine:
         narrative_char_data['current_state'] = current_state
         
         # Set universal metadata
-        narrative_char_data['user_id'] = 'player'
         narrative_char_data['session_id'] = self.session_id
+        
+        # Remove user_id from character data since Character class doesn't accept it
+        if 'user_id' in narrative_char_data:
+            del narrative_char_data['user_id']
         
         # Add character to engine with properly filtered data
         char_id = self.engine.add_character(narrative_char_data)
@@ -204,8 +207,12 @@ class SoloHeartNarrativeEngine:
                 current_state[k] = v
         
         char_data['current_state'] = current_state
-        char_data['user_id'] = 'player'
         char_data['session_id'] = self.session_id
+        
+        # Remove user_id from character data since Character class doesn't accept it
+        if 'user_id' in char_data:
+            del char_data['user_id']
+        
         char_id = self.engine.add_character(char_data)
         # Record fact discovery with emotional and thematic context
         emotional_context = self._analyze_emotional_context_from_facts(facts)
