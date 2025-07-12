@@ -2128,8 +2128,8 @@ class NarrativeBridge:
             Generated setting introduction text
         """
         try:
-            # Use Ollama to generate a unique setting introduction
-            from ollama_llm_service import chat_completion
+            # Use LLM to generate a unique setting introduction
+            from llm_interface.provider_factory import chat_completion
             
             prompt = f"""
             You are a master storyteller creating an immersive opening scene for a SoloHeart solo adventure.
@@ -2409,7 +2409,7 @@ def store_quest_memory(bridge: NarrativeBridge, quest_description: str,
     def generate_setting_introduction(self, character_data: Dict[str, Any], campaign_name: str) -> str:
         """Generate LLM-created setting introduction as per design guide."""
         try:
-            from ollama_llm_service import chat_completion
+            from llm_interface.provider_factory import chat_completion
             
             prompt = f"""
             You are a master storyteller creating an immersive opening scene for a SoloHeart solo adventure.

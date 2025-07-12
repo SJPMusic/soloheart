@@ -1,0 +1,117 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+README.md
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Logs
+logs/
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Archive directories
+archive_*/
+backups/
+
+# Campaign and character saves (will be mounted as volumes)
+campaign_saves/
+character_saves/
+
+# Ollama models (will be mounted as volumes)
+ollama_models/
+
+# Test files
+test_*.py
+*_test.py
+
+# Development journal
+development_journal/
+
+# Branding status
+branding_status/
+
+# Investor docs
+investor_docs/
+
+# CLI tools
+cli/
+
+# Shared utilities
+shared/
+
+# Narrative Engine docs
+The Narrative Engine/
+
+# SRD data
+srd_data/
+
+# Tests
+tests/
+
+# Utils
+utils/
+
+# Page UI
+page-ui/
+
+# Cache manager
+cache_manager.py 

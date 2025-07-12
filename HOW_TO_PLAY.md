@@ -1,63 +1,77 @@
-# 🎲 How to Play Solo DnD 5E Demo
+# 🎲 How to Use The Narrative Engine D&D Demo
 
 ## Quick Start (2 minutes)
 
-### 1. **Get an OpenAI API Key**
-- Go to https://platform.openai.com/api-keys
-- Sign up or log in
-- Click "Create new secret key"
-- Copy the key (it starts with `sk-`)
+### 1. **Configure LLM Provider**
+- Set up Gemma API access (or use Ollama fallback)
+- Configure your `.env` file with `LLM_PROVIDER=gemma`
+- Ensure TNB server is running on localhost:3000
+- Ensure TNE server is running on localhost:5000
 
-### 2. **Run the Game**
+### 2. **Run the Demo**
 ```bash
-python consumer_launcher.py
+python simple_unified_interface.py
 ```
 
-### 3. **Play!**
-- The game will open in your browser
+### 3. **Explore TNE Capabilities!**
+- The demo will open in your browser
 - Click "Start New Campaign"
-- Choose "Natural Language" for character creation
-- Describe your character concept
-- Start your adventure!
+- Describe your character concept in natural language
+- Watch symbolic processing and memory flow visualization
+- Experience TNE's archetype detection and goal inference
 
 ## 🎮 What You'll Experience
 
-### **Character Creation**
-- Tell the AI about your character concept in plain English
-- Example: "I want to be a mysterious elven wizard who was exiled from their homeland"
-- The AI will ask clarifying questions and build your character
+### **Symbolic Processing Visualization**
+- Watch TNE's archetype detection in real-time
+- See pattern recognition for transformation, conflict, and resolution cycles
+- Observe symbolic reasoning and insight generation
+- Experience goal inference and completion tracking
 
-### **Gameplay**
-- Pure narrative storytelling with an AI Dungeon Master
-- Respond naturally to the story
-- Your choices and progress are automatically saved
-- Return anytime to continue your campaign
+### **Memory Flow Display**
+- View episodic memory retrieval and relevance scoring
+- See semantic memory integration and concept recall
+- Observe emotional memory context and relationship dynamics
+- Watch memory impact on narrative generation
+
+### **Bridge Routing Demonstration**
+- Experience clean handoff of user input through TNB
+- See memory injection and context preservation
+- Observe output processing and symbolic integrity
+- Watch LLM response enrichment with memory context
 
 ## 🔧 Troubleshooting
 
-### **"API key not found"**
-- Make sure you entered your OpenAI API key correctly
-- It should start with `sk-`
+### **"LLM provider not found"**
+- Make sure your `.env` file has `LLM_PROVIDER=gemma` or `LLM_PROVIDER=ollama`
+- For Gemma: Ensure Gemma is running at http://localhost:1234/v1
+- For Ollama: Start with `brew services start ollama`
+
+### **"TNB/TNE connection failed"**
+- Ensure TNB server is running on localhost:3000
+- Ensure TNE server is running on localhost:5000
+- Check network connectivity and firewall settings
 
 ### **"Port already in use"**
 - Close other applications that might be using port 5001
 - Or restart your computer
 
 ### **"Module not found"**
-- Run: `pip install Flask Flask-CORS openai python-dotenv jsonschema`
+- Run: `pip install Flask Flask-CORS requests python-dotenv jsonschema`
 
 ## 💡 Tips
 
-- **Be descriptive** when creating your character
-- **Respond naturally** to the AI's storytelling
-- **Save often** - your progress is automatic
-- **Try different character concepts** - each creates a unique story
+- **Be descriptive** when creating your character concept
+- **Watch the symbolic processing** - observe archetype detection
+- **Monitor memory flows** - see how context enhances responses
+- **Try different character concepts** - each demonstrates unique symbolic patterns
 
 ## 🎯 What Makes This Special
 
-- **No dice rolling** - pure storytelling
-- **AI remembers everything** - your choices matter
-- **Natural language** - no complex rules to learn
-- **Immersive experience** - like having a personal DM
+- **Symbolic Processing Visualization** - see TNE's archetype detection in action
+- **Memory Flow Display** - observe episodic, semantic, and emotional memory
+- **Bridge Routing Compliance** - experience clean TNB/TNE integration
+- **LLM-Native Integration** - leverage Gemma's autonomous narrative generation
+- **Clean Modular Boundaries** - maintain symbolic integrity and domain agnosticism
 
-Enjoy your adventure! 🗡️✨ 
+Explore TNE's capabilities! 🧠✨ 

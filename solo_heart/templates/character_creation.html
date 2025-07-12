@@ -224,6 +224,12 @@
                     <div class="field-value empty" id="char-alignment">Not set</div>
                 </div>
                 
+                <!-- Ability Scores -->
+                <div class="field">
+                    <div class="field-label">Ability Scores</div>
+                    <div class="field-value empty" id="char-ability-scores">Not set</div>
+                </div>
+                
                 <!-- Combat & Gear -->
                 <div class="field">
                     <div class="field-label">Combat Style</div>
@@ -351,6 +357,7 @@
                 'char-age': data.age,
                 'char-gender': data.gender,
                 'char-alignment': data.alignment,
+                'char-ability-scores': formatAbilityScores(data.ability_scores, data.ability_modifiers),
                 'char-combat-style': data.combat_style,
                 'char-gear': data.gear,
                 'char-personality-traits': data.personality_traits,
@@ -397,6 +404,22 @@
             if (element) {
                 element.classList.add('updating');
             }
+        }
+
+        function formatAbilityScores(scores, modifiers) {
+            if (!scores || Object.keys(scores).length === 0) {
+                return null;
+            }
+            
+            const abilities = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+            const formattedScores = abilities.map(ability => {
+                const score = scores[ability];
+                const modifier = modifiers ? modifiers[ability] : 0;
+                const modifierStr = modifier >= 0 ? `+${modifier}` : `${modifier}`;
+                return `${ability.charAt(0).toUpperCase() + ability.slice(1)}: ${score} (${modifierStr})`;
+            });
+            
+            return formattedScores.join(', ');
         }
 
         async function sendMessage() {

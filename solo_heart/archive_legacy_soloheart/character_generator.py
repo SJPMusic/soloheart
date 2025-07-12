@@ -10,7 +10,7 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from character_manager import CharacterManager
-from ollama_llm_service import chat_completion
+from llm_interface.provider_factory import chat_completion
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -27,8 +27,8 @@ class CharacterGenerator:
         
         # Initialize Ollama LLM service
         try:
-            from ollama_llm_service import get_ollama_service
-            self.ollama_service = get_ollama_service()
+            from llm_interface.provider_factory import get_llm_provider
+            self.ollama_service = get_llm_provider()
             logger.info("Ollama LLM service initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize Ollama LLM service: {e}")

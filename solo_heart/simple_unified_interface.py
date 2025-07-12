@@ -1,7 +1,8 @@
-#!/usr/bin/env python3
+from dotenv import load_dotenv
+load_dotenv()
 """
-Simple Unified SoloHeart Narrative Interface
-A single Flask server that provides the complete immersive SoloHeart experience.
+The Narrative Engine D&D Demo - Unified Interface
+A demonstration application showcasing TNE's symbolic processing capabilities through interactive character creation and narrative development workflows.
 """
 
 import os
@@ -11,8 +12,8 @@ import uuid
 import datetime
 import re
 from typing import Dict, List, Optional, Any
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-from ollama_llm_service import chat_completion
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
+from llm_interface.provider_factory import chat_completion, get_llm_provider
 from utils.character_fact_extraction import (
     extract_race_from_text,
     extract_class_from_text,
@@ -24,11 +25,14 @@ from utils.character_fact_extraction import (
     extract_emotional_themes,
     extract_alignment_from_text
 )
-from utils.symbolic_meaning_framework import SymbolicMeaningFramework
 from utils.guided_character_completion import GuidedCharacterCompletion, CompletionPhase, StatAssignmentMode
 from utils.srd_requirements import SRDRequirements, FieldPriority
-# Enable SoloHeart Narrative Engine integration for sophisticated memory and context tracking
-from narrative_engine_integration import SoloHeartNarrativeEngine
+from utils.ability_score_system import AbilityScoreSystem, AbilityScoreMethod
+from utils.racial_modifiers import racial_modifiers
+from srd_compliance_checker import srd_checker
+# Enable TNE integration for symbolic processing and memory management
+from narrative_engine_integration import TNEDemoEngine
+from routing import tne_connector
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -57,24 +61,15 @@ def check_system_requirements():
         else:
             logger.info("⚠️ Port 5001 in use (likely Flask restart) - continuing...")
     
-    # Check Ollama connection
+    # Check LLM provider connection
     try:
-        import requests
-        response = requests.get("http://localhost:11434/api/tags", timeout=5)
-        if response.status_code == 200:
-            models = response.json().get('models', [])
-            model_names = [model.get('name', '') for model in models]
-            if 'llama3:latest' in model_names:
-                logger.info("✅ Ollama is running with llama3 model")
-            else:
-                logger.warning("⚠️ Ollama is running but llama3 model not found")
-                logger.info("💡 Run: ollama pull llama3")
-        else:
-            raise Exception(f"Ollama health check failed: {response.status_code}")
+        provider = get_llm_provider()
+        logger.info(f"✅ LLM provider initialized: {provider.provider_name.title()}")
     except Exception as e:
-        logger.error(f"❌ Ollama connection failed: {e}")
-        logger.error("💡 Please start Ollama with: brew services start ollama")
-        logger.error("💡 Or install with: brew install ollama")
+        logger.error(f"❌ LLM provider connection failed: {e}")
+        logger.error("💡 Please check your LLM provider configuration in .env")
+        logger.error("💡 For Gemma: Ensure Gemma is running at http://localhost:1234/v1")
+        logger.error("💡 For Ollama: Start with: brew services start ollama")
         raise Exception("System requirements not met")
     
     logger.info("✅ All system requirements met")
@@ -90,8 +85,8 @@ if not os.environ.get('WERKZEUG_RUN_MAIN'):
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'unified-narrative-key')
 
-class SimpleCharacterGenerator:
-    """Enhanced character generator for player-led, natural language character creation with immediate fact commitment."""
+class TNECharacterGenerator:
+    """TNE demo character generator for symbolic processing visualization and memory flow display."""
     
     def __init__(self, playtest_mode: bool = None):
         self.conversation_history = []
@@ -102,13 +97,23 @@ class SimpleCharacterGenerator:
             "class": None,
             "level": 1,
             
-            # Ability Scores (CRITICAL)
-            "strength": 10,
-            "dexterity": 10,
-            "constitution": 10,
-            "intelligence": 10,
-            "wisdom": 10,
-            "charisma": 10,
+            # Ability Scores (CRITICAL) - Now using proper structure
+            "ability_scores": {
+                "strength": 10,
+                "dexterity": 10,
+                "constitution": 10,
+                "intelligence": 10,
+                "wisdom": 10,
+                "charisma": 10
+            },
+            "ability_modifiers": {
+                "strength": 0,
+                "dexterity": 0,
+                "constitution": 0,
+                "intelligence": 0,
+                "wisdom": 0,
+                "charisma": 0
+            },
             
             # Combat Stats (CRITICAL)
             "hit_points": 10,
@@ -162,8 +167,7 @@ class SimpleCharacterGenerator:
             "_symbolic_data": {}  # Store archetypal tags and symbolic meaning
         }
         
-        # Initialize symbolic meaning framework
-        self.symbolic_framework = SymbolicMeaningFramework()
+        # Symbolic processing now delegated to TNE
         self.is_complete = False
         self.character_finalized = False
         self.in_review_mode = False
@@ -175,6 +179,9 @@ class SimpleCharacterGenerator:
         
         # Initialize SRD requirements system
         self.srd_requirements = SRDRequirements()
+        
+        # Initialize ability score system
+        self.ability_score_system = AbilityScoreSystem()
         
         # Enhanced fact tracking for DnD 5E compliance
         self.fact_types = {
@@ -228,33 +235,31 @@ class SimpleCharacterGenerator:
                 if display_facts:
                     current_facts_str = f"\n\nCURRENTLY COMMITTED FACTS (DO NOT CHANGE THESE):\n{json.dumps(display_facts, indent=2)}"
             
-            # Create a comprehensive prompt for the LLM
-            prompt = f"""Extract all DnD 5E character facts from the following player description. 
-Return a JSON object with these exact fields: name, race, class, background, age, gender, alignment, 
-personality_traits, motivations, emotional_themes, combat_style, traits, traumas, relational_history, gear, backstory.
+            # Create a concise prompt for the LLM
+            prompt = f"""Extract DnD 5E character facts from: "{text}"
 
-CRITICAL RULES:
-- ONLY extract facts that are EXPLICITLY mentioned in the text
-- If a field is not mentioned or is ambiguous, set its value to null
-- DO NOT make assumptions or inferences about missing information
-- DO NOT change facts that are already committed (see below)
-- For age: only set if explicitly mentioned (e.g., "25 years old", "I am 30")
-- For gender: only set if explicitly mentioned or clear from pronouns
-- For lists like personality_traits, motivations, etc., return as arrays
-- For relational_history, return as an object with relationship keys
-- For gear, return as an array of items
-- Use proper DnD 5E terminology for races, classes, and backgrounds
-- Be conservative - it's better to return null than to guess
+Return JSON with: name, race, class, background, age, gender, alignment, personality_traits, motivations, emotional_themes, combat_style, traits, traumas, relational_history, gear, backstory.
 
-Player description:
-{text}{current_facts_str}
+Rules: Only extract explicit facts. Use null for missing info. Use arrays for lists. Use objects for relationships.
 
-Return only valid JSON:"""
+{current_facts_str}
 
-            # Call Ollama LLM using the correct format
-            from ollama_llm_service import chat_completion
+JSON:"""
+
+            # Call LLM using the correct format with shorter timeout
+            from llm_interface.provider_factory import chat_completion
             messages = [{"role": "user", "content": prompt}]
-            response = chat_completion(messages)
+            
+            # Set shorter timeout for faster responses
+            import os
+            original_timeout = os.environ.get('LLM_TIMEOUT_SECONDS', '180')
+            os.environ['LLM_TIMEOUT_SECONDS'] = '30'  # 30 second timeout
+            
+            try:
+                response = chat_completion(messages)
+            finally:
+                # Restore original timeout
+                os.environ['LLM_TIMEOUT_SECONDS'] = original_timeout
             
             if not response or not response.strip():
                 logger.error("❌ LLM returned empty response")
@@ -270,15 +275,9 @@ Return only valid JSON:"""
             else:
                 json_str = response
             
-            # Clean up common JSON issues
+            # Minimal JSON cleanup - only remove newlines and comments
             json_str = json_str.replace('\n', ' ').replace('\r', ' ')
             json_str = re.sub(r'//.*?(?=\n|$)', '', json_str)  # Remove comments
-            json_str = re.sub(r',\s*}', '}', json_str)  # Remove trailing commas
-            json_str = re.sub(r',\s*]', ']', json_str)  # Remove trailing commas in arrays
-            
-            # Additional cleanup for common LLM JSON issues
-            json_str = re.sub(r'([a-zA-Z_][a-zA-Z0-9_]*):', r'"\1":', json_str)  # Quote unquoted keys
-            json_str = re.sub(r':\s*([^"][^,}\]]*?)(?=\s*[,}\]])', r': "\1"', json_str)  # Quote unquoted string values
             
             try:
                 facts = json.loads(json_str)
@@ -315,11 +314,16 @@ Return only valid JSON:"""
         newly_committed = {}
         ambiguous_facts = {}
         
-        # Try LLM extraction first
-        llm_facts = self._extract_facts_with_llm(text)
+        # Try LLM extraction first (with timeout)
+        try:
+            llm_facts = self._extract_facts_with_llm(text)
+        except Exception as e:
+            logger.warning(f"⚠️ LLM extraction failed, skipping to pattern matching: {e}")
+            llm_facts = {}
         
         # Post-process: Only commit age if explicitly present in text
         if llm_facts and 'age' in llm_facts:
+            logger.debug(f">>> DEBUG: calling .lower() on text in age_pattern (line 336), value={text!r}, type={type(text)}")
             age_pattern = re.search(r'(\d+)\s*(?:year|yr)s?\s*old', text.lower())
             if not age_pattern:
                 llm_facts['age'] = None
@@ -383,17 +387,23 @@ Return only valid JSON:"""
             extracted_facts['emotional_themes'] = emotional_themes
         
         # Extract age using simple pattern
+        logger.debug(f">>> DEBUG: calling .lower() on text in age_match (line 399), value={text!r}, type={type(text)}")
         age_match = re.search(r'(\d+)\s*(?:year|yr)s?\s*old', text.lower())
         if age_match:
             extracted_facts['age'] = int(age_match.group(1))
             
         # Extract gender using simple patterns
+        logger.debug(f">>> DEBUG: calling .lower() on text in gender detection (line 404), value={text!r}, type={type(text)}")
         if re.search(r'\b(he|his|him)\b', text.lower()):
             extracted_facts['gender'] = 'Male'
-        elif re.search(r'\b(she|her|hers)\b', text.lower()):
-            extracted_facts['gender'] = 'Female'
-        elif re.search(r'\b(they|their|them)\b', text.lower()):
-            extracted_facts['gender'] = 'Non-binary'
+        else:
+            logger.debug(f">>> DEBUG: calling .lower() on text in gender detection (line 406), value={text!r}, type={type(text)}")
+            if re.search(r'\b(she|her|hers)\b', text.lower()):
+                extracted_facts['gender'] = 'Female'
+            else:
+                logger.debug(f">>> DEBUG: calling .lower() on text in gender detection (line 408), value={text!r}, type={type(text)}")
+                if re.search(r'\b(they|their|them)\b', text.lower()):
+                    extracted_facts['gender'] = 'Non-binary'
         
         # Process each extracted fact
         for fact_type, value in extracted_facts.items():
@@ -488,6 +498,7 @@ Return only valid JSON:"""
         motivations = self.character_data.get('motivations', [])
         
         if themes or motivations:
+            logger.debug(f">>> DEBUG: calling .lower() on themes+motivations in theme_text (line 504), value={themes+motivations!r}, type={type(themes+motivations)}")
             theme_text = ", ".join(themes + motivations).lower()
             prompt = f"It sounds like {char_name} carries themes of {theme_text}. "
         else:
@@ -565,37 +576,23 @@ Return only valid JSON:"""
         return "\n".join(summary_parts)
     
     def _get_symbolic_summary(self) -> str:
-        """Get a summary of symbolic meaning and archetypal themes."""
-        if not self.character_data.get('_symbolic_data'):
-            return ""
-        
+        """
+        Get symbolic summary from TNE for the given character.
+        # Replaced local symbolic logic with TNE integration
+        """
+        character_id = self.character_data.get('id') or self.character_data.get('name', 'unknown')
+        symbolic_state = tne_connector.get_symbolic_summary(character_id)
+        # Format output for UI
         symbolic_parts = []
-        
-        # Get overall symbolic state
-        symbolic_state = self.symbolic_framework.get_symbolic_summary()
-        
-        # Chaos/Order tension
-        chaos_order = symbolic_state["chaos_order_state"]
+        chaos_order = symbolic_state.get("chaos_order_state", "Unknown")
         symbolic_parts.append(f"Chaos/Order State: {chaos_order}")
-        
-        # Narrative decay
-        if symbolic_state["narrative_decay"] > 0:
+        if symbolic_state.get("narrative_decay", 0) > 0:
             symbolic_parts.append(f"Narrative Decay: {symbolic_state['narrative_decay']:.2f}")
-        
-        # Archetypal tags
-        all_tags = []
-        for fact_type, data in self.character_data["_symbolic_data"].items():
-            if "archetypal_tags" in data:
-                all_tags.extend(data["archetypal_tags"])
-        
-        if all_tags:
-            unique_tags = list(set(all_tags))
-            symbolic_parts.append(f"Archetypal Themes: {', '.join(unique_tags)}")
-        
-        # Symbolic coherence
-        if symbolic_state["symbolic_coherence"] < 1.0:
+        tags = symbolic_state.get("archetypal_tags", [])
+        if tags:
+            symbolic_parts.append(f"Archetypal Themes: {', '.join(tags)})")
+        if symbolic_state.get("symbolic_coherence", 1.0) < 1.0:
             symbolic_parts.append(f"Symbolic Coherence: {symbolic_state['symbolic_coherence']:.2f}")
-        
         return "\n".join(symbolic_parts)
     
     def _get_missing_dnd_fields(self) -> List[str]:
@@ -621,45 +618,58 @@ Return only valid JSON:"""
         return missing
     
     def start_character_creation(self, description: str, campaign_name: str = "") -> Dict[str, Any]:
-        """Start player-led character creation with immediate fact extraction."""
+        """
+        Start player-led character creation with immediate fact extraction.
+        
+        CRITICAL REGRESSION WARNING:
+        - Do not reset character data unless this is a truly new session
+        - This fix prevents data loss during character creation
+        - See test_character_persistence.py for validation tests
+        - Session detection logic: if not (name or race), then reset; otherwise preserve
+        """
         try:
             campaign_context = None  # Always define campaign_context for all branches
             logger.info(f"🎲 Starting player-led character creation with description: {description[:100]}...")
             logger.info(f"📝 Campaign name: {campaign_name}")
             
-            # Reset character creation state
-            preserved_data = {k: v for k, v in self.character_data.items() 
-                             if k in ['level', 'ability_scores', 'hit_points', 'armor_class', 
-                                     'saving_throws', 'skills', 'feats', 'weapons', 'gear', 'spells']}
-            
-            self.character_data = {
-                **preserved_data,
-                "name": None, "race": None, "class": None, "background": None, "alignment": None,
-                "personality_traits": [], "age": None, "gender": None, "background_freeform": "", 
-                "created_date": None, "motivations": [], "emotional_themes": [], "combat_style": None,
-                "combat_experience": None, "traits": [], "traumas": [], "relational_history": {}, 
-                "backstory": "", "_symbolic_data": {}
-            }
-            
-            # Reset fact tracking
-            for fact_type in self.fact_types:
-                self.fact_types[fact_type]["extracted"] = False
-                self.fact_types[fact_type]["value"] = None
-                self.fact_types[fact_type]["source_text"] = None
-                self.fact_types[fact_type]["timestamp"] = None
-            
-            self.conversation_history = []
-            self.in_review_mode = False
-            self.is_complete = False
-            self.arc_scaffolding_triggered = False
-            
-            logger.info("🔄 Reset character creation state")
+            # Only reset character creation state if this is a new session
+            if not self.character_data.get('name') and not self.character_data.get('race'):
+                # This is a new session - reset everything
+                preserved_data = {k: v for k, v in self.character_data.items() 
+                                 if k in ['level', 'ability_scores', 'hit_points', 'armor_class', 
+                                         'saving_throws', 'skills', 'feats', 'weapons', 'gear', 'spells']}
+                
+                self.character_data = {
+                    **preserved_data,
+                    "name": None, "race": None, "class": None, "background": None, "alignment": None,
+                    "personality_traits": [], "age": None, "gender": None, "background_freeform": "", 
+                    "created_date": None, "motivations": [], "emotional_themes": [], "combat_style": None,
+                    "combat_experience": None, "traits": [], "traumas": [], "relational_history": {}, 
+                    "backstory": "", "_symbolic_data": {}
+                }
+                
+                # Reset fact tracking
+                for fact_type in self.fact_types:
+                    self.fact_types[fact_type]["extracted"] = False
+                    self.fact_types[fact_type]["value"] = None
+                    self.fact_types[fact_type]["source_text"] = None
+                    self.fact_types[fact_type]["timestamp"] = None
+                
+                self.conversation_history = []
+                self.in_review_mode = False
+                self.is_complete = False
+                self.arc_scaffolding_triggered = False
+                
+                logger.info("🔄 Reset character creation state")
+            else:
+                # This is continuing an existing session - preserve character data
+                logger.info("🔄 Continuing existing character creation session")
             
             # Extract facts from initial description
             extraction_result = self._extract_and_commit_facts_immediately(description)
             
-                        # Initialize SoloHeart Narrative Engine
-            self.narrative_bridge = SoloHeartNarrativeEngine(campaign_id=campaign_name or "default")
+            # Initialize TNE Demo Engine
+            self.narrative_bridge = TNEDemoEngine(campaign_id=campaign_name or "default")
             
             # Initialize campaign_context to None first
             campaign_context = None
@@ -761,18 +771,32 @@ Return only valid JSON:"""
             else:
                 campaign_context = None
             
-            # Check if character sheet is incomplete using SRD requirements
-            missing_summary = self.srd_requirements.get_missing_fields_summary(self.character_data)
-            if not self.srd_requirements.is_character_complete(self.character_data):
-                logger.info(f"📋 Character sheet incomplete: {missing_summary}")
-                # Inform Ollama about what's missing but let it handle the conversation naturally
-                missing_context = f"Note: {missing_summary} Help the player complete their character through natural conversation, focusing on the most critical missing information first."
-                response = self._generate_natural_response_with_context(user_input, extraction_result, missing_context, campaign_context)
-                logger.info(f"💬 Guided Ollama response: {response}")
+            # Check if character sheet is incomplete using SRD 5.2 compliance checker
+            completeness_result = srd_checker.check_character_completeness(self.character_data)
+            srd_compliance_result = srd_checker.validate_srd_compliance(self.character_data)
+            
+            if not completeness_result['is_complete']:
+                # Use intelligent priority engine to determine what to ask for next
+                priority_fields = srd_checker.get_next_priority_fields(self.character_data, max_fields=2)
+                steering_prompt = srd_checker.generate_steering_prompt(self.character_data)
+                
+                logger.info(f"📋 Character sheet incomplete: {completeness_result['completion_percentage']:.1f}% complete")
+                logger.info(f"🎯 Priority fields: {[f.field for f in priority_fields]}")
+                logger.info(f"🎯 Steering prompt: {steering_prompt}")
+                
+                # Use steering prompt to guide the AI response
+                response = self._generate_natural_response_with_context(user_input, extraction_result, steering_prompt, campaign_context)
+                logger.info(f"💬 Priority-guided response: {response}")
             else:
                 # Character sheet is complete, continue with natural conversation
                 response = self._generate_ollama_response(user_input, extraction_result, self.character_data, campaign_context)
                 logger.info(f"💬 Natural Ollama response: {response}")
+            
+            # Log SRD compliance status
+            if not srd_compliance_result['is_srd_compliant']:
+                logger.warning(f"⚠️ SRD compliance issues: {srd_compliance_result['compliance_issues']}")
+            else:
+                logger.info("✅ Character is SRD 5.2 compliant")
             
             # Check if we should trigger emotional scaffolding
             if self._should_trigger_emotional_scaffolding():
@@ -908,8 +932,8 @@ Respond naturally as a helpful assistant. Acknowledge what you learned about the
 
 Response:"""
 
-            # Get response from Ollama
-            from ollama_llm_service import chat_completion
+            # Get response from LLM
+            from llm_interface.provider_factory import chat_completion
             messages = [{"role": "user", "content": prompt}]
             response = chat_completion(messages)
             
@@ -919,7 +943,7 @@ Response:"""
                 return "I'm listening. Tell me more about your character."
                 
         except Exception as e:
-            logger.error(f"❌ Error generating Ollama response: {e}")
+            logger.error(f"❌ Error generating LLM response: {e}")
             return "I'm listening. Tell me more about your character."
 
     def _generate_natural_response_with_context(self, user_input: str, extraction_result: Dict[str, Any], additional_context: str, campaign_context: Dict[str, Any] = None) -> str:
@@ -984,10 +1008,12 @@ IMPORTANT: Don't ask about information they've already told you. If they've alre
 
 If there's missing information, guide them conversationally to share more about their character. Don't be pushy or scripted - make it feel like natural conversation. Be encouraging and help them develop their character's story.
 
-Keep your response under 2-3 sentences and focus on one aspect at a time."""
+Keep your response under 2-3 sentences and focus on one aspect at a time.
+
+STEERING GUIDANCE: {additional_context}"""
             
-            # Get response from Ollama
-            from ollama_llm_service import chat_completion
+            # Get response from LLM
+            from llm_interface.provider_factory import chat_completion
             messages = [{"role": "user", "content": prompt}]
             response = chat_completion(messages)
             
@@ -1001,8 +1027,8 @@ Keep your response under 2-3 sentences and focus on one aspect at a time."""
             logger.error(f"❌ Error generating guided natural response: {e}")
             return "Tell me more about your character."
 
-class SimpleNarrativeBridge:
-    """Narrative bridge for SoloHeart with memory tracking."""
+class TNEDemoBridge:
+    """Narrative bridge for TNE Demo with memory tracking."""
     
     def __init__(self):
         self.ensure_directories()
@@ -1113,7 +1139,7 @@ class SimpleNarrativeBridge:
             context_messages = [
                 {
                     "role": "system",
-                    "content": f"""You are a SoloHeart Guide providing a brief campaign recap. 
+                    "content": f"""You are a TNE Demo Guide providing a brief campaign recap. 
 
 The player is {name}, a {race} {char_class}.
 
@@ -1152,7 +1178,7 @@ Keep it brief (2-3 sentences) and engaging. Don't make up details that aren't in
             return f"Welcome back, {name}! Your adventure continues..."
     
     def process_player_input(self, player_input: str, campaign_id: str) -> str:
-        """Process player input and return SoloHeart Guide response with memory tracking."""
+        """Process player input and return TNE Demo Guide response with memory tracking."""
         try:
             # Get campaign context
             campaign_context = self.get_campaign_data(campaign_id)
@@ -1183,7 +1209,7 @@ Keep it brief (2-3 sentences) and engaging. Don't make up details that aren't in
             
             if is_new_campaign:
                 # For new campaigns, be honest about starting fresh
-                system_prompt = f"""You are a SoloHeart Guide, an AI companion for immersive solo narrative adventures. 
+                system_prompt = f"""You are a TNE Demo Guide, an AI companion for immersive narrative demonstrations. 
 
 The player is {name}, a {race} {char_class}. 
 
@@ -1197,7 +1223,7 @@ This appears to be the beginning of a new adventure. You should:
 Write in third person, present tense. Be descriptive and engaging. Keep responses concise but vivid."""
             else:
                 # For ongoing campaigns, reference actual history
-                system_prompt = f"""You are a SoloHeart Guide, an AI companion for immersive solo narrative adventures. 
+                system_prompt = f"""You are a TNE Demo Guide, an AI companion for immersive narrative demonstrations. 
 
 The player is {name}, a {race} {char_class}. 
 
@@ -1273,12 +1299,12 @@ Write in third person, present tense. Be descriptive and engaging. Keep response
             logger.error(f"Error getting campaign data: {e}")
             return None
 
-class SimpleUnifiedGame:
+class TNEDemoGame:
     """Simple unified game manager."""
     
     def __init__(self):
-        self.character_generator = SimpleCharacterGenerator()
-        self.narrative_bridge = SimpleNarrativeBridge()
+        self.character_generator = TNECharacterGenerator()
+        self.narrative_bridge = TNEDemoBridge()
     
     def get_saved_campaigns(self):
         """Get list of all saved campaigns."""
@@ -1339,7 +1365,7 @@ class SimpleUnifiedGame:
             return False
 
 # Initialize game manager
-game = SimpleUnifiedGame()
+game = TNEDemoGame()
 
 @app.route('/')
 def start_screen():
@@ -1380,7 +1406,144 @@ def character_creation():
 @app.route('/test-character-sheet')
 def test_character_sheet():
     """Test page for character sheet updates."""
-    return send_file('test_character_sheet.html')
+    try:
+        # Get current character data
+        character_data = game.character_generator.get_character_data()
+        
+        # Get ability scores
+        ability_scores = character_data.get('ability_scores', {
+            "strength": 10,
+            "dexterity": 10,
+            "constitution": 10,
+            "intelligence": 10,
+            "wisdom": 10,
+            "charisma": 10
+        })
+        
+        # Get racial information
+        race = character_data.get('race', 'Unknown')
+        subrace = character_data.get('subrace')
+        
+        # Get racial summary if available
+        racial_summary = ""
+        try:
+            # from utils.racial_modifiers import racial_modifiers  # Removed duplicate import
+            if race and race != 'Unknown':
+                racial_summary = racial_modifiers.format_racial_summary(race, subrace)
+        except ImportError:
+            racial_summary = f"Race: {race}" + (f" ({subrace})" if subrace else "")
+        
+        # Create simple HTML response
+        html_response = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Character Sheet Test</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; }}
+        .character-info {{ background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}
+        .ability-scores {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }}
+        .ability-score {{ background: white; padding: 10px; border-radius: 3px; border: 1px solid #ddd; }}
+        .score {{ font-weight: bold; color: #2c5aa0; }}
+        .modifier {{ color: #666; }}
+        .racial-info {{ background: #e8f4f8; padding: 15px; border-radius: 5px; }}
+        .racial-summary {{ white-space: pre-line; }}
+    </style>
+</head>
+<body>
+    <h1>Character Sheet Test</h1>
+    
+    <div class="character-info">
+        <h2>Character Information</h2>
+        <p><strong>Name:</strong> {character_data.get('name', 'Unknown')}</p>
+        <p><strong>Race:</strong> {race}</p>
+        <p><strong>Subrace:</strong> {subrace or 'None'}</p>
+        <p><strong>Class:</strong> {character_data.get('class', 'Unknown')}</p>
+        <p><strong>Level:</strong> {character_data.get('level', 1)}</p>
+    </div>
+    
+    <div class="ability-scores">
+        <h2>Ability Scores</h2>
+"""
+        
+        for ability, score in ability_scores.items():
+            modifier = (score - 10) // 2
+            modifier_text = f"+{modifier}" if modifier >= 0 else f"{modifier}"
+            html_response += f"""
+        <div class="ability-score">
+            <div class="score">{ability.title()}: {score}</div>
+            <div class="modifier">Modifier: {modifier_text}</div>
+        </div>
+"""
+        
+        html_response += f"""
+    </div>
+    
+    <div class="racial-info">
+        <h2>Racial Information</h2>
+        <div class="racial-summary">{racial_summary}</div>
+    </div>
+</body>
+</html>
+"""
+        
+        return html_response
+    except Exception as e:
+        logger.error(f"Error in test character sheet: {e}")
+        return f"Error: {e}"
+
+@app.route('/character-sheet-test')
+def character_sheet_test():
+    """Alternative test page for character sheet updates."""
+    try:
+        return "Character Sheet Test - Alternative Working!"
+    except Exception as e:
+        logger.error(f"Error in character sheet test: {e}")
+        return f"Error: {e}"
+
+@app.route('/ability-scores-test')
+def ability_scores_test():
+    """Test page for ability scores display."""
+    try:
+        # Get current character data
+        character_data = game.character_generator.get_character_data()
+        
+        # Get ability scores
+        ability_scores = character_data.get('ability_scores', {
+            "strength": 10,
+            "dexterity": 10,
+            "constitution": 10,
+            "intelligence": 10,
+            "wisdom": 10,
+            "charisma": 10
+        })
+        
+        # Create simple text response
+        response = f"""
+Ability Scores Test
+
+Character: {character_data.get('name', 'Unknown')}
+Race: {character_data.get('race', 'Unknown')}
+Class: {character_data.get('class', 'Unknown')}
+Level: {character_data.get('level', 1)}
+
+Ability Scores:
+"""
+        
+        for ability, score in ability_scores.items():
+            modifier = (score - 10) // 2
+            modifier_text = f"+{modifier}" if modifier >= 0 else f"{modifier}"
+            response += f"{ability.title()}: {score} (Modifier: {modifier_text})\n"
+        
+        return response
+    except Exception as e:
+        logger.error(f"Error in ability scores test: {e}")
+        return f"Error: {e}"
+
+@app.route('/simple-test')
+def simple_test():
+    """Simple test endpoint."""
+    return "Simple test endpoint working!"
 
 @app.route('/api/character/create/start', methods=['POST'])
 def start_character_creation_api():
@@ -1395,7 +1558,7 @@ def start_character_creation_api():
         if not description:
             logger.warning("❌ No description provided")
             return jsonify({'success': False, 'message': 'Character description is required'})
-        temp_bridge = SimpleNarrativeBridge()
+        temp_bridge = TNEDemoBridge()
         game.character_generator.narrative_bridge = temp_bridge
         result = game.character_generator.start_character_creation(description, campaign_name)
         session['character_creation_active'] = True
@@ -1497,16 +1660,30 @@ def get_symbolic_meaning():
     if not game.character_generator.character_data.get('_symbolic_data'):
         return jsonify({'success': True, 'symbolic_data': {}})
     
-    symbolic_state = game.character_generator.symbolic_framework.get_symbolic_summary()
+    character_id = game.character_generator.character_data.get('id') or game.character_generator.character_data.get('name', 'unknown')
+    symbolic_state = tne_connector.get_symbolic_summary(character_id)
+    
+    # Check for TNE errors and handle gracefully
+    if symbolic_state.get('error'):
+        return jsonify({
+            'success': True,
+            'symbolic_data': {
+                'error': 'Symbolic analysis unavailable',
+                'message': 'TNE symbolic processing is currently unavailable'
+            }
+        })
+    
+    # Return TNE-compliant symbolic data
     return jsonify({
         'success': True, 
         'symbolic_data': {
-            'chaos_order_tension': symbolic_state['chaos_order_tension'],
-            'chaos_order_state': symbolic_state['chaos_order_state'],
-            'narrative_decay': symbolic_state['narrative_decay'],
-            'symbolic_coherence': symbolic_state['symbolic_coherence'],
-            'narrative_response': symbolic_state['narrative_response'],
-            'archetypal_data': game.character_generator.character_data['_symbolic_data']
+            'chaos_order_tension': symbolic_state.get('chaos_order_tension', 0.5),
+            'chaos_order_state': symbolic_state.get('chaos_order_state', 'Unknown'),
+            'narrative_decay': symbolic_state.get('narrative_decay', 0.0),
+            'symbolic_coherence': symbolic_state.get('symbolic_coherence', 1.0),
+            'narrative_response': symbolic_state.get('narrative_response', ''),
+            'archetypal_tags': symbolic_state.get('archetypal_tags', []),
+            'archetypal_data': game.character_generator.character_data.get('_symbolic_data', {})
         }
     })
 
@@ -1884,30 +2061,65 @@ def get_campaign_recap():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint for monitoring."""
+    """Health check endpoint for TNE Demo monitoring."""
     try:
-        # Check Ollama connection
-        ollama_healthy = False
+        # Check LLM provider status
+        llm_healthy = False
+        llm_provider = "unknown"
         try:
-            import requests
-            response = requests.get("http://localhost:11434/api/tags", timeout=5)
-            if response.status_code == 200:
-                models = response.json().get('models', [])
-                model_names = [model.get('name', '') for model in models]
-                ollama_healthy = 'llama3' in model_names or 'llama3:latest' in model_names
+            from llm_interface.provider_factory import get_llm_provider
+            provider = get_llm_provider()
+            llm_healthy = provider is not None
+            llm_provider = provider.provider_name if provider else "unknown"
+        except Exception as e:
+            logger.error(f"LLM provider health check failed: {e}")
+        
+        # Check TNB connection (if configured)
+        tnb_healthy = False
+        try:
+            import os
+            tnb_endpoint = os.environ.get('TNB_ENDPOINT')
+            if tnb_endpoint:
+                import requests
+                response = requests.get(f"{tnb_endpoint}/api/health", timeout=5)
+                tnb_healthy = response.status_code == 200
         except:
             pass
         
-        # Check if game instance is available
-        game_healthy = hasattr(game, 'character_generator') and game.character_generator is not None
+        # Check TNE connection (if configured)
+        tne_healthy = False
+        try:
+            import os
+            tne_endpoint = os.environ.get('TNE_ENDPOINT')
+            if tne_endpoint:
+                import requests
+                response = requests.get(f"{tne_endpoint}/api/health", timeout=5)
+                tne_healthy = response.status_code == 200
+        except:
+            pass
         
-        status = 'healthy' if ollama_healthy and game_healthy else 'degraded'
+        # Check if demo instance is available
+        demo_healthy = hasattr(game, 'character_generator') and game.character_generator is not None
+        
+        # Determine overall status
+        if llm_healthy and demo_healthy:
+            status = 'healthy'
+        elif llm_healthy or demo_healthy:
+            status = 'degraded'
+        else:
+            status = 'unhealthy'
         
         return jsonify({
             'status': status,
             'timestamp': datetime.datetime.now().isoformat(),
-            'ollama_healthy': ollama_healthy,
-            'game_healthy': game_healthy,
+            'llm_provider': llm_provider,
+            'llm_healthy': llm_healthy,
+            'tnb_healthy': tnb_healthy,
+            'tne_healthy': tne_healthy,
+            'demo_healthy': demo_healthy,
+            'memory_visualization': os.environ.get('MEMORY_VISUALIZATION', 'false').lower() == 'true',
+            'goal_tracking': os.environ.get('GOAL_TRACKING', 'false').lower() == 'true',
+            'symbolic_display': os.environ.get('SYMBOLIC_DISPLAY', 'false').lower() == 'true',
             'version': '1.0.0'
         })
     except Exception as e:
@@ -1920,99 +2132,547 @@ def health_check():
 
 @app.route('/api/character/create/assign-stats', methods=['POST'])
 def assign_character_stats():
-    """Handle ability score assignment."""
+    """Handle ability score assignment using SRD 5.2 methods."""
     try:
         data = request.get_json()
-        assignment_type = data.get('type', 'auto')  # 'auto' or 'manual'
+        assignment_type = data.get('type', 'auto')  # 'auto', 'standard_array', 'point_buy', 'roll', 'manual'
         
         if assignment_type == 'auto':
-            # Auto-assign stats
-            stats = game.character_generator.guided_completion.assign_stats_automatically(
+            # Auto-assign stats based on character story
+            scores = game.character_generator.ability_score_system.assign_auto_based_on_story(
                 game.character_generator.character_data
             )
-            game.character_generator.character_data['ability_scores'] = stats
+            modifiers = game.character_generator.ability_score_system.calculate_modifiers(scores)
+            
+            game.character_generator.character_data['ability_scores'] = scores
+            game.character_generator.character_data['ability_modifiers'] = modifiers
             game.character_generator.guided_completion.stat_assignment_mode = StatAssignmentMode.AUTO
             
-            response = f"Perfect! I've assigned your ability scores:\n\n"
-            response += f"Strength: {stats['strength']}\n"
-            response += f"Dexterity: {stats['dexterity']}\n"
-            response += f"Constitution: {stats['constitution']}\n"
-            response += f"Intelligence: {stats['intelligence']}\n"
-            response += f"Wisdom: {stats['wisdom']}\n"
-            response += f"Charisma: {stats['charisma']}\n\n"
-            response += "Your character is ready! Would you like to start your adventure?"
+            response = f"Perfect! I've assigned your ability scores based on your character's story:\n\n"
+            response += game.character_generator.guided_completion.get_ability_score_summary(scores)
+            response += "\n\nYour character is ready! Would you like to start your adventure?"
+            
+        elif assignment_type == 'standard_array':
+            # Use SRD 5.2 standard array
+            result = game.character_generator.guided_completion.assign_standard_array(
+                game.character_generator.character_data
+            )
+            
+            game.character_generator.character_data['ability_scores'] = result['scores']
+            game.character_generator.character_data['ability_modifiers'] = result['modifiers']
+            game.character_generator.guided_completion.stat_assignment_mode = StatAssignmentMode.STANDARD_ARRAY
+            
+            response = f"Great! I've assigned the SRD 5.2 standard array:\n\n"
+            response += game.character_generator.guided_completion.get_ability_score_summary(result['scores'])
+            response += "\n\nYour character is ready! Would you like to start your adventure?"
+            
+        elif assignment_type == 'point_buy':
+            # Use SRD 5.2 point buy system
+            result = game.character_generator.guided_completion.assign_point_buy(
+                game.character_generator.character_data
+            )
+            
+            game.character_generator.character_data['ability_scores'] = result['scores']
+            game.character_generator.character_data['ability_modifiers'] = result['modifiers']
+            game.character_generator.guided_completion.stat_assignment_mode = StatAssignmentMode.POINT_BUY
+            
+            response = f"Excellent! I've assigned scores using the SRD 5.2 point buy system:\n\n"
+            response += game.character_generator.guided_completion.get_ability_score_summary(result['scores'])
+            response += "\n\nYour character is ready! Would you like to start your adventure?"
+            
+        elif assignment_type == 'roll':
+            # Use 4d6 drop lowest method
+            result = game.character_generator.guided_completion.assign_rolled_scores(
+                game.character_generator.character_data
+            )
+            
+            game.character_generator.character_data['ability_scores'] = result['scores']
+            game.character_generator.character_data['ability_modifiers'] = result['modifiers']
+            game.character_generator.guided_completion.stat_assignment_mode = StatAssignmentMode.ROLL_4D6_DROP_LOWEST
+            
+            response = f"Fantastic! I've rolled your ability scores using 4d6 drop lowest:\n\n"
+            response += game.character_generator.guided_completion.get_ability_score_summary(result['scores'])
+            response += "\n\nYour character is ready! Would you like to start your adventure?"
             
         elif assignment_type == 'manual':
-            # Manual stat assignment
-            stats = data.get('stats', {})
-            is_valid, error_msg = game.character_generator.guided_completion.validate_manual_stats(stats)
+            # Manual assignment - validate the provided scores
+            manual_scores = data.get('scores', {})
+            is_valid, error_message = game.character_generator.guided_completion.validate_manual_stats(manual_scores)
             
             if is_valid:
-                game.character_generator.character_data['ability_scores'] = stats
+                modifiers = game.character_generator.ability_score_system.calculate_modifiers(manual_scores)
+                
+                game.character_generator.character_data['ability_scores'] = manual_scores
+                game.character_generator.character_data['ability_modifiers'] = modifiers
                 game.character_generator.guided_completion.stat_assignment_mode = StatAssignmentMode.MANUAL
                 
-                response = f"Great! Your ability scores are set:\n\n"
-                response += f"Strength: {stats['strength']}\n"
-                response += f"Dexterity: {stats['dexterity']}\n"
-                response += f"Constitution: {stats['constitution']}\n"
-                response += f"Intelligence: {stats['intelligence']}\n"
-                response += f"Wisdom: {stats['wisdom']}\n"
-                response += f"Charisma: {stats['charisma']}\n\n"
-                response += "Your character is ready! Would you like to start your adventure?"
+                response = f"Perfect! Your manually assigned ability scores are valid:\n\n"
+                response += game.character_generator.guided_completion.get_ability_score_summary(manual_scores)
+                response += "\n\nYour character is ready! Would you like to start your adventure?"
             else:
-                response = f"Those scores don't quite work: {error_msg}. Please try again with valid ability scores."
+                response = f"❌ Invalid ability scores: {error_message}\n\nPlease check your scores and try again."
         
         else:
-            response = "Please choose 'auto' or 'manual' for stat assignment."
-        
-        game.character_generator.conversation_history.append({"role": "assistant", "content": response})
+            response = "❌ Invalid assignment type. Please choose 'auto', 'standard_array', 'point_buy', 'roll', or 'manual'."
         
         return jsonify({
-            'success': True,
-            'message': response,
-            'is_complete': assignment_type in ['auto', 'manual'] and 'error' not in response.lower(),
-            'current_step': 'complete' if 'ready' in response else 'stat_assignment'
+            "success": True,
+            "response": response,
+            "character_data": game.character_generator.get_character_data()
         })
         
     except Exception as e:
-        logger.error(f"Error assigning stats: {e}")
-        return jsonify({'success': False, 'message': 'Error assigning ability scores.'})
+        logger.error(f"❌ Error assigning ability scores: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Error assigning ability scores: {str(e)}"
+        })
 
-@app.route('/api/character/create/load-draft', methods=['POST'])
-def load_character_draft():
-    """Load a saved character draft and resume the conversation flow."""
+
+
+@app.route('/api/character/create/ability-scores/validate', methods=['POST'])
+def validate_ability_scores():
+    """Validate manually entered ability scores."""
     try:
         data = request.get_json()
-        draft_id = data.get('draft_id', None)
-        if not draft_id:
-            return jsonify({'success': False, 'message': 'Draft ID required.'})
-        draft_path = f"logs/character_creation_sessions/{draft_id}.jsonl"
-        if not os.path.exists(draft_path):
-            return jsonify({'success': False, 'message': 'Draft not found.'})
-        # Read metadata and fact state
-        with open(draft_path, 'r') as f:
-            lines = f.readlines()
-        # First line is metadata block
-        metadata = json.loads(lines[0].strip().lstrip('# '))
-        # Remaining lines are fact logs (optional for future use)
-        # Restore fact_types and character_data
-        game.character_generator.fact_types = metadata['fact_types']
-        game.character_generator.character_data = metadata['character_data']
-        game.character_generator.session_id = draft_id
-        game.character_generator.session_start_time = metadata.get('session_start_time')
-        # Resume validation/conversation
-        missing = [k for k, v in game.character_generator.fact_types.items() if v['required'] and not v['extracted']]
-        if missing:
-            prompt = f"Draft loaded. I still need: {', '.join(missing)}. Please provide more details."
+        scores = data.get('scores', {})
+        method = data.get('method', 'manual')
+        
+        # Convert method string to enum
+        method_enum = AbilityScoreMethod.MANUAL
+        if method == 'standard_array':
+            method_enum = AbilityScoreMethod.STANDARD_ARRAY
+        elif method == 'point_buy':
+            method_enum = AbilityScoreMethod.POINT_BUY
+        elif method == 'roll_4d6_drop_lowest':
+            method_enum = AbilityScoreMethod.ROLL_4D6_DROP_LOWEST
+        
+        is_valid, message = game.character_generator.ability_score_system.validate_scores(scores, method_enum)
+        
+        if is_valid:
+            modifiers = game.character_generator.ability_score_system.calculate_modifiers(scores)
+            summary = game.character_generator.guided_completion.get_ability_score_summary(scores)
+            
+            return jsonify({
+                "success": True,
+                "valid": True,
+                "message": message,
+                "modifiers": modifiers,
+                "summary": summary
+            })
         else:
-            prompt = game.character_generator.get_fact_summary() + '\nAre you ready to start your adventure with this character?'
-        return jsonify({'success': True, 'message': prompt, 'fact_types': game.character_generator.fact_types})
+            return jsonify({
+                "success": True,
+                "valid": False,
+                "message": message
+            })
+        
     except Exception as e:
-        logger.error(f"Error loading draft: {e}")
-        return jsonify({'success': False, 'message': 'Error loading draft.'})
+        logger.error(f"❌ Error validating ability scores: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Error validating ability scores: {str(e)}"
+        })
+
+@app.route('/api/character/create/ability-scores/current', methods=['GET'])
+def get_current_ability_scores():
+    """Get current ability scores and modifiers."""
+    try:
+        scores = game.character_generator.character_data.get('ability_scores', {})
+        modifiers = game.character_generator.character_data.get('ability_modifiers', {})
+        
+        if scores:
+            summary = game.character_generator.guided_completion.get_ability_score_summary(scores)
+            
+            return jsonify({
+                "success": True,
+                "scores": scores,
+                "modifiers": modifiers,
+                "summary": summary
+            })
+        else:
+            return jsonify({
+                "success": True,
+                "scores": None,
+                "modifiers": None,
+                "summary": "No ability scores assigned yet."
+            })
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting current ability scores: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Error getting current ability scores: {str(e)}"
+        })
+
+@app.route('/api/character/create/ability-scores/assign', methods=['POST'])
+def assign_ability_scores():
+    """Assign ability scores using the specified method."""
+    try:
+        data = request.get_json()
+        method = data.get('method', 'auto')
+        
+        if method == 'auto':
+            # Auto-assign based on character story
+            scores = game.character_generator.ability_score_system.assign_auto_based_on_story(
+                game.character_generator.character_data
+            )
+            modifiers = game.character_generator.ability_score_system.calculate_modifiers(scores)
+            
+            game.character_generator.character_data['ability_scores'] = scores
+            game.character_generator.character_data['ability_modifiers'] = modifiers
+            
+            response = f"Perfect! I've assigned your ability scores based on your character's story:\n\n"
+            response += game.character_generator.guided_completion.get_ability_score_summary(scores)
+            response += "\n\nYour character is ready! Would you like to start your adventure?"
+            
+        elif method == 'standard_array':
+            # Use SRD 5.2 standard array
+            scores = game.character_generator.ability_score_system.assign_standard_array(
+                game.character_generator.character_data
+            )
+            modifiers = game.character_generator.ability_score_system.calculate_modifiers(scores)
+            
+            game.character_generator.character_data['ability_scores'] = scores
+            game.character_generator.character_data['ability_modifiers'] = modifiers
+            
+            response = f"Great! I've assigned the SRD 5.2 standard array:\n\n"
+            response += game.character_generator.guided_completion.get_ability_score_summary(scores)
+            response += "\n\nYour character is ready! Would you like to start your adventure?"
+            
+        elif method == 'point_buy':
+            # Use SRD 5.2 point buy system
+            scores = game.character_generator.ability_score_system.assign_point_buy(
+                game.character_generator.character_data
+            )
+            modifiers = game.character_generator.ability_score_system.calculate_modifiers(scores)
+            
+            game.character_generator.character_data['ability_scores'] = scores
+            game.character_generator.character_data['ability_modifiers'] = modifiers
+            
+            response = f"Excellent! I've assigned scores using the SRD 5.2 point buy system:\n\n"
+            response += game.character_generator.guided_completion.get_ability_score_summary(scores)
+            response += "\n\nYour character is ready! Would you like to start your adventure?"
+            
+        elif method == 'roll':
+            # Use 4d6 drop lowest method
+            scores = game.character_generator.ability_score_system.assign_rolled_scores(
+                game.character_generator.character_data
+            )
+            modifiers = game.character_generator.ability_score_system.calculate_modifiers(scores)
+            
+            game.character_generator.character_data['ability_scores'] = scores
+            game.character_generator.character_data['ability_modifiers'] = modifiers
+            
+            response = f"Fantastic! I've rolled your ability scores using 4d6 drop lowest:\n\n"
+            response += game.character_generator.guided_completion.get_ability_score_summary(scores)
+            response += "\n\nYour character is ready! Would you like to start your adventure?"
+            
+        elif method == 'manual':
+            # Manual assignment - validate the provided scores
+            manual_scores = data.get('scores', {})
+            is_valid, error_message = game.character_generator.ability_score_system.validate_scores(
+                manual_scores, AbilityScoreMethod.MANUAL
+            )
+            
+            if is_valid:
+                modifiers = game.character_generator.ability_score_system.calculate_modifiers(manual_scores)
+                
+                game.character_generator.character_data['ability_scores'] = manual_scores
+                game.character_generator.character_data['ability_modifiers'] = modifiers
+                
+                response = f"Perfect! Your manually assigned ability scores are valid:\n\n"
+                response += game.character_generator.guided_completion.get_ability_score_summary(manual_scores)
+                response += "\n\nYour character is ready! Would you like to start your adventure?"
+            else:
+                response = f"❌ Invalid ability scores: {error_message}\n\nPlease check your scores and try again."
+        
+        else:
+            response = "❌ Invalid assignment type. Please choose 'auto', 'standard_array', 'point_buy', 'roll', or 'manual'."
+        
+        return jsonify({
+            "success": True,
+            "response": response,
+            "character_data": game.character_generator.get_character_data()
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error assigning ability scores: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Error assigning ability scores: {str(e)}"
+        })
+
+@app.route('/api/character/create/ability-scores/methods', methods=['GET'])
+def get_ability_score_methods():
+    """Get available ability score assignment methods."""
+    try:
+        # Safely get character class, defaulting to 'fighter' if not set
+        char_class = game.character_generator.character_data.get('class')
+        char_class = (char_class or '')
+        
+        methods = {
+            "auto": {
+                "name": "Automatic (Story-Based)",
+                "description": "I'll assign scores based on your character's story and personality",
+                "recommended": True
+            },
+            "standard_array": {
+                "name": "Standard Array",
+                "description": "Use the SRD 5.2 standard array: 15, 14, 13, 12, 10, 8",
+                "recommended": False
+            },
+            "point_buy": {
+                "name": "Point Buy",
+                "description": "Use the SRD 5.2 point buy system (27 points)",
+                "recommended": False
+            },
+            "roll": {
+                "name": "Roll 4d6 Drop Lowest",
+                "description": "Roll 4d6 for each ability, drop the lowest die",
+                "recommended": False
+            },
+            "manual": {
+                "name": "Manual Entry",
+                "description": "Enter your own ability scores",
+                "recommended": False
+            }
+        }
+        
+        # Add class recommendations
+        recommendations = game.character_generator.ability_score_system.get_class_recommendations(char_class)
+        
+        # Safely format current class
+        current_class = 'Unknown'
+        if char_class:
+            current_class = char_class.title()
+        
+        return jsonify({
+            "success": True,
+            "methods": methods,
+            "class_recommendations": recommendations,
+            "current_class": current_class
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting ability score methods: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Error getting ability score methods: {str(e)}"
+        })
+
+@app.route('/api/character/create/races', methods=['GET'])
+def get_available_races():
+    """Get available races with their descriptions and bonuses."""
+    try:
+        races = racial_modifiers.get_available_races()
+        
+        return jsonify({
+            "success": True,
+            "races": races
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting available races: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Error getting available races: {str(e)}"
+        })
+
+@app.route('/api/character/create/races/<race_name>', methods=['GET'])
+def get_race_info(race_name):
+    """Get detailed information about a specific race."""
+    try:
+        # from utils.racial_modifiers import racial_modifiers  # Removed duplicate import
+        race_info = racial_modifiers.get_race_info(race_name)
+        if not race_info:
+            return jsonify({
+                "success": False,
+                "error": f"Race '{race_name}' not found"
+            })
+        
+        # Get recommended races for current class
+        char_class = game.character_generator.character_data.get('class', '')
+        recommended_races = racial_modifiers.get_recommended_races_for_class(char_class)
+        
+        return jsonify({
+            "success": True,
+            "race": race_info,
+            "recommended_for_class": race_name.lower() in recommended_races,
+            "current_class": char_class
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting race info: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Error getting race info: {str(e)}"
+        })
+
+@app.route('/api/character/create/races/<race_name>/subraces', methods=['GET'])
+def get_subraces(race_name):
+    """Get available subraces for a specific race."""
+    try:
+        # from utils.racial_modifiers import racial_modifiers  # Removed duplicate import
+        race_info = racial_modifiers.get_race_info(race_name)
+        if not race_info:
+            return jsonify({
+                "success": False,
+                "error": f"Race '{race_name}' not found"
+            })
+        
+        subraces = []
+        for subrace in race_info['subraces']:
+            subrace_info = racial_modifiers.get_subrace_info(subrace.lower())
+            if subrace_info:
+                subraces.append({
+                    'name': subrace,
+                    'ability_bonuses': {k: v for k, v in subrace_info.items() if k != 'traits'},
+                    'traits': subrace_info.get('traits', [])
+                })
+        
+        return jsonify({
+            "success": True,
+            "race": race_name,
+            "subraces": subraces
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting subraces: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Error getting subraces: {str(e)}"
+        })
+
+@app.route('/api/character/create/ability-scores/assign-with-race', methods=['POST'])
+def assign_ability_scores_with_race():
+    """Assign ability scores using the specified method and apply racial modifiers."""
+    try:
+        data = request.get_json()
+        method = data.get('method', 'auto')
+        race = data.get('race', 'human')
+        subrace = data.get('subrace')
+        # from utils.racial_modifiers import racial_modifiers  # Removed duplicate import
+        if not racial_modifiers.validate_race_subrace_combination(race, subrace):
+            return jsonify({
+                "success": False,
+                "error": f"Invalid race/subrace combination: {race}/{subrace}"
+            })
+        
+        # Assign base scores
+        if method == 'auto':
+            base_scores = game.character_generator.ability_score_system.assign_auto_based_on_story(
+                game.character_generator.character_data
+            )
+        elif method == 'standard_array':
+            base_scores = game.character_generator.ability_score_system.assign_standard_array(
+                game.character_generator.character_data
+            )
+        elif method == 'point_buy':
+            base_scores = game.character_generator.ability_score_system.assign_point_buy(
+                game.character_generator.character_data
+            )
+        elif method == 'roll':
+            base_scores = game.character_generator.ability_score_system.assign_rolled_scores(
+                game.character_generator.character_data
+            )
+        elif method == 'manual':
+            base_scores = data.get('scores', {})
+            is_valid, error_message = game.character_generator.ability_score_system.validate_scores(
+                base_scores, AbilityScoreMethod.MANUAL
+            )
+            if not is_valid:
+                return jsonify({
+                    "success": False,
+                    "error": f"Invalid manual scores: {error_message}"
+                })
+        else:
+            return jsonify({
+                "success": False,
+                "error": "Invalid assignment method"
+            })
+        
+        # Apply racial modifiers
+        final_scores = game.character_generator.ability_score_system.apply_racial_modifiers(
+            base_scores, race, subrace
+        )
+        
+        # Calculate modifiers
+        modifiers = game.character_generator.ability_score_system.calculate_modifiers(final_scores)
+        
+        # Store in character data
+        game.character_generator.character_data['ability_scores'] = final_scores
+        game.character_generator.character_data['ability_modifiers'] = modifiers
+        game.character_generator.character_data['race'] = race
+        if subrace:
+            game.character_generator.character_data['subrace'] = subrace
+        
+        # Get racial summary
+        racial_summary = game.character_generator.ability_score_system.get_racial_summary(race, subrace)
+        
+        # Format response
+        response = f"Perfect! I've assigned your ability scores using {method.replace('_', ' ').title()} and applied {race.title()}"
+        if subrace:
+            response += f" ({subrace.title()})"
+        response += " racial modifiers:\n\n"
+        
+        response += game.character_generator.guided_completion.get_ability_score_summary(final_scores)
+        response += f"\n\n{racial_summary}\n\nYour character is ready! Would you like to start your adventure?"
+        
+        return jsonify({
+            "success": True,
+            "response": response,
+            "character_data": game.character_generator.get_character_data(),
+            "base_scores": base_scores,
+            "racial_bonuses": {
+                ability: final_scores[ability] - base_scores[ability]
+                for ability in final_scores
+                if final_scores[ability] != base_scores[ability]
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error assigning ability scores with race: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Error assigning ability scores with race: {str(e)}"
+        })
+
+@app.route('/api/character/create/races/recommendations', methods=['GET'])
+def get_race_recommendations():
+    """Get race recommendations based on current character class."""
+    try:
+        # from utils.racial_modifiers import racial_modifiers  # Removed duplicate import
+        char_class = game.character_generator.character_data.get('class', '')
+        recommended_races = racial_modifiers.get_recommended_races_for_class(char_class)
+        
+        # Get detailed info for recommended races
+        race_details = {}
+        for race in recommended_races:
+            race_info = racial_modifiers.get_race_info(race)
+            if race_info:
+                race_details[race] = {
+                    'name': race_info['name'],
+                    'description': race_info['description'],
+                    'ability_bonuses': race_info['ability_bonuses']
+                }
+        
+        return jsonify({
+            "success": True,
+            "current_class": char_class,
+            "recommended_races": recommended_races,
+            "race_details": race_details
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting race recommendations: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Error getting race recommendations: {str(e)}"
+        })
 
 if __name__ == '__main__':
-    print("🎲 Starting Simple Unified SoloHeart Narrative Interface...")
-    print("Access the game at: http://localhost:5001")
+    print("🎲 Starting The Narrative Engine D&D Demo...")
+    print("Access the demo at: http://localhost:5001")
     print("Press Ctrl+C to stop the server")
     app.run(host='0.0.0.0', port=5001, debug=False)

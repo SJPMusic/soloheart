@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-SoloHeart Narrative Engine Integration
+The Narrative Engine D&D Demo - TNE Integration
 
-This module integrates the unified Narrative Engine as a sophisticated memory and context system
-that provides Ollama with structured, relevant context for maintaining narrative coherence
-and continuity. It never directs or guides the story - only informs.
+This module integrates The Narrative Engine (TNE) for symbolic processing visualization
+and memory flow display. It provides structured, relevant context for maintaining
+narrative coherence and continuity through symbolic analysis and memory management.
 
-The integration follows the Narrative Engine manifesto:
+The integration follows TNE's symbolic processing principles:
+- Archetype detection and pattern recognition
+- Symbolic reasoning and insight generation
 - Memory-driven continuity with layered decay
-- Causal inference connecting events by consequence
-- Emergent storytelling through evolving state
-- Domain-agnostic architecture
+- Domain-agnostic architecture with clean modular boundaries
 """
 
 import json
@@ -36,21 +36,20 @@ except ImportError as e:
     logger.error("Make sure the narrative_core directory is properly set up")
     raise
 
-class SoloHeartNarrativeEngine:
+class TNEDemoEngine:
     """
-    SoloHeart-specific integration of the Narrative Engine.
-    Provides campaign context, character tracking, and memory surfacing for Ollama.
+    TNE Demo integration for symbolic processing visualization and memory flow display.
+    Provides campaign context, character tracking, and memory surfacing for LLM providers.
     
-    This integration treats the Narrative Engine as a memory and context system
-    that feeds structured, meaningful data to Ollama, but never scripts or directs
-    story outcomes.
+    This integration treats TNE as a symbolic processing system that feeds structured,
+    meaningful data to LLM providers, while maintaining clean modular boundaries.
     """
     
     def __init__(self, campaign_id: str = "default"):
         self.campaign_id = campaign_id
         self.engine = NarrativeEngine(campaign_id=campaign_id, data_dir="narrative_data")
         self.session_id = f"session_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-        logger.info(f"🔧 Initialized SoloHeart Narrative Engine for campaign: {campaign_id}")
+        logger.info(f"🔧 Initialized TNE Demo Engine for campaign: {campaign_id}")
     
     def record_character_creation(self, character_data: Dict[str, Any]) -> str:
         """

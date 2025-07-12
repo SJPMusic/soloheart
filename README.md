@@ -1,116 +1,118 @@
-# SoloHeart - Enhanced Natural Language DnD 5E Character Creation
+# The Narrative Engine D&D Demo
 
-> **A solo tabletop RPG featuring enhanced natural language character creation that extracts and commits facts immediately from freeform player input, powered by Ollama LLM integration and a domain-agnostic Narrative Engine.**
+> **A demonstration application showcasing The Narrative Engine's symbolic processing capabilities through interactive character creation and narrative development workflows, featuring clean input/output routing and symbolic state visualization.**
 
-![Demo Status](https://img.shields.io/badge/status-Enhanced%20Character%20Creation%20%E2%80%93%20Actively%20Developing-blue)
+![Demo Status](https://img.shields.io/badge/status-TNE%20Demo%20Layer%20%E2%80%93%20Active-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Python](https://img.shields.io/badge/python-3.9+-blue)
-![LLM](https://img.shields.io/badge/LLM-Ollama%20llama3-orange)
+![LLM](https://img.shields.io/badge/LLM-Gemma%20Integration-orange)
 
-## What is SoloHeart?
+## What is The Narrative Engine D&D Demo?
 
-SoloHeart is a solo tabletop RPG that demonstrates advanced natural language character creation and a domain-agnostic Narrative Engine. Unlike traditional character creation systems that ask linear questions, SoloHeart extracts multiple character facts from freeform player input without requiring explicit prompts or default values.
+The Narrative Engine D&D Demo is a lightweight orchestration layer that demonstrates The Narrative Engine's symbolic processing capabilities through interactive character creation and narrative development workflows. It serves as a reference implementation for symbolic bridge input routing, goal inference monitoring, episodic and semantic memory integration, and LLM-assisted narrative decision modeling.
+
+**Key Demonstration Features:**
+- **Symbolic Bridge Routing**: Clean handoff of user input through TNB to TNE
+- **Memory State Visualization**: Display of episodic, semantic, and emotional memory flows
+- **Goal Inference Monitoring**: Real-time tracking of narrative goal completion
+- **Symbolic Pattern Recognition**: Visualization of archetype detection and symbolic reasoning
+- **LLM Response Enrichment**: Display of memory-enhanced narrative outputs
 
 **Key Innovations:**
-- **Immediate Fact Commitment**: Facts are committed to character sheet immediately, avoiding staging states
-- **LLM-Powered Extraction**: Uses Ollama's llama3 model for semantic understanding of character descriptions
-- **Natural Language Processing**: Robust pattern-matching with LLM fallback for complex extractions
-- **DnD 5E Compliance**: Tracks all required character sheet fields automatically
-- **Live Character Sheet**: Real-time character sheet updates as you describe your character
-- **Guided Completion**: Intelligent fallback to guided questions only when truly ambiguous
-- **Domain-Agnostic Narrative Engine**: Modular memory and context system for narrative continuity
-- **Game-Specific Features**: Support for inspiration points and saving throws in integration layer
+- **Symbolic Processing Demonstration**: Showcases TNE's archetype detection and symbolic reasoning
+- **Memory Flow Visualization**: Displays episodic, semantic, and emotional memory retrieval
+- **Goal State Tracking**: Real-time visualization of narrative goal completion and inference
+- **Bridge Routing Compliance**: Follows TNB's input/output patterns exactly
+- **LLM-Native Integration**: Leverages Gemma's autonomous narrative generation capabilities
+- **Clean Modular Boundaries**: Maintains strict separation from core TNE/TNB architecture
+- **Symbolic State Display**: Visualizes symbolic patterns, transformations, and insights
+- **Memory Context Enrichment**: Shows how retrieved memories enhance LLM responses
 
-## Enhanced Character Creation System
+## TNE Demonstration System
 
 ### How It Works
 
 ```
-Player Input → LLM Extraction → Pattern Matching → Immediate Commitment → Live Character Sheet
+User Input → TNB Bridge → TNE Processing → Symbolic Analysis → Response Display
      ↓              ↓                ↓                    ↓                ↓
-Natural Language → Semantic Analysis → Regex Patterns → Character State → Real-time Updates
+Narrative Input → Memory Retrieval → Symbolic Processing → Pattern Detection → Enriched Output
      ↓              ↓                ↓                    ↓                ↓
-Freeform Description → Context Understanding → Fact Extraction → No Staging → Instant Feedback
+Character Creation → Context Injection → Archetype Recognition → Goal Tracking → Memory Visualization
 ```
 
-### Example Character Creation
+### Example TNE Demonstration
 
-**Player Input:**
+**User Input:**
 > "My character is Kaelen Thorne. He's a 35-year-old former blacksmith who lost everything when his forge was burned down in a raid. He has a badly scarred left arm and a deep distrust of authority. Kaelen carries a massive hammer—his own creation—and wears a leather apron like armor. He doesn't call himself a warrior, but when things go bad, he's the first to step in. He's loyal to those who earn it, and he's searching for the raiders who destroyed his home, hoping for justice… or revenge."
 
-**System Extracts:**
-- **Name**: Kaelen Thorne
-- **Age**: 35
-- **Race**: Human
-- **Class**: Fighter
-- **Background**: Soldier
-- **Gender**: Male
-- **Combat Style**: Massive hammer, leather apron armor
-- **Personality**: Loyal, distrustful of authority
-- **Motivations**: Justice, revenge
-- **Trauma**: Lost forge in raid, scarred arm
-- **Gear**: Massive hammer, leather apron
+**TNE Symbolic Analysis:**
+- **Archetype Detection**: Hero's Journey pattern (transformation, quest for justice)
+- **Symbolic Patterns**: Rebirth cycle (loss → transformation → quest)
+- **Memory Integration**: Episodic (raid trauma), Semantic (blacksmith skills), Emotional (distrust, loyalty)
+- **Goal Inference**: Justice/revenge quest, protection of allies, personal transformation
+- **Symbolic Reasoning**: Transformation from craftsman to protector, loss as catalyst for growth
 
 ### Core Features
 
-#### 1. LLM-Powered Semantic Extraction
-- **Primary Method**: Uses Ollama's llama3 model for semantic understanding
-- **Structured Output**: LLM extracts facts into JSON format
-- **Context Awareness**: Understands relationships between facts
-- **Ambiguity Detection**: Identifies when facts need confirmation
+#### 1. Symbolic Bridge Routing
+- **TNB Integration**: Clean handoff of user input through Narrative Bridge
+- **Memory Retrieval**: Demonstrates episodic, semantic, and emotional memory flows
+- **Context Injection**: Shows how relevant memories enhance LLM prompts
+- **Output Processing**: Visualizes extraction of narrative-relevant information
 
-#### 2. Robust Pattern Matching
-- **Fallback System**: Pattern-matching when LLM extraction fails
-- **Confidence Scoring**: Only commits high-confidence facts
-- **Multiple Fact Types**: Extracts race, class, background, gear, motivations, trauma
-- **Context Clues**: Uses surrounding text to infer missing information
+#### 2. Symbolic State Visualization
+- **Archetype Detection**: Displays recognition of universal narrative patterns
+- **Pattern Recognition**: Shows transformation, conflict, and resolution cycles
+- **Symbolic Reasoning**: Visualizes computational analysis of symbolic relationships
+- **Insight Generation**: Displays meaningful interpretations of symbolic patterns
 
-#### 3. Immediate Fact Commitment
-- **No Staging**: Facts committed directly to character sheet
-- **Live Updates**: Character sheet updates in real-time
-- **Ambiguity Handling**: Only asks for confirmation when truly ambiguous
-- **Confidence Thresholds**: Configurable confidence levels for different fact types
+#### 3. Memory Flow Display
+- **Episodic Memory**: Shows retrieval of past interactions and events
+- **Semantic Memory**: Demonstrates concept and knowledge recall capabilities
+- **Emotional Memory**: Visualizes emotional context and relationship dynamics
+- **Memory Relevance**: Displays relevance scores and contextual weighting
 
-#### 4. Live Character Sheet
-- **Real-time Display**: Character sheet updates as you type
-- **Visual Feedback**: See what facts have been captured
-- **Missing Fields**: Clear indication of what's still needed
-- **Responsive Design**: Works on desktop and mobile
+#### 4. Goal State Tracking
+- **Goal Inference**: Shows automatic detection of narrative objectives
+- **Progress Visualization**: Displays completion status of narrative goals
+- **Goal Evolution**: Tracks how goals change and develop over time
+- **Completion Indicators**: Highlights achieved narrative milestones
 
-#### 5. Guided Completion System
-- **Intelligent Fallback**: Only transitions to guided questions when necessary
-- **Context Preservation**: Maintains all extracted facts during guided completion
-- **Natural Flow**: Seamless transition from natural language to guided questions
-- **Completion Tracking**: Automatically tracks required DnD 5E fields
+#### 5. LLM Response Enrichment
+- **Memory Context**: Shows how retrieved memories enhance LLM responses
+- **Symbolic Insights**: Displays symbolic analysis of narrative content
+- **Response Analysis**: Visualizes the impact of memory on narrative generation
+- **Enrichment Display**: Highlights memory-influenced narrative elements
 
-#### 6. Domain-Agnostic Narrative Engine
-- **Modular Design**: Core engine independent of game mechanics
-- **Layered Memory**: Episodic, semantic, procedural, and emotional memory layers
-- **Context Surfacing**: Provides relevant narrative context to LLM
-- **Memory Management**: Intelligent memory storage and retrieval
-- **Integration Layer**: Clean separation between core engine and game-specific features
+#### 6. Clean Modular Boundaries
+- **Demo Layer Only**: Focuses exclusively on demonstration and visualization
+- **No Core Logic**: All narrative processing delegated to TNE/TNB systems
+- **UI/UX Focus**: Emphasizes user experience and interface design
+- **Integration Testing**: Validates proper communication with core systems
 
-#### 7. Game-Specific Features
-- **Inspiration Points**: Track and manage character inspiration
-- **Saving Throws**: Store and retrieve saving throw modifiers
-- **Domain Encapsulation**: All game-specific data stored in `current_state`
-- **Clean Integration**: Game features don't affect core Narrative Engine
+#### 7. LLM Provider Orchestration
+- **Gemma Integration**: Primary provider for autonomous narrative generation
+- **Provider Abstraction**: Uses llm_provider_base.py pattern for clean routing
+- **Environment Configuration**: .env-based control of active LLM backend
+- **Fallback Support**: Maintains Ollama fallback for testing and validation
 
 ## Technology Stack
 
-- **Backend**: Python, Flask, Ollama (local LLM)
-- **Character Creation**: Enhanced fact extraction with immediate commitment
-- **LLM Integration**: Ollama llama3 model for semantic understanding
-- **Pattern Matching**: Robust regex patterns for fallback extraction
+- **Backend**: Python, Flask, Gemma API integration
+- **Demo Layer**: Lightweight orchestration and visualization
+- **LLM Integration**: Gemma for autonomous narrative generation
+- **Bridge Routing**: TNB integration for memory retrieval and prompt construction
 - **Frontend**: HTML5, CSS3, JavaScript (mobile-responsive)
-- **Narrative Engine**: Domain-agnostic memory and context system
-- **Compliance**: SRD 5.2 compliant, fully rebranded as SoloHeart
+- **Symbolic Processing**: TNE integration for archetype detection and reasoning
+- **Memory Visualization**: Display of episodic, semantic, and emotional memory flows
 
 ## Quick Start
 
 ### Prerequisites
 - Python 3.9+
-- Ollama with llama3 model (local LLM)
+- Gemma API access (or Ollama fallback for testing)
+- TNB server running on localhost:3000
+- TNE server running on localhost:5000
 
 ### Installation
 1. **Clone the repository**:
@@ -124,112 +126,115 @@ Freeform Description → Context Understanding → Fact Extraction → No Stagin
    pip install -r requirements.txt
    ```
 
-3. **Set up Ollama**:
+3. **Configure environment**:
    ```bash
-   # Install Ollama (macOS)
-   brew install ollama
+   # Copy environment template
+   cp env.template .env
    
-   # Start Ollama service
-   brew services start ollama
-   
-   # Pull the llama3 model
-   ollama pull llama3
+   # Set LLM provider (gemma or ollama)
+   echo "LLM_PROVIDER=gemma" >> .env
    ```
 
-### Running SoloHeart
+### Running The Narrative Engine D&D Demo
 ```bash
 python simple_unified_interface.py
 ```
 
-Access the game at: [http://localhost:5001](http://localhost:5001)
+Access the demo at: [http://localhost:5001](http://localhost:5001)
 
-## Character Creation Walkthrough
+## TNE Demonstration Walkthrough
 
-### 1. Natural Language Input
-- Describe your character concept in detail using natural language
-- Include race, class, background, personality, motivations, gear, trauma
-- No need to follow specific prompts or answer linear questions
-- System extracts multiple facts simultaneously
+### 1. Narrative Input Capture
+- Describe your character concept using natural language
+- Include background, personality, motivations, and story elements
+- System routes input through TNB for memory retrieval
+- No manual prompt construction or staging required
 
-### 2. Immediate Fact Commitment
-- Facts are committed to character sheet immediately
-- No staging or pending states
-- Live character sheet shows what's been captured
-- Only requests confirmation for truly ambiguous facts
+### 2. Symbolic Bridge Routing
+- Input automatically routed through TNB bridge
+- Memory retrieval from TNE (episodic, semantic, emotional)
+- Context injection into LLM prompts
+- Clean handoff to TNE for symbolic processing
 
-### 3. LLM-Powered Understanding
-- Primary extraction uses Ollama's llama3 model
-- Semantic understanding of character descriptions
-- Context-aware fact extraction
-- Handles complex, multi-sentence descriptions
+### 3. Symbolic State Visualization
+- Archetype detection and pattern recognition displayed
+- Symbolic reasoning and insight generation shown
+- Goal inference and completion tracking visualized
+- Real-time updates of symbolic processing results
 
-### 4. Pattern Matching Fallback
-- Robust regex patterns when LLM extraction fails
-- Confidence scoring for all extracted facts
-- Context clues for inferring missing information
-- Multiple extraction strategies for different fact types
+### 4. Memory Flow Display
+- Episodic memory retrieval and relevance scoring
+- Semantic memory integration and concept recall
+- Emotional memory context and relationship dynamics
+- Memory impact on narrative generation highlighted
 
-### 5. Guided Completion
-- Intelligent transition to guided questions only when needed
-- Preserves all extracted facts during guided completion
-- Tracks missing DnD 5E required fields
-- Natural flow from freeform to guided input
+### 5. Enriched Response Display
+- LLM responses enhanced with memory context
+- Symbolic insights and pattern analysis included
+- Goal progress and completion indicators shown
+- Memory-influenced narrative elements highlighted
 
 ## Key Innovations
 
-### Enhanced Fact Extraction
-- **LLM Primary**: Semantic understanding with Ollama llama3
-- **Pattern Fallback**: Robust regex patterns for reliability
-- **Multi-Fact Extraction**: Extracts multiple facts simultaneously
-- **Context Awareness**: Uses surrounding text for inference
-- **Confidence Scoring**: Only commits high-confidence facts
+### Symbolic Processing Demonstration
+- **Archetype Detection**: Recognition of universal narrative patterns
+- **Pattern Recognition**: Transformation, conflict, and resolution cycles
+- **Symbolic Reasoning**: Computational analysis of symbolic relationships
+- **Insight Generation**: Meaningful interpretations of symbolic patterns
+- **Goal Inference**: Automatic detection of narrative objectives
 
-### Immediate Commitment System
-- **No Staging**: Facts committed directly to character sheet
-- **Live Updates**: Real-time character sheet updates
-- **Ambiguity Detection**: Only asks for confirmation when truly ambiguous
-- **Confidence Thresholds**: Configurable for different fact types
+### Memory Flow Visualization
+- **Episodic Memory**: Retrieval of past interactions and events
+- **Semantic Memory**: Concept and knowledge recall capabilities
+- **Emotional Memory**: Emotional context and relationship dynamics
+- **Memory Relevance**: Relevance scoring and contextual weighting
+- **Memory Impact**: Visualization of memory influence on responses
 
-### Live Character Sheet
-- **Real-time Display**: Updates as you describe your character
-- **Visual Feedback**: Clear indication of captured facts
-- **Missing Fields**: Shows what's still needed
-- **Responsive Design**: Works on all devices
+### Bridge Routing Compliance
+- **TNB Integration**: Clean handoff of user input through Narrative Bridge
+- **Memory Injection**: Shows how relevant memories enhance LLM prompts
+- **Context Preservation**: Demonstrates narrative continuity across sessions
+- **Output Processing**: Visualizes extraction of narrative-relevant information
+- **Symbolic Integrity**: Maintains TNE's cross-domain applicability
 
-### Guided Completion
-- **Intelligent Transition**: Only when truly ambiguous
-- **Context Preservation**: Maintains all extracted facts
-- **Natural Flow**: Seamless from freeform to guided
-- **Completion Tracking**: Tracks DnD 5E required fields
+### LLM-Native Integration
+- **Gemma Integration**: Autonomous narrative generation capabilities
+- **Provider Abstraction**: Clean routing through llm_provider_base.py pattern
+- **Environment Configuration**: .env-based control of active LLM backend
+- **Fallback Support**: Ollama fallback for testing and validation
+- **Token Management**: Optimized for each model's capabilities
 
-### Domain-Agnostic Narrative Engine
-- **Modular Design**: Core engine independent of game mechanics
-- **Layered Memory**: Episodic, semantic, procedural, emotional layers
-- **Context Surfacing**: Provides relevant narrative context to LLM
-- **Memory Management**: Intelligent storage and retrieval
-- **Integration Layer**: Clean separation between core and game-specific features
-
-### Game-Specific Features
-- **Inspiration Points**: Track and manage character inspiration
-- **Saving Throws**: Store and retrieve saving throw modifiers
-- **Domain Encapsulation**: All game-specific data in `current_state`
-- **Clean Integration**: Game features don't affect core engine
+### Clean Modular Boundaries
+- **Demo Layer Only**: Focuses exclusively on demonstration and visualization
+- **No Core Logic**: All narrative processing delegated to TNE/TNB systems
+- **UI/UX Focus**: Emphasizes user experience and interface design
+- **Integration Testing**: Validates proper communication with core systems
+- **Symbolic Integrity**: Full compliance with symbolic processing models
 
 ## Project Structure
 
 ```
 SoloHeart Project/
-├── solo_heart/                      # Main application
-│   ├── simple_unified_interface.py  # Main Flask application
+├── solo_heart/                      # TNE Demo Layer
+│   ├── simple_unified_interface.py  # Main demo application
 │   ├── templates/                   # UI templates
-│   ├── utils/                       # Utility functions
-│   │   ├── character_fact_extraction.py  # Fact extraction
-│   │   ├── guided_character_completion.py # Guided completion
-│   │   └── ollama_llm_service.py   # LLM integration
-│   ├── narrative_engine_integration.py # SoloHeart integration layer
-│   └── character_generator.py       # Character generation
-├── narrative_core/                  # Domain-agnostic Narrative Engine
-│   └── narrative_engine.py         # Core memory and context system
+│   ├── demo_layer/                  # Demonstration components
+│   │   ├── input_capture.py        # User input interfaces
+│   │   ├── output_display.py       # Response visualization
+│   │   ├── memory_visualizer.py    # Memory state display
+│   │   ├── goal_tracker.py         # Goal progress visualization
+│   │   └── symbolic_display.py     # Symbolic pattern visualization
+│   ├── routing/                     # Bridge routing components
+│   │   ├── tnb_bridge.py           # TNB integration
+│   │   ├── tne_connector.py        # TNE integration
+│   │   └── llm_orchestrator.py     # LLM provider management
+│   ├── config/                      # Configuration
+│   │   ├── provider_factory.py     # LLM provider selection
+│   │   └── environment.py          # Environment configuration
+│   └── utils/                       # Utility functions
+│       ├── json_renderer.py        # JSON response formatting
+│       ├── markdown_processor.py   # Markdown output processing
+│       └── symbolic_tags.py        # Symbolic tag visualization
 ├── docs/                           # Documentation
 ├── tests/                          # Test suite
 ├── requirements.txt                 # Dependencies
@@ -239,57 +244,60 @@ SoloHeart Project/
 
 ## Recent Improvements
 
-### Narrative Engine Domain-Agnostic Integrity (2025-07-05)
-- **Core Engine Cleanup**: Removed all domain-specific logic from Narrative Engine core
-- **Integration Layer**: Proper separation of universal vs game-specific fields
-- **Memory Layers**: Established episodic, semantic, procedural, and emotional memory layers
-- **Game Features**: Added inspiration points and saving throws support in integration layer
-- **Architectural Integrity**: Maintained clean separation between core engine and game features
+### TNE Demo Layer Pivot (2025-07-10)
+- **Architectural Pivot**: Transformed from standalone game to TNE demonstration layer
+- **Symbolic Processing Integration**: Clean integration with TNE's archetype detection and reasoning
+- **Bridge Routing Compliance**: Proper adherence to TNB's input/output patterns
+- **Memory Flow Visualization**: Display of episodic, semantic, and emotional memory flows
+- **Goal State Tracking**: Real-time visualization of narrative goal completion and inference
 
-### Project Cleanup (2025-07-04)
-- **Archived Redundant Files**: 50+ files and 4 duplicate directories
-- **Simplified Structure**: Cleaner project hierarchy
-- **Preserved History**: All files safely archived for recovery
-- **Better Maintainability**: Clear separation of active vs archived code
+### LLM Provider Migration (2025-07-09)
+- **Gemma Integration**: Migrated from Ollama to Gemma for autonomous narrative generation
+- **Provider Abstraction**: Implemented clean llm_provider_base.py pattern
+- **Environment Configuration**: .env-based control of active LLM backend
+- **Fallback Support**: Maintained Ollama fallback for testing and validation
+- **Timeout Optimization**: Increased timeout to 180 seconds for long prompts
 
-### Enhanced Character Creation
-- **LLM Integration**: Ollama llama3 for semantic understanding
-- **Immediate Commitment**: No staging states, direct character sheet updates
-- **Live Character Sheet**: Real-time visual feedback
-- **Robust Fallback**: Pattern matching when LLM extraction fails
+### Symbolic State Visualization
+- **Archetype Detection**: Display of universal narrative pattern recognition
+- **Pattern Recognition**: Visualization of transformation, conflict, and resolution cycles
+- **Symbolic Reasoning**: Real-time display of computational symbolic analysis
+- **Insight Generation**: Meaningful interpretations of symbolic patterns
+- **Goal Inference**: Automatic detection and tracking of narrative objectives
 
-### UI Improvements
-- **Simplified Flow**: Removed "Vibe Code" terminology from user interface
-- **Campaign Start**: Only asks for campaign name and character creation
-- **Live Updates**: Character sheet updates in real-time
-- **Responsive Design**: Works on desktop and mobile
+### Clean Modular Boundaries
+- **Demo Layer Only**: Focuses exclusively on demonstration and visualization
+- **No Core Logic**: All narrative processing delegated to TNE/TNB systems
+- **UI/UX Focus**: Emphasizes user experience and interface design
+- **Integration Testing**: Validates proper communication with core systems
+- **Symbolic Integrity**: Full compliance with symbolic processing models
 
 ## Contributing
 
 We welcome contributors interested in:
-- **Enhanced Character Creation**: LLM integration, fact extraction, guided completion
+- **TNE Demo Layer**: Symbolic processing visualization, memory flow display
 - **UI/UX Improvements**: Web interface, mobile responsiveness, user experience
-- **DnD 5E Integration**: Game mechanics, character sheets, compliance
-- **LLM Integration**: Ollama optimization, prompt engineering, semantic understanding
-- **Narrative Engine**: Memory systems, context management, domain-agnostic design
+- **Bridge Routing**: TNB integration, memory retrieval, prompt construction
+- **LLM Integration**: Gemma optimization, provider abstraction, symbolic analysis
+- **Symbolic Processing**: Archetype detection, pattern recognition, goal inference
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## Documentation
 
-- [How to Play](HOW_TO_PLAY.md) - Game instructions and character creation guide
+- [How to Play](HOW_TO_PLAY.md) - Demo instructions and character creation guide
 - [Compliance Summary](COMPLIANCE_SUMMARY.md) - Legal and branding compliance
 - [Cleanup Summary](CLEANUP_SUMMARY.md) - Project cleanup and archive details
 - [Development Log](DEVELOPMENT_LOG.md) - Comprehensive development history
-- [Character Fact Extraction](solo_heart/utils/character_fact_extraction.py) - Fact extraction implementation
-- [Narrative Engine](narrative_core/narrative_engine.py) - Domain-agnostic memory and context system
+- [TNE Integration](solo_heart/narrative_engine_integration.py) - TNE integration implementation
+- [Symbolic Processing](../The Narrative Engine/docs/symbolic_processor.md) - TNE symbolic processing documentation
 
 ## Vision & Future
 
-SoloHeart represents a new approach to character creation and narrative systems—one that prioritizes natural language understanding, immediate feedback, and domain-agnostic design over rigid form-filling. The enhanced character creation system with LLM integration and the modular Narrative Engine demonstrate the potential for more intuitive and engaging game experiences.
+The Narrative Engine D&D Demo represents a new approach to symbolic processing visualization and narrative system demonstration—one that prioritizes clean modular boundaries, symbolic integrity, and LLM-native integration over embedded logic. The demonstration layer showcases TNE's capabilities through interactive character creation and narrative development workflows.
 
 **Interested in collaborating or contributing?**  
-We're actively seeking contributors to enhance the character creation system, improve the UI/UX, expand the game mechanics, and develop the domain-agnostic Narrative Engine for broader applications.
+We're actively seeking contributors to enhance the demo layer visualization, improve the UI/UX, expand the symbolic processing display, and develop the bridge routing capabilities for broader TNE/TNB integration validation.
 
 ## Attribution
 

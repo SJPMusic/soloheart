@@ -83,7 +83,7 @@ def setup_ollama_service():
 def test_ollama_connection():
     """Test the Ollama connection"""
     try:
-        from ollama_llm_service import chat_completion
+        from llm_interface.provider_factory import chat_completion
         
         # Simple test call
         response = chat_completion([

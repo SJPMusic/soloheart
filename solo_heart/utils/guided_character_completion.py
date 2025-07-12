@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 """
-Guided Character Completion System
+Guided Character Completion System for SoloHeart
 
-This module handles the transition from open-ended creative input to structured
-character sheet completion, providing a smooth experience for players who may
-not be familiar with D&D 5E mechanics.
+This module provides a guided character completion system that helps players
+fill in missing character details through natural conversation and targeted questions.
 """
 
 import logging
-import re
 from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
+from utils.ability_score_system import AbilityScoreSystem, AbilityScoreMethod
 
 logger = logging.getLogger(__name__)
 
@@ -27,74 +26,44 @@ class StatAssignmentMode(Enum):
     MANUAL = "manual"
     STANDARD_ARRAY = "standard_array"
     POINT_BUY = "point_buy"
+    ROLL_4D6_DROP_LOWEST = "roll_4d6_drop_lowest"
 
 class GuidedCharacterCompletion:
-    """
-    Manages the transition from creative character input to guided character sheet completion.
-    """
+    """Guided character completion system that helps players fill in missing details."""
     
     def __init__(self):
-        self.phase = CompletionPhase.CREATIVE_INPUT
-        self.creative_phase_complete = False
-        self.stat_assignment_mode = StatAssignmentMode.AUTO
-        self.consecutive_low_confidence = 0
         self.guided_questions_asked = 0
-        self.max_guided_questions = 10
-        self.last_question_asked = None
-        self.repeated_question_count = 0
+        self.max_guided_questions = 3  # Keep it minimal
+        self.stat_assignment_mode = StatAssignmentMode.AUTO
+        self.ability_score_system = AbilityScoreSystem()
         
-        # SRD 5.2 compliant options
-        self.races = ["Human", "Elf", "Dwarf", "Halfling", "Dragonborn", "Gnome", "Half-Elf", "Half-Orc", "Tiefling"]
-        self.classes = ["Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard"]
-        self.backgrounds = ["Acolyte", "Criminal", "Folk Hero", "Noble", "Sage", "Soldier"]
-        
-        # Standard array for automatic assignment
-        self.standard_array = [15, 14, 13, 12, 10, 8]
-        
+        # Track what we've already asked about
+        self.asked_about = set()
+    
     def should_transition_to_guided(self, user_input: str, extracted_facts: Dict[str, Any], 
                                   character_data: Dict[str, Any]) -> bool:
         """
-        Determine if we should transition from creative input to guided questions.
-        Very conservative - only transition on explicit request or if completely stuck.
+        Determine if we should transition to guided questions.
+        Only do this if the user seems stuck or confused.
         """
-        # Check for explicit completion phrases
-        completion_phrases = [
-            "i'm done", "that's all", "that's my character", "that's everything",
-            "i'm finished", "that's it", "complete", "finish", "ready to start",
-            "let's begin", "start the game", "what else do i need", "help me finish",
-            "fill in the rest", "complete my character", "i need help", "guide me"
+        # Don't transition if user is actively providing information
+        if len(extracted_facts) > 0:
+            return False
+        
+        # Don't transition if we've already asked too many questions
+        if self.guided_questions_asked >= self.max_guided_questions:
+            return False
+        
+        # Only transition if user seems confused or asks for help
+        confusion_indicators = [
+            "help", "confused", "don't know", "what do you mean", "how do i",
+            "what should i", "i'm not sure", "what next", "??", "?"
         ]
         
-        if any(phrase in user_input.lower() for phrase in completion_phrases):
-            logger.info("🎯 Transition triggered: explicit completion request")
-            return True
-        
-        # Only transition if we have NO facts at all (completely stuck)
-        core_facts = ["name", "race", "class", "background", "age", "gender"]
-        context_facts = ["personality_traits", "traits", "motivations", "emotional_themes", "gear", "combat_style"]
-        
-        # Check extracted_facts first, then character_data
-        core_count = 0
-        context_count = 0
-        
-        for fact in core_facts:
-            if (fact in extracted_facts and extracted_facts[fact]) or \
-               (fact in character_data and character_data[fact] and character_data[fact] not in [None, "Unknown", ""]):
-                core_count += 1
-        
-        for fact in context_facts:
-            if (fact in extracted_facts and extracted_facts[fact]) or \
-               (fact in character_data and character_data[fact] and character_data[fact] not in [None, "Unknown", "", []]):
-                context_count += 1
-        
-        # Only transition if we have absolutely no facts (completely stuck)
-        if core_count == 0 and context_count == 0:
-            logger.info(f"🎯 Transition triggered: only {core_count} core facts extracted")
-            return True
-        
-        # Let Ollama handle the conversation naturally
-        logger.info(f"✅ Continuing natural input: {core_count} core facts, {context_count} context facts")
-        return False
+        user_input_lower = user_input
+        logger.debug(f">>> DEBUG: calling .lower() on user_input in should_transition_to_guided, value={user_input!r}, type={type(user_input)}")
+        user_input_lower = user_input_lower.lower()
+        return any(indicator in user_input_lower for indicator in confusion_indicators)
     
     def get_transition_message(self) -> str:
         """Get the message to show when transitioning to guided questions."""
@@ -183,90 +152,117 @@ class GuidedCharacterCompletion:
     def get_stat_assignment_prompt(self) -> str:
         """Get the prompt for ability score assignment."""
         return ("Want me to assign ability scores based on what you told me about your character's story and personality? "
-                "I'll make sure they follow the official rules.")
+                "I'll make sure they follow the official DnD SRD 5.2 rules.")
     
     def assign_stats_automatically(self, character_data: Dict[str, Any]) -> Dict[str, int]:
         """
         Automatically assign ability scores based on character story and class.
-        Uses SRD 5.2 standard array.
+        Uses the new ability score system.
         """
-        char_class = character_data.get('class', '').lower()
-        personality_traits = character_data.get('personality_traits', [])
-        motivations = character_data.get('motivations', [])
-        
-        # Determine primary and secondary abilities based on class
-        if char_class in ['fighter', 'barbarian', 'paladin']:
-            primary = 'strength'
-            secondary = 'constitution'
-        elif char_class in ['rogue', 'ranger', 'monk']:
-            primary = 'dexterity'
-            secondary = 'constitution'
-        elif char_class in ['wizard', 'sorcerer']:
-            primary = 'intelligence' if char_class == 'wizard' else 'charisma'
-            secondary = 'constitution'
-        elif char_class in ['cleric', 'druid']:
-            primary = 'wisdom'
-            secondary = 'constitution'
-        elif char_class in ['bard', 'warlock']:
-            primary = 'charisma'
-            secondary = 'constitution'
-        else:
-            # Default to balanced scores
-            primary = 'strength'
-            secondary = 'dexterity'
-        
-        # Assign scores using standard array
-        scores = {
-            'strength': 10,
-            'dexterity': 10,
-            'constitution': 10,
-            'intelligence': 10,
-            'wisdom': 10,
-            'charisma': 10
-        }
-        
-        # Assign highest scores to primary abilities
-        scores[primary] = 15
-        scores[secondary] = 14
-        
-        # Distribute remaining scores based on character traits
-        remaining_scores = [13, 12, 10, 8]
-        
-        # Analyze personality for additional stat hints
-        if any('wise' in trait.lower() or 'knowledge' in trait.lower() for trait in personality_traits):
-            scores['intelligence'] = remaining_scores.pop(0)
-        if any('charismatic' in trait.lower() or 'leader' in trait.lower() for trait in personality_traits):
-            scores['charisma'] = remaining_scores.pop(0)
-        if any('agile' in trait.lower() or 'quick' in trait.lower() for trait in personality_traits):
-            scores['dexterity'] = remaining_scores.pop(0)
-        
-        # Fill remaining scores
-        for ability in ['strength', 'dexterity', 'intelligence', 'wisdom', 'charisma']:
-            if scores[ability] == 10 and remaining_scores:
-                scores[ability] = remaining_scores.pop(0)
-        
-        # Ensure constitution gets a decent score if not already assigned
-        if scores['constitution'] == 10 and remaining_scores:
-            scores['constitution'] = remaining_scores.pop(0)
-        
-        logger.info(f"🎲 Auto-assigned stats: {scores}")
-        return scores
+        return self.ability_score_system.assign_auto_based_on_story(character_data)
     
     def assign_standard_array(self, character_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Automatically assign the standard array to ability scores.
         Uses SRD 5.2 standard array.
         """
-        # Implementation of the method
-        pass
+        scores = self.ability_score_system.assign_standard_array(character_data)
+        modifiers = self.ability_score_system.calculate_modifiers(scores)
+        
+        return {
+            'scores': scores,
+            'modifiers': modifiers,
+            'method': AbilityScoreMethod.STANDARD_ARRAY
+        }
+    
+    def assign_point_buy(self, character_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Assign ability scores using point buy system.
+        Uses SRD 5.2 point buy rules.
+        """
+        scores = self.ability_score_system.assign_point_buy(character_data)
+        modifiers = self.ability_score_system.calculate_modifiers(scores)
+        
+        return {
+            'scores': scores,
+            'modifiers': modifiers,
+            'method': AbilityScoreMethod.POINT_BUY
+        }
+    
+    def assign_rolled_scores(self, character_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Assign ability scores using 4d6 drop lowest method.
+        Uses SRD 5.2 rolling method.
+        """
+        scores = self.ability_score_system.assign_rolled_scores(character_data)
+        modifiers = self.ability_score_system.calculate_modifiers(scores)
+        
+        return {
+            'scores': scores,
+            'modifiers': modifiers,
+            'method': AbilityScoreMethod.ROLL_4D6_DROP_LOWEST
+        }
     
     def validate_manual_stats(self, stats: Dict[str, int]) -> Tuple[bool, str]:
         """
         Validate manually entered ability scores against SRD 5.2 rules.
         Returns (is_valid, error_message).
         """
-        # Implementation of the method
-        pass
+        return self.ability_score_system.validate_scores(stats, AbilityScoreMethod.MANUAL)
+    
+    def get_ability_score_summary(self, scores: Dict[str, int]) -> str:
+        """
+        Get a formatted summary of ability scores with modifiers.
+        
+        Args:
+            scores: Ability scores
+            
+        Returns:
+            Formatted summary string
+        """
+        modifiers = self.ability_score_system.calculate_modifiers(scores)
+        
+        summary = "**Ability Scores:**\n"
+        for ability in self.ability_score_system.abilities:
+            ability_str = (ability or '')
+            logger.debug(f">>> DEBUG: calling .title() on ability in get_ability_score_summary, value={ability_str!r}, type={type(ability_str)}")
+            ability_display = ability_str.title() if ability_str else 'Unknown'
+            score = scores[ability]
+            modifier = modifiers[ability]
+            modifier_str = f"+{modifier}" if modifier >= 0 else str(modifier)
+            description = self.ability_score_system.get_score_description(score)
+            
+            summary += f"• **{ability_display}**: {score} ({modifier_str}) - {description}\n"
+        
+        return summary
+    
+    def get_class_recommendations(self, char_class: str) -> str:
+        """
+        Get ability score recommendations for a class.
+        
+        Args:
+            char_class: Character class
+            
+        Returns:
+            Formatted recommendations string
+        """
+        # Defensive patch for .title() and .lower()
+        char_class_str = (char_class or '')
+        logger.debug(f">>> DEBUG: calling .title() on char_class in get_class_recommendations, value={char_class_str!r}, type={type(char_class_str)}")
+        recommendations = self.ability_score_system.get_class_recommendations(char_class_str)
+        
+        # Safely format class name
+        class_display = 'Unknown'
+        if char_class_str:
+            class_display = char_class_str.title()
+        
+        summary = f"**Ability Score Recommendations for {class_display}:**\n"
+        for ability, recommendation in recommendations.items():
+            ability_title = (ability or '')
+            logger.debug(f">>> DEBUG: calling .title() on ability in get_class_recommendations, value={ability_title!r}, type={type(ability_title)}")
+            ability_display = ability_title.title() if ability_title else 'Unknown'
+            summary += f"• **{ability_display}**: {recommendation}\n"
+        return summary
     
     def get_confusion_response(self) -> str:
         """Get a response when the player seems confused."""
@@ -292,6 +288,11 @@ class GuidedCharacterCompletion:
             summary += f"Personality: {', '.join(character_data['personality_traits'])}\n"
         if character_data.get('motivations'):
             summary += f"Motivations: {', '.join(character_data['motivations'])}\n"
+        
+        # Add ability scores if available
+        ability_scores = character_data.get('ability_scores', {})
+        if ability_scores:
+            summary += "\n" + self.get_ability_score_summary(ability_scores)
         
         summary += "\nReady to start your adventure?"
         return summary 
