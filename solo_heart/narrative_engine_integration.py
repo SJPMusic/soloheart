@@ -29,6 +29,7 @@ try:
         NarrativeEngine, MemoryType, MemoryLayer, EmotionalContext, 
         NarrativeTheme, Character, WorldState
     )
+    from vector_memory.vector_memory_module import VectorMemoryModule
     logger = logging.getLogger(__name__)
 except ImportError as e:
     logger = logging.getLogger(__name__)
@@ -48,8 +49,16 @@ class TNEDemoEngine:
     def __init__(self, campaign_id: str = "default"):
         self.campaign_id = campaign_id
         self.engine = NarrativeEngine(campaign_id=campaign_id, data_dir="narrative_data")
+        
+        # Initialize vector memory for semantic search
+        self.vector_memory = VectorMemoryModule(
+            index_path=f"vector_memory/{campaign_id}",
+            dimension=384
+        )
+        
         self.session_id = f"session_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
         logger.info(f"🔧 Initialized TNE Demo Engine for campaign: {campaign_id}")
+        logger.info(f"🧠 Vector memory initialized for semantic search")
     
     def record_character_creation(self, character_data: Dict[str, Any]) -> str:
         """
@@ -113,10 +122,13 @@ class TNEDemoEngine:
         
         # Add character to engine with properly filtered data
         char_id = self.engine.add_character(narrative_char_data)
+        
         # Record character creation as memory with emotional and thematic context
         emotional_context = self._analyze_emotional_context_from_character(character_data)
         narrative_themes = self._extract_narrative_themes_from_character(character_data)
-        self.engine.add_memory(
+        
+        # Add to TNE memory
+        memory_id = self.engine.add_memory(
             content={
                 'action': 'character_creation_started',
                 'character_name': character_data.get('name', 'Unknown'),
@@ -133,7 +145,21 @@ class TNEDemoEngine:
             thematic_tags=['character_creation', 'development'],
             triggers=['character', 'creation', character_data.get('name', '').lower()]
         )
+        
+        # Also add to vector memory for semantic search
+        character_summary = f"Character {character_data.get('name', 'Unknown')} created: {character_data.get('race', 'Unknown')} {character_data.get('class', 'Unknown')} with {character_data.get('background', 'Unknown')} background"
+        vector_memory_id = self.vector_memory.add_memory(
+            content=character_summary,
+            memory_type="character_creation",
+            layer="long_term",
+            user_id='player',
+            session_id=self.session_id,
+            emotional_weight=0.4,
+            thematic_tags=['character_creation', 'development']
+        )
+        
         logger.info(f"✅ Recorded character creation: {character_data.get('name', 'Unknown')}")
+        logger.info(f"🧠 Added to vector memory: {vector_memory_id}")
         return char_id
     
     def record_player_action(self, user_input: str, context: Dict[str, Any]) -> str:
@@ -307,57 +333,127 @@ class TNEDemoEngine:
     
     def get_memory_context_for_ollama(self, user_id: str = None, max_memories: int = 15) -> str:
         """
-        Get memory context formatted specifically for Ollama consumption.
+        Get memory context for Ollama, including vector memory search results.
+        Returns structured context for LLM providers.
         """
-        context = self.engine.get_context_for_llm(
-            user_id=user_id, 
-            session_id=self.session_id,
-            max_memories=max_memories
-        )
-        
-        # Format for Ollama consumption
-        formatted_context = f"""
-=== NARRATIVE CONTEXT ===
-Campaign: {self.campaign_id}
-Session: {self.session_id}
-
-MEMORIES (ranked by narrative relevance):
-"""
-        
-        for memory in context['memories'][:10]:  # Top 10 most relevant
-            formatted_context += f"- {memory['type'].title()}: {memory['content'].get('summary', str(memory['content']))}\n"
-            if memory['emotional_context']:
-                formatted_context += f"  Emotional: {', '.join(memory['emotional_context'])}\n"
-            if memory['narrative_themes']:
-                formatted_context += f"  Themes: {', '.join(memory['narrative_themes'])}\n"
-        
-        if context['characters']:
-            formatted_context += "\nCHARACTERS:\n"
-            for char_id, char_data in context['characters'].items():
-                formatted_context += f"- {char_data['name']}: {char_data.get('current_state', {})}\n"
-                if char_data.get('goals'):
-                    formatted_context += f"  Goals: {', '.join(char_data['goals'])}\n"
-                if char_data.get('conflicts'):
-                    formatted_context += f"  Conflicts: {', '.join(char_data['conflicts'])}\n"
-        
-        if context['world_state']:
-            formatted_context += "\nWORLD STATE:\n"
-            world = context['world_state']
-            if world.get('factions'):
-                formatted_context += f"Active Factions: {len(world['factions'])}\n"
-            if world.get('npcs'):
-                formatted_context += f"NPCs: {len(world['npcs'])}\n"
-            if world.get('world_events'):
-                formatted_context += f"Recent Events: {len(world['world_events'])}\n"
-        
-        if context['thematic_summary']:
-            formatted_context += f"\nTHEMATIC ELEMENTS:\n"
-            for theme, count in context['thematic_summary'].items():
-                formatted_context += f"- {theme}: {count} occurrences\n"
-        
-        formatted_context += "\n=== END CONTEXT ===\n"
-        
-        return formatted_context.strip()
+        try:
+            # Get TNE memories
+            tne_memories = self.engine.get_recent_memories(
+                user_id=user_id, 
+                limit=max_memories // 2  # Reserve half for vector memories
+            )
+            
+            # Get vector memories through semantic search
+            vector_memories = []
+            if hasattr(self, 'vector_memory') and self.vector_memory:
+                # Search for relevant memories based on recent context
+                if tne_memories:
+                    # Use the most recent memory as search query
+                    latest_memory = tne_memories[0]
+                    search_query = latest_memory.get('content', {}).get('summary', '')
+                    if search_query:
+                        vector_results = self.vector_memory.search_memories(
+                            query=search_query,
+                            top_k=max_memories // 2,
+                            user_id=user_id
+                        )
+                        vector_memories = [
+                            {
+                                'id': item.id,
+                                'content': item.content,
+                                'similarity': score,
+                                'memory_type': item.memory_type,
+                                'thematic_tags': item.thematic_tags,
+                                'created_at': item.created_at.isoformat()
+                            }
+                            for item, score in vector_results
+                        ]
+                        logger.info(f"🧠 Retrieved {len(vector_memories)} vector memories with similarity search")
+            
+            # Combine and format memories
+            all_memories = []
+            
+            # Add TNE memories
+            for memory in tne_memories:
+                all_memories.append({
+                    'source': 'tne',
+                    'id': memory.get('id', 'unknown'),
+                    'content': memory.get('content', {}).get('summary', ''),
+                    'memory_type': memory.get('memory_type', 'unknown'),
+                    'emotional_weight': memory.get('emotional_weight', 0.5),
+                    'thematic_tags': memory.get('thematic_tags', []),
+                    'created_at': memory.get('created_at', 'unknown')
+                })
+            
+            # Add vector memories
+            for memory in vector_memories:
+                all_memories.append({
+                    'source': 'vector',
+                    'id': memory['id'],
+                    'content': memory['content'],
+                    'memory_type': memory['memory_type'],
+                    'similarity': memory['similarity'],
+                    'thematic_tags': memory['thematic_tags'],
+                    'created_at': memory['created_at']
+                })
+            
+            # Sort by relevance (TNE memories first, then by similarity/recency)
+            all_memories.sort(key=lambda x: (
+                x['source'] != 'tne',  # TNE memories first
+                -x.get('similarity', 0) if x['source'] == 'vector' else -x.get('emotional_weight', 0)
+            ))
+            
+            # Format for LLM context
+            context_parts = []
+            
+            if all_memories:
+                context_parts.append("=== RELEVANT MEMORIES ===")
+                
+                for i, memory in enumerate(all_memories[:max_memories]):
+                    source_marker = "🧠" if memory['source'] == 'vector' else "💭"
+                    context_parts.append(
+                        f"{source_marker} Memory {i+1}: {memory['content']}"
+                    )
+                    
+                    if memory.get('thematic_tags'):
+                        tags_str = ', '.join(memory['thematic_tags'])
+                        context_parts.append(f"   Tags: {tags_str}")
+                    
+                    if memory['source'] == 'vector' and memory.get('similarity'):
+                        context_parts.append(f"   Similarity: {memory['similarity']:.3f}")
+                
+                context_parts.append("")
+            
+            # Add character context
+            characters = self.engine.get_characters()
+            if characters:
+                context_parts.append("=== CHARACTERS ===")
+                for char in characters:
+                    char_name = char.get('name', 'Unknown')
+                    char_desc = char.get('description', 'A character')
+                    context_parts.append(f"👤 {char_name}: {char_desc}")
+                context_parts.append("")
+            
+            # Add world state
+            world_state = self.engine.get_world_state()
+            if world_state:
+                context_parts.append("=== WORLD STATE ===")
+                for key, value in world_state.items():
+                    context_parts.append(f"🌍 {key}: {value}")
+                context_parts.append("")
+            
+            context = "\n".join(context_parts)
+            
+            # Log memory retrieval stats
+            tne_count = len([m for m in all_memories if m['source'] == 'tne'])
+            vector_count = len([m for m in all_memories if m['source'] == 'vector'])
+            logger.info(f"📊 Memory context: {tne_count} TNE + {vector_count} vector memories")
+            
+            return context
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to get memory context: {e}")
+            return "=== NO MEMORY CONTEXT AVAILABLE ==="
     
     def update_campaign_state(self, updates: Dict[str, Any]):
         """
