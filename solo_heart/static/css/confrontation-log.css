@@ -1,0 +1,74 @@
+/* Confrontation Log Additional Styles */
+
+/* Smooth transitions for collapsible content */
+.confrontation-log-content {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Custom scrollbar for log entries */
+.confrontation-log-entries {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+.confrontation-log-entries::-webkit-scrollbar {
+  width: 6px;
+}
+
+.confrontation-log-entries::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 3px;
+}
+
+.confrontation-log-entries::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+.confrontation-log-entries::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* Loading animation enhancement */
+.confrontation-log-loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Severity bar animation */
+.severity-bar {
+  transition: width 0.5s ease-out;
+}
+
+/* Hover effects for log entries */
+.confrontation-log-entry:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .confrontation-log-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .confrontation-log-entry {
+    padding: 0.75rem;
+  }
+  
+  .confrontation-log-entry .flex-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+} 

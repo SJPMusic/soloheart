@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoloHeart - Your Solo D&D Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            font-family: 'Georgia', serif;
+        }
+        
+        .hero-section {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .action-button {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            border: none;
+            border-radius: 1rem;
+            color: white;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            justify-content: center;
+        }
+        
+        .action-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        .action-button.secondary {
+            background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+        }
+        
+        .action-button.secondary:hover {
+            box-shadow: 0 10px 25px rgba(75, 85, 99, 0.3);
+        }
+        
+        .action-button.demo {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        }
+        
+        .action-button.demo:hover {
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .session-dropdown {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: white;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .session-dropdown:focus {
+            outline: none;
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+        }
+        
+        .session-dropdown option {
+            background: #1e293b;
+            color: white;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            color: #fbbf24;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+            to { text-shadow: 0 0 30px rgba(251, 191, 36, 0.8); }
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: #fbbf24;
+            margin-bottom: 1rem;
+        }
+        
+        .campaign-input {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: white;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .campaign-input:focus {
+            outline: none;
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+        }
+        
+        .campaign-input::placeholder {
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-4xl w-full">
+            <!-- Hero Section -->
+            <div class="hero-section p-8 mb-8">
+                <div class="text-center mb-8">
+                    <div class="logo mb-4">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">
+                        SoloHeart
+                    </h1>
+                    <p class="text-xl md:text-2xl text-gray-300 mb-6">
+                        Your Solo D&D Adventure Awaits
+                    </p>
+                    <p class="text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                        Experience the magic of Dungeons & Dragons in a solo adventure. 
+                        Create characters, explore worlds, and embark on epic journeys with 
+                        AI-powered storytelling that adapts to your choices.
+                    </p>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="grid md:grid-cols-3 gap-4 mb-8">
+                    <!-- Start New Game -->
+                    <div class="text-center">
+                        <h3 class="text-lg font-semibold text-white mb-3">Start New Game</h3>
+                        <input type="text" id="campaignInput" class="campaign-input" 
+                               placeholder="Campaign ID (optional)">
+                        <button onclick="startNewGame()" class="action-button w-full">
+                            <i class="fas fa-play"></i>
+                            Begin Adventure
+                        </button>
+                    </div>
+                    
+                    <!-- Resume Game -->
+                    <div class="text-center">
+                        <h3 class="text-lg font-semibold text-white mb-3">Resume Game</h3>
+                        <select id="sessionDropdown" class="session-dropdown">
+                            <option value="">Loading sessions...</option>
+                        </select>
+                        <button onclick="resumeGame()" class="action-button secondary w-full">
+                            <i class="fas fa-folder-open"></i>
+                            Continue Journey
+                        </button>
+                    </div>
+                    
+                    <!-- Demo Mode -->
+                    <div class="text-center">
+                        <h3 class="text-lg font-semibold text-white mb-3">Demo Mode</h3>
+                        <p class="text-sm text-gray-400 mb-3">Try SoloHeart instantly</p>
+                        <button onclick="startDemo()" class="action-button demo w-full">
+                            <i class="fas fa-rocket"></i>
+                            Launch Demo
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Features Grid -->
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Character Creation</h3>
+                    <p class="text-gray-400">Create unique characters with natural language descriptions or guided creation.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">AI Dungeon Master</h3>
+                    <p class="text-gray-400">Experience dynamic storytelling that remembers your choices and adapts to your style.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Symbolic Analysis</h3>
+                    <p class="text-gray-400">Discover deeper meaning through archetypal analysis and symbolic interpretation.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Goal Engine</h3>
+                    <p class="text-gray-400">Track character goals and see how your choices shape your character's journey.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Dynamic World</h3>
+                    <p class="text-gray-400">Explore a living world that changes based on your actions and character stats.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white mb-2">Epic Endings</h3>
+                    <p class="text-gray-400">Experience cinematic endings and meaningful epilogues that conclude your story.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load sessions on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSessions();
+        });
+
+        async function loadSessions() {
+            try {
+                const response = await fetch('/api/sessions');
+                const data = await response.json();
+                
+                const dropdown = document.getElementById('sessionDropdown');
+                
+                if (data.success && data.sessions.length > 0) {
+                    dropdown.innerHTML = '<option value="">Select a session...</option>';
+                    data.sessions.forEach(session => {
+                        const option = document.createElement('option');
+                        option.value = session.session_id;
+                        option.textContent = `${session.name} (${session.campaign_id})`;
+                        dropdown.appendChild(option);
+                    });
+                } else {
+                    dropdown.innerHTML = '<option value="">No sessions available</option>';
+                }
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                document.getElementById('sessionDropdown').innerHTML = '<option value="">Error loading sessions</option>';
+            }
+        }
+
+        function startNewGame() {
+            const campaignId = document.getElementById('campaignInput').value.trim();
+            const url = campaignId ? `/game/new?campaign=${encodeURIComponent(campaignId)}` : '/game/new';
+            window.location.href = url;
+        }
+
+        function resumeGame() {
+            const sessionId = document.getElementById('sessionDropdown').value;
+            if (!sessionId) {
+                alert('Please select a session to resume.');
+                return;
+            }
+            window.location.href = `/game/resume/${sessionId}`;
+        }
+
+        function startDemo() {
+            window.location.href = '/game/demo';
+        }
+    </script>
+</body>
+</html> 

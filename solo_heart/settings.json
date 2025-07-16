@@ -1,0 +1,23 @@
+{
+  "demo_mode": {
+    "enable_demo_mode": true,
+    "demo_session_timeout_hours": 24,
+    "auto_resume_latest": false,
+    "max_sessions_visible": 10
+  },
+  "session_management": {
+    "auto_cleanup_demo_sessions": true,
+    "demo_session_prefix": "guest_",
+    "session_retention_days": 7
+  },
+  "ui": {
+    "show_session_manager": true,
+    "show_demo_mode": true,
+    "responsive_design": true
+  },
+  "features": {
+    "enable_memory_saving": true,
+    "enable_advanced_features": true,
+    "restrict_demo_features": false
+  }
+} 

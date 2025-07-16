@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoloHeart - Campaign Archives</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            font-family: 'Georgia', serif;
+        }
+        
+        .archive-detail-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .ending-timeline {
+            position: relative;
+        }
+        
+        .ending-timeline::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(251, 191, 36, 0.3);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 3rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0.5rem;
+            width: 1rem;
+            height: 1rem;
+            background: #fbbf24;
+            border-radius: 50%;
+            border: 2px solid rgba(251, 191, 36, 0.5);
+        }
+        
+        .ending-type-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .ending-triumph { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .ending-tragedy { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .ending-rebirth { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .ending-sacrifice { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+        .ending-redemption { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .ending-bittersweet { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-gray-900 bg-opacity-50 backdrop-blur-sm border-b border-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div class="flex items-center">
+                        <a href="/" class="text-2xl font-bold text-yellow-400">
+                            <i class="fas fa-dragon mr-2"></i>SoloHeart
+                        </a>
+                    </div>
+                    <nav class="flex space-x-8">
+                        <a href="/" class="text-gray-300 hover:text-yellow-400 transition-colors">
+                            <i class="fas fa-home mr-1"></i>Home
+                        </a>
+                        <a href="/character-creation" class="text-gray-300 hover:text-yellow-400 transition-colors">
+                            <i class="fas fa-user-plus mr-1"></i>New Character
+                        </a>
+                        <a href="/archives" class="text-gray-300 hover:text-yellow-400 transition-colors">
+                            <i class="fas fa-archive mr-1"></i>Archives
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="mb-8">
+                <a href="/archives" class="inline-flex items-center text-yellow-400 hover:text-yellow-300 mb-4">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Archives
+                </a>
+                <h1 class="text-4xl font-bold text-yellow-400 mb-2">
+                    Campaign Archive: {{ campaign_id }}
+                </h1>
+                <p class="text-gray-300">Detailed view of campaign completion and ending history</p>
+            </div>
+
+            <!-- Archive Details -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Archive Information -->
+                <div class="archive-detail-card p-6">
+                    <h2 class="text-2xl font-semibold text-white mb-4">
+                        <i class="fas fa-info-circle mr-2"></i>Archive Information
+                    </h2>
+                    
+                    <div id="archiveInfo" class="space-y-4">
+                        <div>
+                            <label class="text-gray-400 text-sm">Character Name</label>
+                            <p class="text-white font-semibold" id="characterName">Loading...</p>
+                        </div>
+                        
+                        <div>
+                            <label class="text-gray-400 text-sm">Ending Type</label>
+                            <p class="text-white font-semibold" id="endingType">Loading...</p>
+                        </div>
+                        
+                        <div>
+                            <label class="text-gray-400 text-sm">Completion Date</label>
+                            <p class="text-white font-semibold" id="completionDate">Loading...</p>
+                        </div>
+                        
+                        <div>
+                            <label class="text-gray-400 text-sm">Campaign ID</label>
+                            <p class="text-white font-semibold" id="campaignId">Loading...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h3 class="text-lg font-semibold text-yellow-400 mb-3">Goals Achieved</h3>
+                        <div id="goalsList" class="space-y-2">
+                            <p class="text-gray-400">Loading goals...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h3 class="text-lg font-semibold text-yellow-400 mb-3">Character Transformation</h3>
+                        <div id="transformationInfo" class="space-y-2">
+                            <p class="text-gray-400">Loading transformation...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ending History -->
+                <div class="archive-detail-card p-6">
+                    <h2 class="text-2xl font-semibold text-white mb-4">
+                        <i class="fas fa-history mr-2"></i>Ending History
+                    </h2>
+                    
+                    <div class="ending-timeline" id="endingTimeline">
+                        <p class="text-gray-400">Loading ending history...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Epilogue Section -->
+            <div class="archive-detail-card p-6 mt-8">
+                <h2 class="text-2xl font-semibold text-white mb-4">
+                    <i class="fas fa-scroll mr-2"></i>Epilogue
+                </h2>
+                
+                <div id="epilogueContent" class="prose prose-invert max-w-none">
+                    <p class="text-gray-400">Loading epilogue...</p>
+                </div>
+                
+                <div class="mt-6 flex space-x-4">
+                    <button onclick="downloadEpilogue()" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>Download Epilogue
+                    </button>
+                    <button onclick="printEpilogue()" class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-print mr-2"></i>Print Epilogue
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentArchive = null;
+        let endingHistory = [];
+
+        async function loadArchiveData() {
+            try {
+                // Try to get archive from session storage first
+                const storedArchive = sessionStorage.getItem('currentArchive');
+                if (storedArchive) {
+                    currentArchive = JSON.parse(storedArchive);
+                    displayArchiveData();
+                } else {
+                    // Load from API if not in session storage
+                    const response = await fetch('/api/archive/list');
+                    const data = await response.json();
+                    
+                    if (data.success && data.archives.length > 0) {
+                        const latestArchive = data.archives[0];
+                        const archiveResponse = await fetch(`/api/archive/load?file=${latestArchive.filename}`);
+                        const archiveData = await archiveResponse.json();
+                        
+                        if (archiveData.success) {
+                            currentArchive = archiveData.archive_data;
+                            displayArchiveData();
+                        }
+                    }
+                }
+                
+                // Load ending history
+                await loadEndingHistory();
+                
+            } catch (error) {
+                console.error('Error loading archive data:', error);
+            }
+        }
+
+        function displayArchiveData() {
+            if (!currentArchive) return;
+            
+            // Display basic information
+            document.getElementById('characterName').textContent = currentArchive.character_data?.name || 'Unknown';
+            document.getElementById('endingType').textContent = getEndingTypeLabel(currentArchive.ending_summary?.ending_type || 'unknown');
+            document.getElementById('completionDate').textContent = formatDate(currentArchive.timestamp);
+            document.getElementById('campaignId').textContent = currentArchive.campaign_id || 'Unknown';
+            
+            // Display goals
+            const goalsList = document.getElementById('goalsList');
+            if (currentArchive.goals && currentArchive.goals.length > 0) {
+                goalsList.innerHTML = currentArchive.goals.map(goal => `
+                    <div class="flex items-center justify-between p-2 bg-gray-800 rounded">
+                        <span class="text-white">${goal.type}</span>
+                        <span class="text-green-400">${(goal.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                `).join('');
+            } else {
+                goalsList.innerHTML = '<p class="text-gray-400">No goals recorded</p>';
+            }
+            
+            // Display transformation
+            const transformationInfo = document.getElementById('transformationInfo');
+            if (currentArchive.transformation) {
+                transformationInfo.innerHTML = `
+                    <div class="p-2 bg-gray-800 rounded">
+                        <p class="text-white font-semibold">${currentArchive.transformation.transformation_type || 'Unknown'}</p>
+                        <p class="text-gray-400 text-sm">${currentArchive.transformation.description || 'No description available'}</p>
+                    </div>
+                `;
+            } else {
+                transformationInfo.innerHTML = '<p class="text-gray-400">No transformation recorded</p>';
+            }
+            
+            // Display epilogue
+            const epilogueContent = document.getElementById('epilogueContent');
+            if (currentArchive.epilogue) {
+                epilogueContent.innerHTML = `
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-yellow-400 mb-2">${currentArchive.epilogue.epilogue_theme}</h3>
+                        <p class="text-gray-300 leading-relaxed">${currentArchive.epilogue.epilogue_text}</p>
+                    </div>
+                    ${currentArchive.epilogue.epilogue_quotes ? `
+                        <div class="mt-4 p-4 bg-gray-800 rounded">
+                            <h4 class="text-sm font-semibold text-yellow-400 mb-2">Memorable Quotes</h4>
+                            ${currentArchive.epilogue.epilogue_quotes.map(quote => `
+                                <blockquote class="text-gray-400 italic border-l-4 border-yellow-400 pl-4 my-2">
+                                    "${quote}"
+                                </blockquote>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                `;
+            } else {
+                epilogueContent.innerHTML = '<p class="text-gray-400">No epilogue available</p>';
+            }
+        }
+
+        async function loadEndingHistory() {
+            try {
+                const response = await fetch('/api/archive/endings');
+                const data = await response.json();
+                
+                if (data.success) {
+                    endingHistory = data.endings;
+                    displayEndingHistory();
+                }
+            } catch (error) {
+                console.error('Error loading ending history:', error);
+            }
+        }
+
+        function displayEndingHistory() {
+            const timeline = document.getElementById('endingTimeline');
+            
+            if (endingHistory.length === 0) {
+                timeline.innerHTML = '<p class="text-gray-400">No ending history available</p>';
+                return;
+            }
+            
+            timeline.innerHTML = endingHistory.map(ending => `
+                <div class="timeline-item">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h4 class="text-white font-semibold">${ending.character_name}</h4>
+                            <p class="text-gray-400 text-sm">${formatDate(ending.timestamp)}</p>
+                            <p class="text-gray-300 mt-2">${ending.justification}</p>
+                        </div>
+                        <span class="ending-type-badge ending-${ending.ending_type} ml-4">
+                            ${getEndingTypeLabel(ending.ending_type)}
+                        </span>
+                    </div>
+                    <div class="mt-2 text-sm text-gray-400">
+                        <p>Transformation: ${ending.transformation_arc}</p>
+                        <p>Goals: ${ending.goal_states.join(', ')}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDate(timestamp) {
+            if (!timestamp) return 'Unknown date';
+            const date = new Date(timestamp);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+
+        function getEndingTypeLabel(endingType) {
+            const labels = {
+                'triumph': 'Triumph',
+                'tragedy': 'Tragedy',
+                'rebirth': 'Rebirth',
+                'sacrifice': 'Sacrifice',
+                'redemption': 'Redemption',
+                'bittersweet': 'Bittersweet'
+            };
+            return labels[endingType] || endingType;
+        }
+
+        function downloadEpilogue() {
+            if (currentArchive && currentArchive.epilogue) {
+                const content = `# SoloHeart Epilogue\n\n${currentArchive.epilogue.epilogue_text}\n\nTheme: ${currentArchive.epilogue.epilogue_theme}\n\nQuotes:\n${currentArchive.epilogue.epilogue_quotes.join('\n')}`;
+                const blob = new Blob([content], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'soloheart-epilogue.md';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        function printEpilogue() {
+            if (currentArchive && currentArchive.epilogue) {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>SoloHeart Epilogue</title>
+                            <style>
+                                body { font-family: Georgia, serif; line-height: 1.6; }
+                                h1 { color: #fbbf24; }
+                                blockquote { border-left: 4px solid #fbbf24; padding-left: 1rem; }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>SoloHeart Epilogue</h1>
+                            <h2>${currentArchive.epilogue.epilogue_theme}</h2>
+                            <p>${currentArchive.epilogue.epilogue_text}</p>
+                            ${currentArchive.epilogue.epilogue_quotes ? `
+                                <h3>Memorable Quotes</h3>
+                                ${currentArchive.epilogue.epilogue_quotes.map(quote => `
+                                    <blockquote>"${quote}"</blockquote>
+                                `).join('')}
+                            ` : ''}
+                        </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            }
+        }
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadArchiveData);
+    </script>
+</body>
+</html> 

@@ -90,15 +90,56 @@ This is an enhanced demo for the Narrative Engine: an immersive, LLM-powered sol
    python simple_unified_interface.py
    ```
 2. Open your browser:
-   - Game interface: [http://localhost:5001](http://localhost:5001)
+   - Landing page: [http://localhost:5001](http://localhost:5001)
+   - Game interface: [http://localhost:5001/game](http://localhost:5001/game)
 
 ## Demo Instructions
-1. **Start a New Campaign**: Click "Start New Campaign" and follow the prompts
-2. **Enhanced Character Creation**: Choose the natural language option and describe your character in detail
-3. **Live Character Sheet**: Watch as your character sheet updates in real-time as you describe your character
-4. **Symbolic Analysis**: Watch as facts are tagged with archetypal symbols and chaos/order tension is calculated
-5. **Play**: After character creation, transition directly into immersive narrative gameplay
-6. **Continue or Delete**: Return to the start screen to continue or delete campaigns
+
+### Landing Page Options
+1. **Start New Game**: Begin a new adventure with optional campaign ID
+2. **Resume Game**: Continue an existing session from the dropdown list
+3. **Demo Mode**: Try SoloHeart instantly with a pre-configured demo character
+
+### Session Management
+- **Session List**: View all available sessions with creation dates and campaign IDs
+- **Load Sessions**: Resume any previous session with one click
+- **Rename Sessions**: Customize session names for better organization
+- **Delete Sessions**: Remove old sessions to keep your list clean
+- **Auto-Cleanup**: Demo sessions are automatically cleaned up after 24 hours
+
+### Demo Mode Features
+- **Instant Start**: No character creation required - jump straight into gameplay
+- **Pre-configured Character**: Demo character with balanced stats and equipment
+- **Temporary Sessions**: Demo sessions are tagged and auto-deleted after timeout
+- **Full Feature Access**: All gameplay features available in demo mode
+- **Session Timeout**: Configurable timeout (default: 24 hours) in settings.json
+
+### Enhanced Character Creation
+1. **Natural Language**: Describe your character in detail without constraints
+2. **Live Character Sheet**: Watch as your character sheet updates in real-time
+3. **Symbolic Analysis**: Facts tagged with archetypal symbols and chaos/order tension
+4. **SRD Compliance**: All character data validated against D&D 5E rules
+5. **Immersive Gameplay**: Transition directly into narrative storytelling
+
+## Configuration
+
+### Demo Mode Settings
+Edit `settings.json` to customize demo behavior:
+```json
+{
+  "demo_mode": {
+    "enable_demo_mode": true,
+    "demo_session_timeout_hours": 24,
+    "auto_resume_latest": false,
+    "max_sessions_visible": 10
+  }
+}
+```
+
+### Session Management
+- **Auto-cleanup**: Demo sessions automatically deleted after timeout
+- **Session retention**: Regular sessions kept for 7 days by default
+- **Max sessions**: Limit visible sessions to prevent UI clutter
 
 ## Technical Architecture
 

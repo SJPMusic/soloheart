@@ -94,7 +94,7 @@ Character Creation → Context Injection → Archetype Recognition → Goal Trac
 - **Gemma Integration**: Primary provider for autonomous narrative generation
 - **Provider Abstraction**: Uses llm_provider_base.py pattern for clean routing
 - **Environment Configuration**: .env-based control of active LLM backend
-- **Fallback Support**: Maintains Ollama fallback for testing and validation
+- **Standardized AI**: Uses Google Gemma 3 for all AI operations
 
 ## Technology Stack
 
@@ -110,7 +110,7 @@ Character Creation → Context Injection → Archetype Recognition → Goal Trac
 
 ### Prerequisites
 - Python 3.9+
-- Gemma API access (or Ollama fallback for testing)
+- Google Gemma 3 API access
 - TNB server running on localhost:3000
 - TNE server running on localhost:5000
 
@@ -131,7 +131,7 @@ Character Creation → Context Injection → Archetype Recognition → Goal Trac
    # Copy environment template
    cp env.template .env
    
-   # Set LLM provider (gemma or ollama)
+   # Set LLM provider (standardized on gemma)
    echo "LLM_PROVIDER=gemma" >> .env
    ```
 

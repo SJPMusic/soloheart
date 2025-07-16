@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Gemma LLM Provider for SoloHeart
-Connects to Gemma 3 running locally at http://localhost:1234/v1
+Google Gemma 3 LLM Provider for SoloHeart
+Connects to Google Gemma 3 running locally at http://localhost:1234/v1
+Standardized on google/gemma-3-12b model for all AI operations.
 """
 
 import os
@@ -14,36 +15,37 @@ from .llm_provider_base import LLMProviderBase
 logger = logging.getLogger(__name__)
 
 class GemmaProvider(LLMProviderBase):
-    """Gemma LLM provider using OpenAI-compatible API."""
+    """Google Gemma 3 LLM provider using OpenAI-compatible API."""
     
-    def __init__(self, base_url: str = "http://localhost:1234/v1", model_name: str = "gemma"):
+    def __init__(self, base_url: str = "http://localhost:1234/v1", model_name: str = "google/gemma-3-12b"):
         self.chat_endpoint = "/chat/completions"
         self.health_endpoint = "/models"
         super().__init__(base_url, model_name)
     
     def _verify_connection(self) -> None:
-        """Verify that Gemma is running and accessible."""
+        """Verify that Google Gemma 3 is running and accessible."""
         try:
             response = requests.get(f"{self.base_url}{self.health_endpoint}", timeout=5)
             if response.status_code == 200:
                 models = response.json().get('data', [])
                 model_names = [model.get('id', '') for model in models]
-                if self.model_name in model_names or any('gemma' in name.lower() for name in model_names):
-                    logger.info(f"✅ Gemma connection verified at {self.base_url}")
+                if self.model_name in model_names or any('gemma-3' in name.lower() for name in model_names):
+                    logger.info(f"✅ Google Gemma 3 connection verified at {self.base_url}")
                     logger.info(f"✅ Available models: {model_names}")
+                    logger.info(f"✅ Using model: {self.model_name}")
                 else:
                     logger.warning(f"⚠️  Model '{self.model_name}' not found. Available models: {model_names}")
-                    logger.info("💡 Using first available model")
+                    logger.info("💡 Using first available Gemma model")
             else:
-                raise Exception(f"Gemma health check failed with status {response.status_code}")
+                raise Exception(f"Google Gemma 3 health check failed with status {response.status_code}")
         except requests.exceptions.ConnectionError:
-            raise Exception(f"❌ Cannot connect to Gemma at {self.base_url}. Is Gemma running?")
+            raise Exception(f"❌ Cannot connect to Google Gemma 3 at {self.base_url}. Is the API server running?")
         except Exception as e:
-            raise Exception(f"❌ Gemma connection error: {e}")
+            raise Exception(f"❌ Google Gemma 3 connection error: {e}")
     
     def chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: Optional[int] = None) -> str:
         """
-        Send a chat completion request to Gemma.
+        Send a chat completion request to Google Gemma 3.
         
         Args:
             messages: List of message dictionaries with 'role' and 'content' keys
@@ -54,7 +56,7 @@ class GemmaProvider(LLMProviderBase):
             The assistant's response content as a string
         
         Raises:
-            Exception: If Gemma is not available or request fails
+            Exception: If Google Gemma 3 is not available or request fails
         """
         try:
             # Prepare the request payload (OpenAI-compatible format)
@@ -75,22 +77,22 @@ class GemmaProvider(LLMProviderBase):
             # Parse the response (OpenAI-compatible format)
             choices = response_data.get('choices', [])
             if not choices:
-                raise Exception("Empty response from Gemma")
+                raise Exception("Empty response from Google Gemma 3")
             
             assistant_message = choices[0].get('message', {})
             content = assistant_message.get('content', '')
             
             if not content:
-                raise Exception("Empty response content from Gemma")
+                raise Exception("Empty response content from Google Gemma 3")
             
             # Log token information for debugging
             self._log_token_info(messages, content)
             
-            logger.debug(f"Received response from Gemma: {content[:100]}...")
+            logger.debug(f"Received response from Google Gemma 3: {content[:100]}...")
             return content
             
         except Exception as e:
-            raise Exception(f"❌ Gemma API error: {e}")
+            raise Exception(f"❌ Google Gemma 3 API error: {e}")
     
     def generate_text(self, prompt: str, system_prompt: str = "", temperature: float = 0.7) -> str:
         """

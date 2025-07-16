@@ -63,7 +63,7 @@ class TNEDemoEngine:
     def record_character_creation(self, character_data: Dict[str, Any]) -> str:
         """
         Record character creation in the Narrative Engine.
-        Returns campaign context for Ollama.
+        Returns campaign context for LLM providers.
         """
         # --- Universal Character Fields (domain-agnostic) ---
         UNIVERSAL_FIELDS = {
@@ -165,7 +165,7 @@ class TNEDemoEngine:
     def record_player_action(self, user_input: str, context: Dict[str, Any]) -> str:
         """
         Record a player action in the Narrative Engine.
-        Returns campaign context for Ollama.
+        Returns campaign context for LLM providers.
         """
         # Determine emotional context from input
         emotional_context = self._analyze_emotional_context(user_input)
@@ -322,7 +322,7 @@ class TNEDemoEngine:
     
     def get_campaign_context(self, user_id: str = None) -> Dict[str, Any]:
         """
-        Get structured campaign context for Ollama.
+        Get structured campaign context for LLM providers.
         """
         return self.engine.get_context_for_llm(
             user_id=user_id, 
@@ -331,9 +331,9 @@ class TNEDemoEngine:
             include_world_state=True
         )
     
-    def get_memory_context_for_ollama(self, user_id: str = None, max_memories: int = 15) -> str:
+    def get_memory_context_for_llm(self, user_id: str = None, max_memories: int = 15) -> str:
         """
-        Get memory context for Ollama, including vector memory search results.
+        Get memory context for LLM providers, including vector memory search results.
         Returns structured context for LLM providers.
         """
         try:
@@ -694,4 +694,495 @@ class TNEDemoEngine:
             logger.warning(f"Character '{character_name}' not found.")
             return {}
         current_state = getattr(char, 'current_state', {}) or {}
-        return current_state.get('saving_throws', {}) 
+        return current_state.get('saving_throws', {})
+    
+    def detect_narrative_ending(self, goals, transformation, resolution, world_state):
+        try:
+            completed_goals = sum(1 for goal in goals if goal.get('confidence', 0) > 0.8)
+            total_goals = len(goals) if goals else 1
+            goal_completion_rate = completed_goals / total_goals if total_goals > 0 else 0
+            transformation_confidence = transformation.get('confidence_score', 0) if transformation else 0
+            resolution_progress = resolution.get('progress', 0) if resolution else 0
+            resolution_state = resolution.get('resolution_state', 'early') if resolution else 'early'
+            story_flags = world_state.get('story_flags', {})
+            completed_flags = sum(1 for flag, value in story_flags.items() if value is True)
+            total_flags = len(story_flags) if story_flags else 1
+            flag_completion_rate = completed_flags / total_flags if total_flags > 0 else 0
+            completion_score = (goal_completion_rate + transformation_confidence + resolution_progress + flag_completion_rate) / 4
+            ending_triggered = completion_score > 0.75 and resolution_state in ['climax', 'denouement']
+            if not ending_triggered:
+                return {
+                    'ending_triggered': False,
+                    'ending_type': None,
+                    'justification': f"Story completion at {completion_score:.1%}, not ready for ending",
+                    'confidence': completion_score
+                }
+            ending_type = self._determine_ending_type(goals, transformation, world_state)
+            return {
+                'ending_triggered': True,
+                'ending_type': ending_type,
+                'justification': f"Story completion at {completion_score:.1%}, {ending_type} ending triggered",
+                'confidence': completion_score
+            }
+        except Exception as e:
+            logger.error(f"Error detecting narrative ending: {e}")
+            return {
+                'ending_triggered': False,
+                'ending_type': None,
+                'justification': 'Error in ending detection',
+                'confidence': 0.0
+            }
+
+    def _determine_ending_type(self, goals, transformation, world_state):
+        goal_types = [goal.get('type', '').lower() for goal in goals]
+        transformation_type = transformation.get('transformation_type', '').lower() if transformation else ''
+        story_flags = world_state.get('story_flags', {})
+        if 'sacrifice' in goal_types or 'sacrifice' in transformation_type:
+            return 'sacrifice'
+        elif 'redemption' in goal_types or 'redemption' in transformation_type:
+            return 'redemption'
+        elif 'rebirth' in goal_types or 'rebirth' in transformation_type:
+            return 'rebirth'
+        elif any(flag for flag, value in story_flags.items() if 'tragic' in flag.lower() or 'loss' in flag.lower()):
+            return 'tragedy'
+        elif any(flag for flag, value in story_flags.items() if 'victory' in flag.lower() or 'triumph' in flag.lower()):
+            return 'triumph'
+        else:
+            return 'bittersweet'
+
+    def generate_narrative_epilogue(self, memory_log, goals_achieved, character_stats, transformation_path, world_state_flags, ending_type):
+        try:
+            character_name = character_stats.get('name', 'The Hero')
+            character_level = character_stats.get('level', 1)
+            transformation_type = transformation_path.get('transformation_type', 'Unknown')
+            epilogue_text = self._generate_ending_specific_epilogue(ending_type, character_name, transformation_type, goals_achieved, world_state_flags)
+            epilogue_theme = self._determine_epilogue_theme(ending_type, transformation_type)
+            epilogue_quotes = self._generate_epilogue_quotes(ending_type, transformation_type)
+            return {
+                'epilogue_text': epilogue_text,
+                'epilogue_theme': epilogue_theme,
+                'epilogue_quotes': epilogue_quotes
+            }
+        except Exception as e:
+            logger.error(f"Error generating narrative epilogue: {e}")
+            return {
+                'epilogue_text': 'An epilogue could not be generated.',
+                'epilogue_theme': 'Unknown',
+                'epilogue_quotes': ['Every journey changes the traveler.']
+            }
+
+    def _generate_ending_specific_epilogue(self, ending_type, character_name, transformation_type, goals_achieved, world_state_flags):
+        if ending_type == 'triumph':
+            return f"And so {character_name}'s journey reached its triumphant conclusion. Through trials and tribulations, they had emerged victorious, their transformation from {transformation_type.split(' → ')[0] if ' → ' in transformation_type else 'innocence'} to {transformation_type.split(' → ')[-1] if ' → ' in transformation_type else 'mastery'} complete. The world would remember their deeds, and their legend would inspire generations to come."
+        elif ending_type == 'tragedy':
+            return f"In the end, {character_name}'s path led to tragedy. Despite their transformation from {transformation_type.split(' → ')[0] if ' → ' in transformation_type else 'hope'} to {transformation_type.split(' → ')[-1] if ' → ' in transformation_type else 'despair'}, the cost was too great. Their story serves as a cautionary tale, a reminder that not all journeys end in victory."
+        elif ending_type == 'rebirth':
+            return f"Through the crucible of their adventures, {character_name} experienced a profound rebirth. Their transformation from {transformation_type.split(' → ')[0] if ' → ' in transformation_type else 'old self'} to {transformation_type.split(' → ')[-1] if ' → ' in transformation_type else 'new self'} was not just physical, but spiritual. They emerged from their trials fundamentally changed, ready to face whatever the future held."
+        elif ending_type == 'sacrifice':
+            return f"{character_name} chose the path of sacrifice, giving up everything for the greater good. Their transformation from {transformation_type.split(' → ')[0] if ' → ' in transformation_type else 'selfishness'} to {transformation_type.split(' → ')[-1] if ' → ' in transformation_type else 'selflessness'} was complete. Though they may be gone, their sacrifice ensures that others may live and prosper."
+        elif ending_type == 'redemption':
+            return f"{character_name} found redemption through their journey. Their transformation from {transformation_type.split(' → ')[0] if ' → ' in transformation_type else 'darkness'} to {transformation_type.split(' → ')[-1] if ' → ' in transformation_type else 'light'} was hard-won, but ultimately successful. They proved that even the most fallen can rise again, given the chance and the will to change."
+        else:
+            return f"{character_name}'s journey ended in bittersweet fashion. Their transformation from {transformation_type.split(' → ')[0] if ' → ' in transformation_type else 'innocence'} to {transformation_type.split(' → ')[-1] if ' → ' in transformation_type else 'experience'} brought both victory and loss. They achieved their goals, but at a cost that would forever change them. Such is the nature of true adventure."
+
+    def _determine_epilogue_theme(self, ending_type, transformation_type):
+        themes = {
+            'triumph': 'Victory and Legacy',
+            'tragedy': 'Loss and Remembrance',
+            'rebirth': 'Transformation and Renewal',
+            'sacrifice': 'Selflessness and Honor',
+            'redemption': 'Forgiveness and Growth',
+            'bittersweet': 'Balance and Wisdom'
+        }
+        return themes.get(ending_type, 'Journey and Change')
+
+    def _generate_epilogue_quotes(self, ending_type, transformation_type):
+        quotes = {
+            'triumph': [
+                "The greatest glory in living lies not in never falling, but in rising every time we fall.",
+                "Heroes are made by the paths they choose, not the powers they are graced with."
+            ],
+            'tragedy': [
+                "Sometimes the greatest tragedies are those that teach us the most profound lessons.",
+                "In loss, we find the strength we never knew we had."
+            ],
+            'rebirth': [
+                "Every ending is a new beginning.",
+                "The only way to make sense out of change is to plunge into it, move with it, and join the dance."
+            ],
+            'sacrifice': [
+                "The true measure of a hero is not how they live, but how they die.",
+                "Greater love has no one than this: to lay down one's life for one's friends."
+            ],
+            'redemption': [
+                "It is never too late to be what you might have been.",
+                "The past is not a prison, but a foundation for the future."
+            ],
+            'bittersweet': [
+                "Life is not about waiting for the storm to pass, but learning to dance in the rain.",
+                "The beauty of life lies not in its perfection, but in its imperfection."
+            ]
+        }
+        return quotes.get(ending_type, ["Every journey changes the traveler."])
+    
+    def extract_symbolic_tags(self, narrative_text: str, memory_context: Dict[str, Any], character_stats: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Extract symbolic tags from narrative text using TNE analysis.
+        """
+        try:
+            # Analyze narrative text for symbolic patterns
+            symbolic_tags = []
+            
+            # Extract emotional context
+            emotional_context = self._analyze_emotional_context(narrative_text)
+            
+            # Extract narrative themes
+            narrative_themes = self._extract_narrative_themes(narrative_text)
+            
+            # Extract thematic tags
+            thematic_tags = self._extract_thematic_tags(narrative_text)
+            
+            # Archetype detection
+            archetypes = self._detect_archetypes(narrative_text)
+            
+            # Metaphor detection
+            metaphors = self._detect_metaphors(narrative_text)
+            
+            # Combine all symbolic elements
+            for archetype in archetypes:
+                symbolic_tags.append({
+                    'type': 'archetype',
+                    'symbol': archetype,
+                    'confidence': 0.8,
+                    'color': '#fbbf24',
+                    'tooltip': f'Archetypal pattern: {archetype}'
+                })
+            
+            for theme in narrative_themes:
+                symbolic_tags.append({
+                    'type': 'theme',
+                    'symbol': theme.value.title(),
+                    'confidence': 0.7,
+                    'color': '#3b82f6',
+                    'tooltip': f'Narrative theme: {theme.value}'
+                })
+            
+            for metaphor in metaphors:
+                symbolic_tags.append({
+                    'type': 'metaphor',
+                    'symbol': metaphor,
+                    'confidence': 0.6,
+                    'color': '#10b981',
+                    'tooltip': f'Metaphorical meaning: {metaphor}'
+                })
+            
+            return symbolic_tags
+            
+        except Exception as e:
+            logger.error(f"Error extracting symbolic tags: {e}")
+            return []
+    
+    def infer_narrative_goals(self, session_history: List[Dict], memory_context: Dict[str, Any], current_turn: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Infer narrative goals from session history and memory context.
+        """
+        try:
+            goals = []
+            
+            # Analyze session history for goal patterns
+            all_text = ' '.join([msg.get('content', '') for msg in session_history]).lower()
+            
+            # Goal type detection with TNE context
+            goal_patterns = {
+                'Escape': {
+                    'keywords': ['escape', 'flee', 'run', 'get away', 'leave', 'exit'],
+                    'confidence': 0.8,
+                    'color': '#ef4444'
+                },
+                'Discover': {
+                    'keywords': ['find', 'discover', 'explore', 'search', 'investigate', 'learn'],
+                    'confidence': 0.7,
+                    'color': '#3b82f6'
+                },
+                'Change': {
+                    'keywords': ['change', 'transform', 'become', 'evolve', 'grow', 'develop'],
+                    'confidence': 0.6,
+                    'color': '#10b981'
+                },
+                'Protect': {
+                    'keywords': ['protect', 'defend', 'guard', 'save', 'shield', 'shelter'],
+                    'confidence': 0.8,
+                    'color': '#f59e0b'
+                },
+                'Destroy': {
+                    'keywords': ['destroy', 'kill', 'eliminate', 'remove', 'end', 'stop'],
+                    'confidence': 0.9,
+                    'color': '#dc2626'
+                },
+                'Connect': {
+                    'keywords': ['connect', 'meet', 'join', 'unite', 'bond', 'relationship'],
+                    'confidence': 0.6,
+                    'color': '#8b5cf6'
+                },
+                'Survive': {
+                    'keywords': ['survive', 'live', 'stay alive', 'endure', 'persist'],
+                    'confidence': 0.7,
+                    'color': '#059669'
+                },
+                'Achieve': {
+                    'keywords': ['achieve', 'accomplish', 'succeed', 'win', 'complete', 'finish'],
+                    'confidence': 0.6,
+                    'color': '#fbbf24'
+                }
+            }
+            
+            # Detect goals based on keywords and TNE context
+            for goal_type, pattern in goal_patterns.items():
+                if any(keyword in all_text for keyword in pattern['keywords']):
+                    # Calculate confidence based on frequency and TNE context
+                    keyword_count = sum(1 for keyword in pattern['keywords'] if keyword in all_text)
+                    base_confidence = pattern['confidence']
+                    
+                    # Boost confidence based on memory context
+                    memory_boost = 0.1 if memory_context else 0.0
+                    confidence = min(0.95, base_confidence + (keyword_count * 0.05) + memory_boost)
+                    
+                    # Generate narrative justification
+                    justification = self._generate_goal_justification(goal_type, all_text)
+                    
+                    goals.append({
+                        'type': goal_type,
+                        'confidence': confidence,
+                        'color': pattern['color'],
+                        'justification': justification,
+                        'progress': min(0.8, confidence * 0.8)
+                    })
+            
+            # Sort by confidence and return top 3
+            goals.sort(key=lambda x: x['confidence'], reverse=True)
+            return goals[:3]
+            
+        except Exception as e:
+            logger.error(f"Error inferring narrative goals: {e}")
+            return []
+    
+    def infer_character_transformation(self, narrative_history: list, symbolic_tags: list, character_stats: dict) -> dict:
+        """
+        Infer character transformation from narrative history and symbolic tags.
+        """
+        try:
+            all_text = ' '.join([msg.get('content', '') for msg in narrative_history]).lower()
+            transformation_patterns = {
+                'Innocent → Orphan → Seeker → Warrior → Magician': {
+                    'keywords': ['innocent', 'naive', 'orphan', 'lost', 'seeker', 'quest', 'warrior', 'battle', 'magician', 'power'],
+                    'confidence': 0.8,
+                    'archetypal_shift': "Hero's Journey",
+                    'description': "Classic hero's journey from innocence to mastery"
+                },
+                'Victim → Survivor → Redeemer': {
+                    'keywords': ['victim', 'suffering', 'survivor', 'endure', 'redeem', 'save', 'heal'],
+                    'confidence': 0.7,
+                    'archetypal_shift': 'Redemption Arc',
+                    'description': 'Transformation from victimhood to redemption'
+                },
+                'Monster → Protector': {
+                    'keywords': ['monster', 'evil', 'dark', 'protect', 'guard', 'save', 'shield'],
+                    'confidence': 0.6,
+                    'archetypal_shift': 'Beauty and the Beast',
+                    'description': 'Transformation from monstrous to protective'
+                },
+                'Fool → Sage': {
+                    'keywords': ['fool', 'naive', 'ignorant', 'sage', 'wise', 'knowledge', 'learn'],
+                    'confidence': 0.7,
+                    'archetypal_shift': 'Wisdom Journey',
+                    'description': 'Transformation from ignorance to wisdom'
+                },
+                'Outcast → Leader': {
+                    'keywords': ['outcast', 'alone', 'rejected', 'leader', 'guide', 'inspire', 'unite'],
+                    'confidence': 0.6,
+                    'archetypal_shift': 'Leadership Arc',
+                    'description': 'Transformation from isolation to leadership'
+                }
+            }
+            detected_transformations = []
+            for pattern_name, pattern_data in transformation_patterns.items():
+                keyword_matches = sum(1 for keyword in pattern_data['keywords'] if keyword in all_text)
+                if keyword_matches >= 2:
+                    confidence = min(0.95, pattern_data['confidence'] + (keyword_matches * 0.05))
+                    detected_transformations.append({
+                        'transformation_type': pattern_name,
+                        'archetypal_shift': pattern_data['archetypal_shift'],
+                        'confidence_score': confidence,
+                        'description': pattern_data['description'],
+                        'evidence_snippets': self._extract_evidence_snippets(all_text, pattern_data['keywords'])
+                    })
+            if detected_transformations:
+                detected_transformations.sort(key=lambda x: x['confidence_score'], reverse=True)
+                return detected_transformations[0]
+            else:
+                return {
+                    'transformation_type': 'Unknown',
+                    'archetypal_shift': 'No clear pattern',
+                    'confidence_score': 0.0,
+                    'description': 'No clear transformation detected',
+                    'evidence_snippets': []
+                }
+        except Exception as e:
+            logger.error(f"Error inferring character transformation: {e}")
+            return {
+                'transformation_type': 'Unknown',
+                'archetypal_shift': 'Error in analysis',
+                'confidence_score': 0.0,
+                'description': 'Error analyzing transformation',
+                'evidence_snippets': []
+            }
+
+    def _extract_evidence_snippets(self, text: str, keywords: list) -> list:
+        snippets = []
+        sentences = text.split('.')
+        for sentence in sentences:
+            if any(keyword in sentence.lower() for keyword in keywords):
+                clean_sentence = sentence.strip()
+                if len(clean_sentence) > 10:
+                    snippets.append(clean_sentence[:100] + "..." if len(clean_sentence) > 100 else clean_sentence)
+        return snippets[:3]
+
+    def monitor_narrative_resolution(self, goals: list, world_state: dict, memory_context: dict, transformations: list) -> dict:
+        try:
+            completed_goals = sum(1 for goal in goals if goal.get('confidence', 0) > 0.8)
+            total_goals = len(goals) if goals else 1
+            story_flags = world_state.get('story_flags', {})
+            completed_flags = sum(1 for flag, value in story_flags.items() if value is True)
+            total_flags = len(story_flags) if story_flags else 1
+            transformation_progress = 0
+            if transformations:
+                transformation_progress = transformations[0].get('confidence_score', 0)
+            goal_progress = completed_goals / total_goals if total_goals > 0 else 0
+            flag_progress = completed_flags / total_flags if total_flags > 0 else 0
+            overall_progress = (goal_progress + flag_progress + transformation_progress) / 3
+            if overall_progress < 0.25:
+                resolution_state = 'early'
+                recommendation = 'Establish stakes and introduce conflicts'
+            elif overall_progress < 0.5:
+                resolution_state = 'mid'
+                recommendation = 'Develop character relationships and deepen conflicts'
+            elif overall_progress < 0.75:
+                resolution_state = 'climax'
+                recommendation = 'Raise stakes and introduce moral costs'
+            else:
+                resolution_state = 'denouement'
+                recommendation = 'Resolve conflicts and show character growth'
+            return {
+                'resolution_state': resolution_state,
+                'progress': overall_progress,
+                'goal_progress': goal_progress,
+                'flag_progress': flag_progress,
+                'transformation_progress': transformation_progress,
+                'justification': f"Story is {resolution_state} stage with {overall_progress:.1%} completion",
+                'recommendation': recommendation
+            }
+        except Exception as e:
+            logger.error(f"Error monitoring narrative resolution: {e}")
+            return {
+                'resolution_state': 'unknown',
+                'progress': 0.0,
+                'goal_progress': 0.0,
+                'flag_progress': 0.0,
+                'transformation_progress': 0.0,
+                'justification': 'Error in resolution monitoring',
+                'recommendation': 'Unable to provide recommendation'
+            }
+    
+    def _detect_archetypes(self, text: str) -> List[str]:
+        """Detect archetypal patterns in text."""
+        text_lower = text.lower()
+        archetypes = []
+        
+        archetype_patterns = {
+            'Hero': ['hero', 'protagonist', 'champion', 'warrior', 'savior'],
+            'Mentor': ['mentor', 'guide', 'teacher', 'wise', 'elder'],
+            'Shadow': ['shadow', 'dark', 'evil', 'villain', 'antagonist'],
+            'Trickster': ['trickster', 'fool', 'jester', 'deceiver', 'chaos'],
+            'Rebirth': ['rebirth', 'renewal', 'transformation', 'change', 'evolution'],
+            'Labyrinth': ['labyrinth', 'maze', 'confusion', 'lost', 'journey'],
+            'Monster': ['monster', 'beast', 'creature', 'threat', 'danger'],
+            'Threshold': ['threshold', 'door', 'gate', 'passage', 'boundary'],
+            'Sacred': ['sacred', 'holy', 'divine', 'spiritual', 'magical'],
+            'Profane': ['profane', 'corrupt', 'tainted', 'fallen', 'sinful']
+        }
+        
+        for archetype, keywords in archetype_patterns.items():
+            if any(keyword in text_lower for keyword in keywords):
+                archetypes.append(archetype)
+        
+        return archetypes
+    
+    def _detect_metaphors(self, text: str) -> List[str]:
+        """Detect metaphorical patterns in text."""
+        text_lower = text.lower()
+        metaphors = []
+        
+        metaphor_patterns = {
+            'Light vs Dark': ['light', 'dark', 'shadow', 'illumination', 'obscurity'],
+            'Journey': ['journey', 'path', 'road', 'travel', 'quest'],
+            'Battle': ['battle', 'war', 'fight', 'conflict', 'struggle'],
+            'Growth': ['growth', 'bloom', 'flourish', 'develop', 'mature'],
+            'Decay': ['decay', 'rot', 'wither', 'fade', 'decline'],
+            'Water': ['water', 'flow', 'river', 'ocean', 'tide'],
+            'Fire': ['fire', 'flame', 'burn', 'heat', 'passion'],
+            'Earth': ['earth', 'ground', 'soil', 'foundation', 'stability']
+        }
+        
+        for metaphor, keywords in metaphor_patterns.items():
+            if any(keyword in text_lower for keyword in keywords):
+                metaphors.append(metaphor)
+        
+        return metaphors
+    
+    def _generate_goal_justification(self, goal_type: str, context_text: str) -> str:
+        """Generate a brief narrative justification for a goal."""
+        justifications = {
+            'Escape': "The character seeks to escape from a threatening or confining situation.",
+            'Discover': "The character is driven by curiosity and the desire to uncover hidden knowledge.",
+            'Change': "The character is undergoing or seeking personal transformation and growth.",
+            'Protect': "The character feels responsible for protecting others or important things.",
+            'Destroy': "The character is motivated to eliminate a threat or obstacle.",
+            'Connect': "The character seeks meaningful relationships or connections with others.",
+            'Survive': "The character is focused on basic survival in a dangerous environment.",
+            'Achieve': "The character is pursuing a specific accomplishment or success."
+        }
+        
+        return justifications.get(goal_type, f"The character is pursuing a {goal_type.lower()} goal.")
+    
+    def _extract_stat_triggers(self, character_stats: Dict[str, Any]) -> List[str]:
+        """Extract stat-based triggers from character stats."""
+        triggers = []
+        
+        # HP-based triggers
+        current_hp = character_stats.get('hit_points', 10)
+        if current_hp <= 3:
+            triggers.append("critical_health")
+        elif current_hp <= 5:
+            triggers.append("low_health")
+        elif current_hp <= 10:
+            triggers.append("wounded")
+        
+        # Ability score triggers
+        ability_scores = character_stats.get('ability_scores', {})
+        
+        for ability, score in ability_scores.items():
+            if score >= 18:
+                triggers.append(f"exceptional_{ability}")
+            elif score >= 16:
+                triggers.append(f"high_{ability}")
+            elif score <= 6:
+                triggers.append(f"low_{ability}")
+        
+        # Level-based triggers
+        level = character_stats.get('level', 1)
+        if level >= 5:
+            triggers.append("experienced_warrior")
+        elif level >= 3:
+            triggers.append("seasoned_adventurer")
+        
+        return triggers 

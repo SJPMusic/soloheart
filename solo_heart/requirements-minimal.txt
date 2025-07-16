@@ -51,7 +51,7 @@ mypy_extensions==1.1.0
 -e git+https://github.com/PianomanSJPM/the-narrative-engine.git@a517cb247a24db60d71310d1451325c31f43fb92#egg=narrative_engine&subdirectory=narrative_engine
 nltk==3.9.1
 numpy==2.3.1
-# openai==1.92.3  # Removed - using Ollama instead
+# openai==1.92.3  # Removed - using Google Gemma 3 instead
 packaging==25.0
 pathspec==0.12.1
 platformdirs==4.3.8
