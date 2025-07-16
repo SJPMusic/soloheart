@@ -1,57 +1,241 @@
 
-Narrative Engine Solo DnD Game Design Guide
-Generated: 2025-07-01 01:00:31
+# SoloHeart Game Design Guide
 
-Purpose:
---------
-This guide outlines the core design principles and required user experience for the Solo DnD 5E experience using the Narrative Engine. It is intended to be used by Cursor when making implementation decisions to prevent gamification drift and preserve immersive storytelling.
+## Overview
 
-Scope:
-------
-This system is NOT a traditional game engine. It is a narrative interface where an LLM acts as a Dungeon Master for a solo player using natural conversation.
+SoloHeart is a narrative-driven D&D 5E solo roleplaying game that combines traditional tabletop mechanics with AI-powered storytelling. The game emphasizes character development, meaningful choices, and immersive narrative experiences.
 
-Initial Game Flow (Gamified Portion):
--------------------------------------
-The *only* parts of the experience that may include gamified UI elements or structured choices are:
+## Core Design Principles
 
-1. **Start Menu Options:**
-   - "Start a New Campaign"
-   - "Load Existing Campaign"
-   - "Delete Saved Campaigns"
+### Narrative-First Approach
+- Story and character development take precedence over mechanics
+- AI Dungeon Master adapts to player choices and character development
+- Meaningful consequences drive narrative progression
+- Character arcs and personal growth are central to gameplay
 
-2. **New Campaign Start Flow:**
-   - Prompt player to either:
-     a) Use **"Vibe Code"** (AI generates the character based on tone, themes, and loose player input — stats, feats, gear all handled automatically).
-     b) Use **Step-by-Step Builder** (traditional DnD 5E character creation flow).
-   - After character creation, the system sends a prompt to the LLM to generate a **setting introduction**:
-     - This should describe where the campaign begins (e.g., town, forest, dungeon, etc.).
-     - This scene **must be fully LLM-generated**. No static or pre-scripted descriptions.
+### Accessibility and Inclusivity
+- Intuitive interface designed for players of all experience levels
+- Clear, helpful guidance for new players
+- Flexible character creation that accommodates diverse preferences
+- Support for various play styles and preferences
 
-Post-Setup Gameplay (No Gamification):
---------------------------------------
-- All responses from the moment the setting is introduced must be **authored dynamically by the LLM**.
-- The game UI should:
-  - Display user input as-is.
-  - Display LLM responses as immersive, in-character DM narration.
-  - Avoid mechanical prompts, reminders, or "turn indicators."
+### SRD 5.2 Compliance
+- All game mechanics follow official D&D 5E rules
+- Proper attribution to Wizards of the Coast
+- No proprietary content included
+- Creative Commons license compliance
 
-- The backend should:
-  - Handle session memory using narrative, emotional, procedural, and episodic memory layers.
-  - Record relationships, world states, and progression events.
-  - Pass memory back to the LLM as context in every prompt.
+## Character Creation System
 
-- The frontend should **never** alter user prompts or insert tokens, flags, or system markers. It should also never template prompts in a way that hints at commands.
+### Natural Language Processing
+- Players describe their character in natural language
+- AI extracts character details and creates a complete character sheet
+- Fallback pattern matching ensures reliability
+- Real-time character sheet updates as player describes character
 
-- The LLM should act as a DM, not a parser or assistant.
+### Archetype Integration
+- AI detects character archetypes from descriptions
+- Archetype transformations tracked over time
+- Symbolic analysis provides deeper character insights
+- Character development patterns inform narrative direction
 
-Fallback Handling:
-------------------
-- If OpenAI API fails, fallback logic may trigger, but the user should be **notified**.
-- Stock or gamified fallback messages should be **visibly marked** as fallback and **never used** silently.
-- The system should always allow the user to retry for a real LLM response when fallback is detected.
+### SRD 5.2 Ability Scores
+- Standard array, point buy, and roll 4d6 drop lowest methods
+- Class-optimized ability score assignment
+- Manual entry option for custom characters
+- Comprehensive validation and error handling
 
-Closing Notes:
---------------
-This document reflects the user's intention to create a high-immersion solo DnD 5E experience powered by a conversational LLM Dungeon Master. Cursor should use this guide as the authoritative reference for determining UI, backend, and prompt-handling logic.
+## Game Mechanics
 
-END OF GUIDE
+### Core D&D 5E Systems
+- Combat mechanics with initiative and action economy
+- Skill checks and saving throws
+- Experience points and leveling
+- Inspiration points and character motivation
+- Inventory and equipment management
+
+### AI-Powered Storytelling
+- Dynamic narrative generation based on character actions
+- Adaptive difficulty and challenge scaling
+- Meaningful consequences for player choices
+- Character-driven plot development
+- World state persistence and continuity
+
+### Memory and Continuity
+- Session memory persists between play sessions
+- Character development tracked over time
+- World state changes remembered and referenced
+- Narrative threads maintained across sessions
+- Symbolic memory integration for deeper storytelling
+
+## User Interface Design
+
+### Character Creation Interface
+- Clean, intuitive design for character creation
+- Real-time feedback and validation
+- Helpful guidance and suggestions
+- Mobile-responsive design
+- Accessibility features for all users
+
+### Gameplay Interface
+- Clear presentation of character information
+- Easy access to game mechanics
+- Intuitive combat and skill check interfaces
+- Session state clearly displayed
+- Quick access to character sheet and inventory
+
+### Confrontation Log
+- Real-time logging of character interactions
+- Collapsible interface for space efficiency
+- React component integration for modern UI
+- Safe identity handling and error prevention
+- QA hooks for debugging and development
+
+## Narrative Arc Viewer (Phase 4)
+
+Players can now browse their active and resolved narrative arcs via a dedicated viewer. This tool exposes symbolic memory threads, contradiction markers, and allows filtering by character, arc phase, and symbolic role. It supports transparency for memory evolution and arc resolution.
+
+### Arc Visualization
+- Timeline view of character development
+- Visual representation of archetype transformations
+- Conflict resolution tracking
+- Memory thread connections
+- Symbolic pattern recognition
+
+### Filtering and Search
+- Filter arcs by type (character, world, plot)
+- Filter by phase (active, resolved, abandoned)
+- Filter by memory importance
+- Search functionality for specific content
+- Symbolic tag filtering
+
+### Integration Features
+- Real-time arc updates
+- Memory persistence
+- API endpoints for arc data
+- Export functionality for arc analysis
+- Cross-character arc relationships
+
+## Technical Architecture
+
+### Backend Systems
+- Flask web framework for core functionality
+- Gemma 3 AI integration for narrative generation
+- SQLite database for data persistence
+- RESTful API for frontend communication
+- Session management and state persistence
+
+### Frontend Systems
+- HTML5/CSS3/JavaScript for responsive design
+- React components for modern UI elements
+- Tailwind CSS for consistent styling
+- Local storage for UI state persistence
+- Error boundaries for graceful failure handling
+
+### AI Integration
+- Modular LLM provider system
+- Fallback mechanisms for reliability
+- Context-aware prompt generation
+- Memory integration for continuity
+- Symbolic analysis for deeper insights
+
+## Quality Assurance
+
+### Testing Strategy
+- Comprehensive unit tests for all systems
+- Integration tests for AI and database interactions
+- UI tests for user interface functionality
+- Performance tests for scalability
+- Compliance tests for SRD 5.2 requirements
+
+### Error Handling
+- Graceful degradation when AI is unavailable
+- Clear error messages for user guidance
+- Comprehensive logging for debugging
+- Recovery mechanisms for common failures
+- User-friendly error states
+
+### Performance Optimization
+- Efficient database queries and indexing
+- Optimized AI response handling
+- Responsive UI with minimal loading times
+- Memory management for long sessions
+- Scalable architecture for future growth
+
+## Future Development
+
+### Planned Features
+- Multiplayer support for collaborative play
+- Advanced combat mechanics and tactics
+- Expanded spell system and magic
+- Campaign management tools
+- Character import/export functionality
+
+### AI Enhancements
+- Multi-character AI interactions
+- Dynamic world generation
+- Advanced dialogue systems
+- Emotional AI responses
+- Predictive narrative modeling
+
+### User Experience Improvements
+- Mobile app development
+- Advanced accessibility features
+- Customization options
+- Performance optimizations
+- Enhanced visualization tools
+
+## Compliance and Legal
+
+### SRD 5.2 Compliance
+- All content properly attributed to Wizards of the Coast
+- No proprietary SRD publisher content included
+- Creative Commons Attribution 4.0 license compliance
+- Automated compliance checking and validation
+- Clear separation of SRD and original content
+
+### Legal Requirements
+- Comprehensive terms of service
+- Privacy policy for user data protection
+- Copyright notices and disclaimers
+- License files and attribution requirements
+- Legal review and compliance verification
+
+## Deployment and Operations
+
+### Production Environment
+- Secure hosting with SSL encryption
+- Automated deployment and rollback procedures
+- Monitoring and alerting systems
+- Backup and disaster recovery plans
+- Performance monitoring and optimization
+
+### Maintenance and Updates
+- Regular security updates and patches
+- Performance monitoring and optimization
+- User feedback collection and analysis
+- Feature updates and improvements
+- Documentation maintenance and updates
+
+## Success Metrics
+
+### User Engagement
+- Character creation completion rates
+- Session duration and frequency
+- Feature usage and adoption
+- User satisfaction and feedback
+- Return user rates
+
+### Technical Performance
+- Response times for all operations
+- System reliability and uptime
+- Error rates and resolution times
+- Memory usage and optimization
+- Scalability and growth capacity
+
+### Quality Indicators
+- Bug reports and resolution times
+- User support requests and satisfaction
+- Feature request frequency and implementation
+- Community engagement and feedback
+- Overall system stability and reliability
