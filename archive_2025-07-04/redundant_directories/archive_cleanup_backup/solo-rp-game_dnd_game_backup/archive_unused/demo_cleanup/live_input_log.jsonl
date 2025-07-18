@@ -1,0 +1,4 @@
+{"timestamp": "2025-06-28T03:39:02.625344", "source": "file:input1.txt", "raw_input": "The king declared a festival.", "parsed_data": {"names": ["The"], "length": 29}, "relevance": 0.29, "tags": [], "storyline": null}
+{"timestamp": "2025-06-28T03:39:02.625711", "source": "file:input2.json", "raw_input": "{\"event\": \"A shadowy figure was seen near the docks.\"}", "parsed_data": {"names": ["\"A"], "length": 54}, "relevance": 0.54, "tags": [], "storyline": null}
+{"timestamp": "2025-06-28T03:39:03.630206", "source": "manual", "raw_input": "A mysterious stranger enters the tavern.", "parsed_data": {"names": ["A"], "length": 40}, "relevance": 0.4, "tags": [], "storyline": null}
+{"timestamp": "2025-06-28T03:39:03.630294", "source": "manual", "raw_input": "The party forms an alliance with the local guard.", "parsed_data": {"names": ["The"], "length": 49}, "relevance": 0.49, "tags": ["alliance"], "storyline": null}

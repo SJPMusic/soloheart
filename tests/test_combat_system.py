@@ -7,7 +7,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from solo_heart.enhanced_campaign_manager import EnhancedCampaignManager
+from SoloHeart.enhanced_campaign_manager import EnhancedCampaignManager
 from narrative_engine.core.combat_system import Combatant, skill_check_system, DiceRoller
 from narrative_engine.core.character_manager import Character, Race, CharacterClass, AbilityScore
 

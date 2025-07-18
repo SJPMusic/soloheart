@@ -1,0 +1,26 @@
+[
+  {
+    "type": "memory",
+    "character_id": "mvp_test_char_001",
+    "timestamp": "2025-07-17T21:35:18.704414",
+    "content": "Test memory entry for MVP validation",
+    "layer": "episodic",
+    "importance": 0.7,
+    "tags": [
+      "test",
+      "mvp"
+    ],
+    "metadata": {
+      "test_type": "mvp_validation"
+    }
+  },
+  {
+    "type": "dialogue",
+    "character_id": "mvp_test_char_001",
+    "timestamp": "2025-07-17T21:35:18.704419",
+    "content": "Test dialogue entry for MVP validation",
+    "metadata": {
+      "test_type": "mvp_validation"
+    }
+  }
+]

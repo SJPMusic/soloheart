@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎲 Solo DnD 5E - AI-Powered Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #e8e8e8;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.8;
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.dm {
+            background: linear-gradient(135deg, #8b4513, #a0522d);
+            margin-right: auto;
+        }
+
+        .message.system {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            margin: 10px auto;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #e8e8e8;
+            font-size: 16px;
+        }
+
+        .chat-input::placeholder {
+            color: rgba(232, 232, 232, 0.6);
+        }
+
+        .send-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #ffd700;
+            padding-bottom: 5px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.02);
+        }
+
+        .btn.secondary {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
+        .btn.warning {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+        }
+
+        .character-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .character-info h4 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .quest-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .quest-title {
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .quest-description {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #ffd700;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ffd700;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #e8e8e8;
+        }
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .dice-roller {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .dice-input {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #e8e8e8;
+        }
+
+        .roll-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            cursor: pointer;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+            
+            .main-content {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎲 Solo DnD 5E</h1>
+            <p>AI-Powered Solo Adventure Engine</p>
+        </div>
+
+        <div class="game-container">
+            <div class="sidebar">
+                <div class="section">
+                    <h3>🎮 Campaign</h3>
+                    <button class="btn" onclick="showNewCampaignModal()">New Campaign</button>
+                    <button class="btn secondary" onclick="showLoadCampaignModal()">Load Campaign</button>
+                    <div id="campaign-info" style="display: none;">
+                        <div class="character-info">
+                            <h4>Current Campaign</h4>
+                            <div id="campaign-details"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>👤 Character</h3>
+                    <button class="btn" onclick="showCharacterCreation()">Create Character</button>
+                    <div id="character-info" style="display: none;">
+                        <div class="character-info">
+                            <h4>Your Character</h4>
+                            <div id="character-details"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🎲 Dice Roller</h3>
+                    <div class="dice-roller">
+                        <input type="text" class="dice-input" id="dice-input" placeholder="d20" value="d20">
+                        <input type="number" class="dice-input" id="modifier-input" placeholder="+0" value="0">
+                        <button class="roll-btn" onclick="rollDice()">Roll</button>
+                    </div>
+                    <div id="dice-result"></div>
+                </div>
+
+                <div class="section">
+                    <h3>📜 Quests</h3>
+                    <button class="btn" onclick="showAddQuestModal()">Add Quest</button>
+                    <div id="quests-list"></div>
+                </div>
+
+                <div class="section">
+                    <h3>💾 Game</h3>
+                    <button class="btn success" onclick="saveGame()">Save Game</button>
+                    <button class="btn warning" onclick="loadGame()">Load Game</button>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="chat-container" id="chat-container">
+                    <div class="message system">
+                        Welcome to Solo DnD 5E! Start by creating a new campaign or loading an existing one.
+                    </div>
+                </div>
+
+                <div class="input-container">
+                    <input type="text" class="chat-input" id="chat-input" placeholder="Type your message or action..." onkeypress="handleKeyPress(event)">
+                    <button class="send-btn" onclick="sendMessage()" id="send-btn">Send</button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>AI DM is thinking...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Campaign Modal -->
+    <div id="newCampaignModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('newCampaignModal')">&times;</span>
+            <h2>Create New Campaign</h2>
+            <div class="form-group">
+                <label for="campaign-name">Campaign Name:</label>
+                <input type="text" id="campaign-name" placeholder="Enter campaign name">
+            </div>
+            <div class="form-group">
+                <label for="narration-style">DM Narration Style:</label>
+                <select id="narration-style">
+                    <option value="balanced">Balanced</option>
+                    <option value="dramatic">Dramatic</option>
+                    <option value="humorous">Humorous</option>
+                    <option value="mysterious">Mysterious</option>
+                    <option value="epic">Epic</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+            <button class="btn" onclick="createCampaign()">Create Campaign</button>
+        </div>
+    </div>
+
+    <!-- Load Campaign Modal -->
+    <div id="loadCampaignModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('loadCampaignModal')">&times;</span>
+            <h2>Load Campaign</h2>
+            <div id="campaigns-list"></div>
+        </div>
+    </div>
+
+    <!-- Character Creation Modal -->
+    <div id="characterCreationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('characterCreationModal')">&times;</span>
+            <h2>Create Your Character</h2>
+            <div id="character-creation-content"></div>
+        </div>
+    </div>
+
+    <!-- Add Quest Modal -->
+    <div id="addQuestModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addQuestModal')">&times;</span>
+            <h2>Add New Quest</h2>
+            <div class="form-group">
+                <label for="quest-title">Quest Title:</label>
+                <input type="text" id="quest-title" placeholder="Enter quest title">
+            </div>
+            <div class="form-group">
+                <label for="quest-description">Description:</label>
+                <textarea id="quest-description" placeholder="Enter quest description"></textarea>
+            </div>
+            <button class="btn" onclick="addQuest()">Add Quest</button>
+        </div>
+    </div>
+
+    <script>
+        let currentCampaign = null;
+        let currentCharacter = null;
+        let characterCreationStep = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkGameStatus();
+        });
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function showNewCampaignModal() {
+            document.getElementById('newCampaignModal').style.display = 'block';
+        }
+
+        function showLoadCampaignModal() {
+            document.getElementById('loadCampaignModal').style.display = 'block';
+            loadCampaignsList();
+        }
+
+        function showCharacterCreation() {
+            if (!currentCampaign) {
+                addMessage('Please create or load a campaign first.', 'system');
+                return;
+            }
+            document.getElementById('characterCreationModal').style.display = 'block';
+            startCharacterCreation();
+        }
+
+        function showAddQuestModal() {
+            if (!currentCampaign) {
+                addMessage('Please create or load a campaign first.', 'system');
+                return;
+            }
+            document.getElementById('addQuestModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function addMessage(text, type = 'user') {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function createCampaign() {
+            const name = document.getElementById('campaign-name').value;
+            const style = document.getElementById('narration-style').value;
+
+            if (!name) {
+                alert('Please enter a campaign name');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/campaigns', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, narration_style: style })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    currentCampaign = data;
+                    closeModal('newCampaignModal');
+                    addMessage(`Created campaign: ${name}`, 'system');
+                    updateCampaignInfo();
+                    checkGameStatus();
+                }
+            } catch (error) {
+                console.error('Error creating campaign:', error);
+                addMessage('Error creating campaign', 'system');
+            }
+        }
+
+        async function loadCampaignsList() {
+            try {
+                const response = await fetch('/api/campaigns');
+                const data = await response.json();
+                
+                const campaignsList = document.getElementById('campaigns-list');
+                campaignsList.innerHTML = '';
+
+                if (data.campaigns.length === 0) {
+                    campaignsList.innerHTML = '<p>No campaigns found. Create a new one!</p>';
+                    return;
+                }
+
+                data.campaigns.forEach(campaign => {
+                    const campaignDiv = document.createElement('div');
+                    campaignDiv.className = 'quest-item';
+                    campaignDiv.innerHTML = `
+                        <div class="quest-title">${campaign.name}</div>
+                        <div class="quest-description">Created: ${new Date(campaign.created_at).toLocaleDateString()}</div>
+                        <button class="btn" onclick="loadCampaign('${campaign.id}')">Load</button>
+                    `;
+                    campaignsList.appendChild(campaignDiv);
+                });
+            } catch (error) {
+                console.error('Error loading campaigns:', error);
+            }
+        }
+
+        async function loadCampaign(campaignId) {
+            try {
+                const response = await fetch(`/api/campaigns/${campaignId}/load`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    currentCampaign = data.campaign;
+                    currentCharacter = data.campaign.character;
+                    closeModal('loadCampaignModal');
+                    addMessage(`Loaded campaign: ${data.campaign.name}`, 'system');
+                    updateCampaignInfo();
+                    updateCharacterInfo();
+                    checkGameStatus();
+                }
+            } catch (error) {
+                console.error('Error loading campaign:', error);
+                addMessage('Error loading campaign', 'system');
+            }
+        }
+
+        async function startCharacterCreation() {
+            try {
+                const response = await fetch('/api/character/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'step_by_step' })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    characterCreationStep = data.step;
+                    updateCharacterCreationUI();
+                }
+            } catch (error) {
+                console.error('Error starting character creation:', error);
+            }
+        }
+
+        function updateCharacterCreationUI() {
+            const content = document.getElementById('character-creation-content');
+            if (!characterCreationStep) {
+                content.innerHTML = '<p>No character creation step available</p>';
+                return;
+            }
+
+            content.innerHTML = `
+                <h3>${characterCreationStep.title}</h3>
+                <p>${characterCreationStep.description}</p>
+                <div class="form-group">
+                    ${characterCreationStep.options.map(option => `
+                        <button class="btn" onclick="makeCharacterChoice('${option}')">${option}</button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function makeCharacterChoice(choice) {
+            try {
+                const response = await fetch('/api/character/choice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ choice })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    if (data.completed) {
+                        currentCharacter = data.character;
+                        closeModal('characterCreationModal');
+                        addMessage('Character creation complete!', 'system');
+                        updateCharacterInfo();
+                        saveCharacter();
+                    } else {
+                        characterCreationStep = data.step;
+                        updateCharacterCreationUI();
+                    }
+                }
+            } catch (error) {
+                console.error('Error making character choice:', error);
+            }
+        }
+
+        async function saveCharacter() {
+            try {
+                const response = await fetch('/api/character/save', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    addMessage(`Character ${data.character.name} saved!`, 'system');
+                }
+            } catch (error) {
+                console.error('Error saving character:', error);
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            if (!currentCampaign) {
+                addMessage('Please create or load a campaign first.', 'system');
+                return;
+            }
+
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('send-btn').disabled = true;
+
+            try {
+                const response = await fetch('/api/game/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+                
+                if (data.type === 'style_change') {
+                    addMessage(data.message, 'system');
+                } else if (data.type === 'game_response') {
+                    addMessage(data.response, 'dm');
+                } else {
+                    addMessage('Sorry, I encountered an error.', 'system');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage('Error communicating with AI DM', 'system');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('send-btn').disabled = false;
+            }
+        }
+
+        async function rollDice() {
+            const dice = document.getElementById('dice-input').value;
+            const modifier = parseInt(document.getElementById('modifier-input').value) || 0;
+            const description = prompt('What are you rolling for?') || '';
+
+            try {
+                const response = await fetch('/api/game/roll', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dice, modifier, description })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    const resultText = `${description ? description + ': ' : ''}${dice}${modifier >= 0 ? '+' : ''}${modifier} = ${data.result}`;
+                    addMessage(resultText, 'system');
+                    document.getElementById('dice-result').innerHTML = `<strong>${resultText}</strong>`;
+                }
+            } catch (error) {
+                console.error('Error rolling dice:', error);
+            }
+        }
+
+        async function addQuest() {
+            const title = document.getElementById('quest-title').value;
+            const description = document.getElementById('quest-description').value;
+
+            if (!title || !description) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/game/quests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description, objectives: [] })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    closeModal('addQuestModal');
+                    addMessage(`Quest "${title}" added!`, 'system');
+                    loadQuests();
+                }
+            } catch (error) {
+                console.error('Error adding quest:', error);
+            }
+        }
+
+        async function loadQuests() {
+            try {
+                const response = await fetch('/api/game/quests');
+                const data = await response.json();
+                
+                const questsList = document.getElementById('quests-list');
+                questsList.innerHTML = '';
+
+                data.quests.forEach(quest => {
+                    const questDiv = document.createElement('div');
+                    questDiv.className = 'quest-item';
+                    questDiv.innerHTML = `
+                        <div class="quest-title">${quest.title}</div>
+                        <div class="quest-description">${quest.description}</div>
+                    `;
+                    questsList.appendChild(questDiv);
+                });
+            } catch (error) {
+                console.error('Error loading quests:', error);
+            }
+        }
+
+        async function saveGame() {
+            try {
+                const response = await fetch('/api/game/save', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    addMessage('Game saved successfully!', 'system');
+                }
+            } catch (error) {
+                console.error('Error saving game:', error);
+            }
+        }
+
+        async function loadGame() {
+            try {
+                const response = await fetch('/api/game/load', {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    addMessage('Game loaded successfully!', 'system');
+                    loadQuests();
+                }
+            } catch (error) {
+                console.error('Error loading game:', error);
+            }
+        }
+
+        async function checkGameStatus() {
+            try {
+                const response = await fetch('/api/game/status');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentCampaign = data.campaign;
+                    currentCharacter = data.character;
+                    updateCampaignInfo();
+                    updateCharacterInfo();
+                    loadQuests();
+                }
+            } catch (error) {
+                console.error('Error checking game status:', error);
+            }
+        }
+
+        function updateCampaignInfo() {
+            const campaignInfo = document.getElementById('campaign-info');
+            const campaignDetails = document.getElementById('campaign-details');
+            
+            if (currentCampaign) {
+                campaignInfo.style.display = 'block';
+                campaignDetails.innerHTML = `
+                    <div class="stat"><span>Name:</span> <span>${currentCampaign.name}</span></div>
+                    <div class="stat"><span>Style:</span> <span>${currentCampaign.narration_style}</span></div>
+                `;
+            } else {
+                campaignInfo.style.display = 'none';
+            }
+        }
+
+        function updateCharacterInfo() {
+            const characterInfo = document.getElementById('character-info');
+            const characterDetails = document.getElementById('character-details');
+            
+            if (currentCharacter) {
+                characterInfo.style.display = 'block';
+                characterDetails.innerHTML = `
+                    <div class="stat"><span>Name:</span> <span>${currentCharacter.name}</span></div>
+                    <div class="stat"><span>Class:</span> <span>${currentCharacter.character_class}</span></div>
+                    <div class="stat"><span>Level:</span> <span>${currentCharacter.level}</span></div>
+                    <div class="stat"><span>HP:</span> <span>${currentCharacter.current_hp}/${currentCharacter.max_hp}</span></div>
+                `;
+            } else {
+                characterInfo.style.display = 'none';
+            }
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = document.getElementsByClassName('modal');
+            for (let modal of modals) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        }
+    </script>
+</body>
+</html> 

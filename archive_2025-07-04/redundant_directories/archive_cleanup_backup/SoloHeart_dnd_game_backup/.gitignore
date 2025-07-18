@@ -1,0 +1,41 @@
+# Docker
+.dockerignore
+Dockerfile*
+docker-compose*
+.docker/
+
+# Docker build artifacts
+*.dockerfile
+docker-compose.override.yml
+
+# Container volumes
+volumes/
+data/volumes/
+
+# Docker logs
+docker.log
+container.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+ENV/
+.env
+.env.*
+
+# Flask/Local
+instance/
+*.db
+*.sqlite3
+*.log
+
+# Local saves
+campaign_saves/
+character_saves/
+
+# OS
+.DS_Store

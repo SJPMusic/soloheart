@@ -1,0 +1,28 @@
+{
+  "name": "Adventurer",
+  "race": "Unknown",
+  "class": "Unknown",
+  "level": 1,
+  "background": "Unknown",
+  "alignment": "Neutral",
+  "personality": "A brave adventurer",
+  "age": null,
+  "ability_scores": {
+    "strength": 10,
+    "dexterity": 10,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 10
+  },
+  "hit_points": 10,
+  "armor_class": 10,
+  "saving_throws": [],
+  "skills": [],
+  "feats": [],
+  "weapons": [],
+  "gear": [],
+  "spells": [],
+  "background_freeform": "",
+  "created_date": "2025-07-03T21:21:07.886114"
+}

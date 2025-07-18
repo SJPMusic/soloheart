@@ -1527,6 +1527,56 @@ class SimpleUnifiedGame:
 # Initialize game manager
 game = SimpleUnifiedGame()
 
+def append_memory_event_to_journal(memory_event: Dict[str, Any], campaign_id: str) -> None:
+    """
+    Append a memory event to the campaign's journal entries.
+    
+    Args:
+        memory_event: Memory event data from TNE
+        campaign_id: Campaign ID for journal location
+    """
+    try:
+        # Ensure campaign directory exists
+        campaign_dir = f"campaign_saves/{campaign_id}"
+        os.makedirs(campaign_dir, exist_ok=True)
+        
+        # Load existing entries
+        entries_file = f"{campaign_dir}/entries.json"
+        entries = []
+        
+        if os.path.exists(entries_file):
+            try:
+                with open(entries_file, 'r') as f:
+                    entries = json.load(f)
+            except (json.JSONDecodeError, FileNotFoundError):
+                entries = []
+        
+        # Create journal entry from memory event
+        journal_entry = {
+            "id": memory_event.get("id", f"memory_{len(entries)}"),
+            "type": "memory",
+            "timestamp": memory_event.get("timestamp", datetime.datetime.now().isoformat()),
+            "character_id": memory_event.get("character_id", "unknown"),
+            "content": memory_event.get("description", ""),
+            "layer": memory_event.get("layer", "episodic"),
+            "tags": memory_event.get("tags", []),
+            "importance": memory_event.get("importance", 0.5),
+            "metadata": memory_event.get("metadata", {}),
+            "source": "tne_injection"
+        }
+        
+        # Add to entries
+        entries.append(journal_entry)
+        
+        # Save back to file
+        with open(entries_file, 'w') as f:
+            json.dump(entries, f, indent=2)
+        
+        logger.info(f"Memory event appended to journal: {journal_entry['id']}")
+        
+    except Exception as e:
+        logger.error(f"Error appending memory event to journal: {e}")
+
 def inject_memory_event(character_name: str, player_input: str, dm_response: str, campaign_id: str):
     """
     Inject a memory event into TNE after a player action.
@@ -1597,6 +1647,11 @@ def inject_memory_event(character_name: str, player_input: str, dm_response: str
                 asyncio.set_event_loop(loop)
                 response = loop.run_until_complete(send_event_to_tne(event))
                 logger.info(f"TNE memory injection successful: {response.get('success', False)}")
+                
+                # Append to journal after successful TNE injection
+                if response and isinstance(response, dict):
+                    append_memory_event_to_journal(response, campaign_id)
+                    
                 loop.close()
             except Exception as e:
                 logger.error(f"TNE memory injection failed: {e}")

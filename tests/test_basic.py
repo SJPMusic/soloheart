@@ -17,7 +17,7 @@ from typing import Dict, Any
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import from the narrative bridge instead of direct imports
-from solo_heart.narrative_bridge import (
+from SoloHeart.narrative_bridge import (
     NarrativeBridge, DnDMemoryEntry, DnDNPCResponse,
     create_dnd_bridge, store_combat_memory, store_quest_memory
 )

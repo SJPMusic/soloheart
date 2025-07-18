@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Narrative Engine - Multi-Domain Storytelling Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .domain-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .domain-selector select {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 14px;
+        }
+
+        .domain-selector select option {
+            background: #667eea;
+            color: white;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .message.ai .message-avatar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px;
+            border-radius: 15px;
+            position: relative;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.ai .message-content {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .message-time {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+            font-family: inherit;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-button {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-section h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #667eea;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 8px;
+        }
+
+        .narrative-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid #667eea;
+        }
+
+        .narrative-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .narrative-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .narrative-item h4 {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .narrative-item p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .narrative-stats {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+            font-size: 0.8rem;
+        }
+
+        .stat {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px;
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .memory-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .memory-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #28a745;
+        }
+
+        .memory-item h4 {
+            font-size: 1rem;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .memory-item p {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .memory-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .status-bar {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 250px 1fr 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+            }
+            
+            .sidebar, .memory-panel {
+                order: 3;
+            }
+            
+            .chat-container {
+                order: 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-book-open"></i> Narrative Engine</h1>
+            <p>Multi-Domain Storytelling & AI-Powered Narrative Intelligence</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-indicator"></div>
+                <span id="system-status">System Online</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-brain"></i>
+                <span id="memory-count">0 memories</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-layer-group"></i>
+                <span id="narrative-count">0 narratives</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Left Sidebar - Narrative Management -->
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-plus"></i> Create Narrative</h3>
+                    <button class="btn btn-primary" onclick="showCreateNarrativeModal()">
+                        <i class="fas fa-plus"></i> New Narrative
+                    </button>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-book"></i> Narratives</h3>
+                    <div id="narratives-list">
+                        <p style="text-align: center; color: #666; font-style: italic;">
+                            No narratives yet. Create one to get started!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-tools"></i> Tools</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="showImportModal()">
+                            <i class="fas fa-upload"></i> Import
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportCurrentNarrative()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Chat Area -->
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h2><i class="fas fa-comments"></i> Narrative Assistant</h2>
+                    <div class="domain-selector">
+                        <label for="domain-select">Domain:</label>
+                        <select id="domain-select" onchange="changeDomain()">
+                            <option value="gaming">Gaming</option>
+                            <option value="therapy">Therapy</option>
+                            <option value="education">Education</option>
+                            <option value="organizational">Organizational</option>
+                            <option value="creative_writing">Creative Writing</option>
+                            <option value="journalism">Journalism</option>
+                            <option value="marketing">Marketing</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message ai">
+                        <div class="message-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-content">
+                            <p>Welcome to the Narrative Engine! I'm here to help you create, analyze, and develop narratives across multiple domains. What would you like to work on today?</p>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="typing-indicator" id="typing-indicator">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <p>AI is thinking...</p>
+                </div>
+
+                <div class="chat-input">
+                    <div class="input-container">
+                        <textarea 
+                            id="message-input" 
+                            class="message-input" 
+                            placeholder="Type your message here..."
+                            onkeydown="handleKeyDown(event)"
+                        ></textarea>
+                        <button class="send-button" onclick="sendMessage()" id="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Memory & Analysis -->
+            <div class="memory-panel">
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-brain"></i> Memory & Context</h3>
+                    <div id="memory-stats">
+                        <p>Loading memory statistics...</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="refreshMemoryStats()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-chart-line"></i> Current Narrative</h3>
+                    <div id="current-narrative-info">
+                        <p style="text-align: center; color: #666; font-style: italic;">
+                            No narrative selected
+                        </p>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-lightbulb"></i> Quick Actions</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="analyzeCurrentNarrative()">
+                            <i class="fas fa-search"></i> Analyze
+                        </button>
+                        <button class="btn btn-primary" onclick="generateNextPlotPoint()">
+                            <i class="fas fa-magic"></i> Generate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Narrative Modal -->
+    <div id="create-narrative-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus"></i> Create New Narrative</h3>
+                <span class="close" onclick="closeModal('create-narrative-modal')">&times;</span>
+            </div>
+            <form id="create-narrative-form">
+                <div class="form-group">
+                    <label for="narrative-name">Narrative Name:</label>
+                    <input type="text" id="narrative-name" required placeholder="Enter narrative name">
+                </div>
+                <div class="form-group">
+                    <label for="narrative-domain">Domain:</label>
+                    <select id="narrative-domain" required>
+                        <option value="gaming">Gaming</option>
+                        <option value="therapy">Therapy</option>
+                        <option value="education">Education</option>
+                        <option value="organizational">Organizational</option>
+                        <option value="creative_writing">Creative Writing</option>
+                        <option value="journalism">Journalism</option>
+                        <option value="marketing">Marketing</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="narrative-structure">Story Structure:</label>
+                    <select id="narrative-structure" required>
+                        <option value="three_act">Three Act Structure</option>
+                        <option value="hero_journey">Hero's Journey</option>
+                        <option value="five_act">Five Act Structure</option>
+                        <option value="freytag_pyramid">Freytag Pyramid</option>
+                        <option value="save_the_cat">Save the Cat</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="narrative-description">Description (Optional):</label>
+                    <textarea id="narrative-description" placeholder="Brief description of your narrative"></textarea>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Narrative
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('create-narrative-modal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-upload"></i> Import Narrative</h3>
+                <span class="close" onclick="closeModal('import-modal')">&times;</span>
+            </div>
+            <form id="import-form">
+                <div class="form-group">
+                    <label for="import-json">Narrative JSON:</label>
+                    <textarea id="import-json" required placeholder="Paste your narrative JSON here"></textarea>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Import
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('import-modal')">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Character Creation Modal -->
+    <div id="characterCreationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Your Character</h2>
+                <span class="close" onclick="closeCharacterCreation()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="characterCreationStep">
+                    <div id="stepInstructions" class="step-instructions"></div>
+                    <div id="stepOptions" class="step-options"></div>
+                    <div id="characterSummary" class="character-summary"></div>
+                    <div class="step-input">
+                        <input type="text" id="characterChoice" placeholder="Enter your choice..." />
+                        <button onclick="makeCharacterChoice()">Continue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Character Name Modal -->
+    <div id="characterNameModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Name Your Character</h2>
+                <span class="close" onclick="closeCharacterNameModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="character-name-input">
+                    <label for="characterName">Character Name:</label>
+                    <input type="text" id="characterName" placeholder="Enter character name..." />
+                    <button onclick="saveCharacter()">Save Character</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Selection Modal -->
+    <div id="campaignSelectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Choose Your Adventure</h2>
+                <span class="close" onclick="closeCampaignSelection()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="campaign-options">
+                    <button onclick="startNewCampaign()" class="campaign-btn">Start New Campaign</button>
+                    <button onclick="loadExistingCampaign()" class="campaign-btn">Load Existing Campaign</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentNarrativeId = null;
+        let currentDomain = 'gaming';
+        let isTyping = false;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNarratives();
+            loadMemoryStats();
+            loadSystemStatus();
+        });
+
+        // Load narratives from the server
+        async function loadNarratives() {
+            try {
+                const response = await fetch('/api/narratives');
+                const data = await response.json();
+                
+                const narrativesList = document.getElementById('narratives-list');
+                
+                if (data.narratives.length === 0) {
+                    narrativesList.innerHTML = '<p style="text-align: center; color: #666; font-style: italic;">No narratives yet. Create one to get started!</p>';
+                    return;
+                }
+                
+                narrativesList.innerHTML = data.narratives.map(narrative => `
+                    <div class="narrative-item ${narrative.id === currentNarrativeId ? 'active' : ''}" 
+                         onclick="selectNarrative('${narrative.id}')">
+                        <h4>${narrative.name}</h4>
+                        <p>${narrative.domain} • ${narrative.structure_type}</p>
+                        <div class="narrative-stats">
+                            <span class="stat">${narrative.character_count} chars</span>
+                            <span class="stat">${narrative.plot_point_count} plots</span>
+                            <span class="stat">${(narrative.coherence_score * 100).toFixed(0)}% coherent</span>
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('narrative-count').textContent = `${data.narratives.length} narratives`;
+                
+            } catch (error) {
+                console.error('Error loading narratives:', error);
+            }
+        }
+
+        // Load memory statistics
+        async function loadMemoryStats() {
+            try {
+                const response = await fetch('/api/memory/stats');
+                const stats = await response.json();
+                
+                document.getElementById('memory-count').textContent = `${stats.total_memories} memories`;
+                
+                const memoryStats = document.getElementById('memory-stats');
+                memoryStats.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Total Memories:</strong> ${stats.total_memories}<br>
+                        <strong>Memory Types:</strong> ${Object.keys(stats.memory_types).length}<br>
+                        <strong>Average Priority:</strong> ${stats.average_priority?.toFixed(2) || 'N/A'}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading memory stats:', error);
+            }
+        }
+
+        // Load system status
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const status = await response.json();
+                
+                document.getElementById('system-status').textContent = 'System Online';
+                
+            } catch (error) {
+                console.error('Error loading system status:', error);
+                document.getElementById('system-status').textContent = 'System Offline';
+            }
+        }
+
+        // Send a message
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message || isTyping) return;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        narrative_id: currentNarrativeId,
+                        domain: currentDomain
+                    })
+                });
+                
+                const data = await response.json();
+                
+                hideTypingIndicator();
+                
+                if (data.error) {
+                    addMessage(`Error: ${data.error}`, 'ai');
+                } else {
+                    addMessage(data.response, 'ai');
+                    
+                    // Update narrative context if provided
+                    if (data.narrative_context) {
+                        updateCurrentNarrativeInfo(data.narrative_context);
+                    }
+                }
+                
+            } catch (error) {
+                hideTypingIndicator();
+                addMessage('Sorry, I encountered an error. Please try again.', 'ai');
+                console.error('Error sending message:', error);
+            }
+        }
+
+        // Add a message to the chat
+        function addMessage(content, sender) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const time = new Date().toLocaleTimeString();
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">
+                    <i class="fas fa-${sender === 'user' ? 'user' : 'robot'}"></i>
+                </div>
+                <div class="message-content">
+                    <p>${content}</p>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Handle Enter key in message input
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Show/hide typing indicator
+        function showTypingIndicator() {
+            isTyping = true;
+            document.getElementById('typing-indicator').style.display = 'block';
+            document.getElementById('send-button').disabled = true;
+        }
+
+        function hideTypingIndicator() {
+            isTyping = false;
+            document.getElementById('typing-indicator').style.display = 'none';
+            document.getElementById('send-button').disabled = false;
+        }
+
+        // Change domain
+        function changeDomain() {
+            currentDomain = document.getElementById('domain-select').value;
+            addMessage(`Switched to ${currentDomain} domain. How can I help you with ${currentDomain} narratives?`, 'ai');
+        }
+
+        // Select a narrative
+        async function selectNarrative(narrativeId) {
+            currentNarrativeId = narrativeId;
+            
+            // Update UI
+            document.querySelectorAll('.narrative-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.narrative-item').classList.add('active');
+            
+            // Load narrative details
+            try {
+                const response = await fetch(`/api/narratives/${narrativeId}`);
+                const data = await response.json();
+                
+                updateCurrentNarrativeInfo(data.summary);
+                
+                addMessage(`Selected narrative: ${data.summary.name}. I'm ready to help you develop this ${data.summary.structure_type} story!`, 'ai');
+                
+            } catch (error) {
+                console.error('Error loading narrative details:', error);
+            }
+        }
+
+        // Update current narrative info
+        function updateCurrentNarrativeInfo(summary) {
+            const infoDiv = document.getElementById('current-narrative-info');
+            infoDiv.innerHTML = `
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px;">
+                    <h4>${summary.name}</h4>
+                    <p><strong>Structure:</strong> ${summary.structure_type}</p>
+                    <p><strong>Characters:</strong> ${summary.character_count}</p>
+                    <p><strong>Plot Points:</strong> ${summary.plot_point_count}</p>
+                    <p><strong>Coherence:</strong> ${(summary.coherence_score * 100).toFixed(0)}%</p>
+                </div>
+            `;
+        }
+
+        // Modal functions
+        function showCreateNarrativeModal() {
+            document.getElementById('create-narrative-modal').style.display = 'block';
+        }
+
+        function showImportModal() {
+            document.getElementById('import-modal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Create narrative form handler
+        document.getElementById('create-narrative-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('narrative-name').value,
+                domain: document.getElementById('narrative-domain').value,
+                structure_type: document.getElementById('narrative-structure').value
+            };
+            
+            try {
+                const response = await fetch('/api/narratives', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeModal('create-narrative-modal');
+                    loadNarratives();
+                    addMessage(`Created new narrative: ${formData.name}!`, 'ai');
+                } else {
+                    addMessage(`Error creating narrative: ${data.error}`, 'ai');
+                }
+                
+            } catch (error) {
+                addMessage('Error creating narrative. Please try again.', 'ai');
+                console.error('Error creating narrative:', error);
+            }
+        });
+
+        // Import form handler
+        document.getElementById('import-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const jsonData = document.getElementById('import-json').value;
+            
+            try {
+                const response = await fetch('/api/narratives/import', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ json_data: jsonData })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeModal('import-modal');
+                    loadNarratives();
+                    addMessage('Narrative imported successfully!', 'ai');
+                } else {
+                    addMessage(`Error importing narrative: ${data.error}`, 'ai');
+                }
+                
+            } catch (error) {
+                addMessage('Error importing narrative. Please check your JSON format.', 'ai');
+                console.error('Error importing narrative:', error);
+            }
+        });
+
+        // Export current narrative
+        async function exportCurrentNarrative() {
+            if (!currentNarrativeId) {
+                addMessage('Please select a narrative to export.', 'ai');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/narratives/${currentNarrativeId}/export`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Create download link
+                    const blob = new Blob([data.export_data], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = data.filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    addMessage(`Narrative exported as ${data.filename}`, 'ai');
+                } else {
+                    addMessage(`Error exporting narrative: ${data.error}`, 'ai');
+                }
+                
+            } catch (error) {
+                addMessage('Error exporting narrative. Please try again.', 'ai');
+                console.error('Error exporting narrative:', error);
+            }
+        }
+
+        // Analyze current narrative
+        async function analyzeCurrentNarrative() {
+            if (!currentNarrativeId) {
+                addMessage('Please select a narrative to analyze.', 'ai');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/narratives/${currentNarrativeId}/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ domain: currentDomain })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const analysis = data.analysis;
+                    const message = `
+                        <strong>Narrative Analysis Results:</strong><br>
+                        • Coherence Score: ${(analysis.coherence_score * 100).toFixed(1)}%<br>
+                        • Themes Identified: ${analysis.themes.length}<br>
+                        • Character Arcs: ${Object.keys(analysis.character_arcs).length}<br>
+                        • Conflicts Detected: ${analysis.conflicts.length}<br><br>
+                        <strong>Main Themes:</strong><br>
+                        ${analysis.themes.slice(0, 3).map(theme => `• ${theme.name}: ${theme.message}`).join('<br>')}
+                    `;
+                    addMessage(message, 'ai');
+                } else {
+                    addMessage(`Error analyzing narrative: ${data.error}`, 'ai');
+                }
+                
+            } catch (error) {
+                addMessage('Error analyzing narrative. Please try again.', 'ai');
+                console.error('Error analyzing narrative:', error);
+            }
+        }
+
+        // Generate next plot point
+        async function generateNextPlotPoint() {
+            if (!currentNarrativeId) {
+                addMessage('Please select a narrative to generate plot points for.', 'ai');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/narratives/${currentNarrativeId}/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        domain: currentDomain,
+                        context: { user_input: 'Generate next plot point' }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const plotPoint = data.plot_point;
+                    const message = `
+                        <strong>Generated Plot Point:</strong><br>
+                        • Name: ${plotPoint.name}<br>
+                        • Description: ${plotPoint.description}<br>
+                        • Position: ${(plotPoint.story_structure_position * 100).toFixed(0)}% through story<br>
+                        • Emotional Impact: ${plotPoint.emotional_impact}
+                    `;
+                    addMessage(message, 'ai');
+                    loadNarratives(); // Refresh to show new plot point
+                } else {
+                    addMessage(`Error generating plot point: ${data.error}`, 'ai');
+                }
+                
+            } catch (error) {
+                addMessage('Error generating plot point. Please try again.', 'ai');
+                console.error('Error generating plot point:', error);
+            }
+        }
+
+        // Refresh memory stats
+        function refreshMemoryStats() {
+            loadMemoryStats();
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html> 

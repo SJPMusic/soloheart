@@ -15,11 +15,11 @@ from unittest.mock import patch, MagicMock
 # Add the project root to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from solo_heart.narrative_bridge import (
+from SoloHeart.narrative_bridge import (
     NarrativeBridge, DnDMemoryEntry, DnDNPCResponse,
     create_dnd_bridge, store_combat_memory, store_quest_memory
 )
-from solo_heart.enhanced_campaign_manager import EnhancedCampaignManager
+from SoloHeart.enhanced_campaign_manager import EnhancedCampaignManager
 
 
 class TestDnDGameLaunch(unittest.TestCase):

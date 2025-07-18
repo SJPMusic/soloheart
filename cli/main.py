@@ -10,7 +10,7 @@ import os
 import datetime
 from typing import Dict, List, Any, Optional
 from dataclasses import asdict
-from solo_heart.enhanced_campaign_manager import EnhancedCampaignManager
+from SoloHeart.enhanced_campaign_manager import EnhancedCampaignManager
 from narrative_core.enhanced_memory_system import LayeredMemorySystem, MemoryType, MemoryLayer
 from narrative_core.ai_dm_engine import AIDMEngine
 from narrative_core.character_creator import CharacterCreator, CharacterCreationStep

@@ -23,7 +23,7 @@ except ImportError:
 try:
     import sys
     import os
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'solo_heart'))
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'SoloHeart'))
     from ollama_llm_service import get_ollama_service
     OLLAMA_AVAILABLE = True
 except ImportError:

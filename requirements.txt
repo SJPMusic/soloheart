@@ -12,6 +12,7 @@ textblob>=0.15.0
 
 # AI and machine learning
 requests>=2.28.0
+httpx>=0.24.0
 python-dotenv>=1.0.0
 
 # Data handling and serialization

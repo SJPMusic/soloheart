@@ -1,0 +1,48 @@
+{
+  "name": "Gesture",
+  "race": "Human",
+  "class": "Wizard",
+  "level": 1,
+  "background": "Sage",
+  "alignment": "Neutral",
+  "personality": "Cautious and mysterious",
+  "ability_scores": {
+    "strength": 10,
+    "dexterity": 12,
+    "constitution": 12,
+    "intelligence": 16,
+    "wisdom": 10,
+    "charisma": 10
+  },
+  "hit_points": 10,
+  "armor_class": 10,
+  "saving_throws": [
+    "INT",
+    "WIS"
+  ],
+  "skills": [
+    "Arcana",
+    "History"
+  ],
+  "feats": [],
+  "weapons": [
+    "Quarterstaff"
+  ],
+  "gear": [
+    "Backpack",
+    "Bedroll",
+    "Rations (5 days)",
+    "Waterskin",
+    "50 feet of rope",
+    "Spellbook",
+    "Arcane focus",
+    "Scholar's pack"
+  ],
+  "spells": [
+    "Fire Bolt",
+    "Mage Hand",
+    "Prestidigitation"
+  ],
+  "background_freeform": "",
+  "created_date": "2025-07-03T19:57:34.229978"
+}
