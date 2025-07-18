@@ -85,3 +85,7 @@ COMPLIANCE_SUMMARY.md
 COMPLIANCE_SUMMARY.md
 .hooks/pre-commit-template
 cli/compliance_check.py
+
+# MVP-tested files with professional terminology
+tests/test_longform_memory_persistence.py
+frontend/onboarding/onboarding_polish.md

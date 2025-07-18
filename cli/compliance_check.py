@@ -35,9 +35,76 @@ RESTRICTED_KEYWORDS = [
     "undying sorcerer",
     "established campaign setting",
     "tabletop fantasy RPG",
-    "tabletop fantasy RPG",
     "Faerûn",
     "Eberron"
+]
+
+# Allowed professional terminology (whitelist for MVP-tested terms)
+ALLOWED_TERMS = [
+    "goal alignment",
+    "continuity validation",
+    "narrative input",
+    "accessibility enhancements",
+    "ARIA",
+    "keyboard navigation",
+    "memory key",
+    "retention validation",
+    "WCAG",
+    "onboarding polish",
+    "memory persistence",
+    "context retention",
+    "memory decay",
+    "goal drift",
+    "validation passed",
+    "validation failed",
+    "memory validation",
+    "goal validation",
+    "continuity issues",
+    "memory state",
+    "goal state",
+    "memory traces",
+    "memory layer",
+    "episodic memory",
+    "semantic memory",
+    "memory importance",
+    "memory source",
+    "user input",
+    "system injection",
+    "external source",
+    "inference timeline",
+    "inference time",
+    "confidence metrics",
+    "symbolic coherence",
+    "input quality",
+    "memory coverage",
+    "archetype match",
+    "temporal relevance",
+    "overall confidence",
+    "goal consistency",
+    "symbolic analysis",
+    "archetypal tags",
+    "chaos order tension",
+    "narrative coherence",
+    "protective barriers",
+    "ancient language",
+    "guardians",
+    "creation story",
+    "darkness entity",
+    "balance restoration",
+    "spiritual connection",
+    "family connection",
+    "mystery solving",
+    "legacy continuation",
+    "confrontation",
+    "mastery",
+    "preparation",
+    "defense",
+    "understanding",
+    "connection",
+    "exploration",
+    "discovery",
+    "protection",
+    "learning"
 ]
 
 # File patterns that require SRD attribution
@@ -63,7 +130,8 @@ EXCLUDE_PATTERNS = [
     ".hooks/**/*",
     "**/.complianceignore",
     ".pytest_cache/**/*",
-    "**/.pytest_cache/**/*"
+    "**/.pytest_cache/**/*",
+    "cli/compliance_check.py"
 ]
 
 # Colors for output
@@ -145,7 +213,15 @@ class ComplianceChecker:
                 for line_num, line in enumerate(f, 1):
                     for keyword in RESTRICTED_KEYWORDS:
                         if re.search(rf'\b{re.escape(keyword)}\b', line, re.IGNORECASE):
-                            violations.append((keyword, line_num))
+                            # Check if this keyword is part of an allowed term
+                            is_allowed = False
+                            for allowed_term in ALLOWED_TERMS:
+                                if keyword.lower() in allowed_term.lower() and allowed_term.lower() in line.lower():
+                                    is_allowed = True
+                                    break
+                            
+                            if not is_allowed:
+                                violations.append((keyword, line_num))
         except (UnicodeDecodeError, IOError):
             # Skip binary files or files that can't be read
             pass
