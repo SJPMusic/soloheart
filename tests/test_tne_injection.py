@@ -140,6 +140,226 @@ async def test_dialogue_action():
         return False
 
 
+async def test_exploration_action():
+    """Test exploration action mapping and injection."""
+    print("\n" + "="*60)
+    print("🔍 TESTING EXPLORATION ACTION")
+    print("="*60)
+    
+    # Simulate exploration action
+    exploration_action = {
+        "action_type": "exploration",
+        "character_name": "Thalion",
+        "location": "ruined temple",
+        "discovery": "ancient scrolls",
+        "success": True,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    print(f"🔍 EXPLORATION ACTION: {exploration_action['character_name']} searches the {exploration_action['location']}")
+    
+    # MAPPING: Convert to TNE event
+    print("\n📝 MAPPING: Converting to TNE memory event...")
+    try:
+        tne_event = map_action_to_event(
+            character_id=exploration_action['character_name'],
+            action_type=exploration_action['action_type'],
+            description=f"{exploration_action['character_name']} searches the {exploration_action['location']}",
+            memory_layer="episodic",
+            tags=["discovery", "curiosity"],
+            importance=0.5,
+            metadata={
+                "location": exploration_action['location'],
+                "discovery": exploration_action['discovery'],
+                "success": exploration_action['success']
+            }
+        )
+        print("✅ Mapping successful")
+        print(f"📋 Generated event type: {tne_event.get('metadata', {}).get('action_type', 'unknown')}")
+        print(f"📋 Event description length: {len(tne_event.get('description', ''))} chars")
+        print(f"📋 Memory layer: {tne_event.get('layer', 'unknown')}")
+        print(f"📋 Tags: {tne_event.get('tags', [])}")
+    except Exception as e:
+        print(f"❌ Mapping failed: {e}")
+        return False
+    
+    # SENDING: Send to TNE
+    print("\n🚀 SENDING: Transmitting to TNE...")
+    try:
+        response = await send_event_to_tne(tne_event)
+        print("✅ Transmission successful")
+        return response
+    except Exception as e:
+        print(f"❌ Transmission failed: {e}")
+        return False
+
+
+async def test_puzzle_solving_action():
+    """Test puzzle solving action mapping and injection."""
+    print("\n" + "="*60)
+    print("🧩 TESTING PUZZLE SOLVING ACTION")
+    print("="*60)
+    
+    # Simulate puzzle solving action
+    puzzle_action = {
+        "action_type": "puzzle",
+        "character_name": "Thalion",
+        "puzzle_type": "riddle",
+        "puzzle_target": "enchanted door",
+        "solution": "speak the ancient words",
+        "success": True,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    print(f"🧩 PUZZLE ACTION: {puzzle_action['character_name']} solves the {puzzle_action['puzzle_target']} riddle")
+    
+    # MAPPING: Convert to TNE event
+    print("\n📝 MAPPING: Converting to TNE memory event...")
+    try:
+        tne_event = map_action_to_event(
+            character_id=puzzle_action['character_name'],
+            action_type=puzzle_action['action_type'],
+            description=f"{puzzle_action['character_name']} solves the {puzzle_action['puzzle_target']} riddle",
+            memory_layer="semantic",
+            tags=["intelligence", "puzzle", "magic"],
+            importance=0.7,
+            metadata={
+                "puzzle_type": puzzle_action['puzzle_type'],
+                "puzzle_target": puzzle_action['puzzle_target'],
+                "solution": puzzle_action['solution'],
+                "success": puzzle_action['success']
+            }
+        )
+        print("✅ Mapping successful")
+        print(f"📋 Generated event type: {tne_event.get('metadata', {}).get('action_type', 'unknown')}")
+        print(f"📋 Event description length: {len(tne_event.get('description', ''))} chars")
+        print(f"📋 Memory layer: {tne_event.get('layer', 'unknown')}")
+        print(f"📋 Tags: {tne_event.get('tags', [])}")
+    except Exception as e:
+        print(f"❌ Mapping failed: {e}")
+        return False
+    
+    # SENDING: Send to TNE
+    print("\n🚀 SENDING: Transmitting to TNE...")
+    try:
+        response = await send_event_to_tne(tne_event)
+        print("✅ Transmission successful")
+        return response
+    except Exception as e:
+        print(f"❌ Transmission failed: {e}")
+        return False
+
+
+async def test_emotional_beat_action():
+    """Test emotional beat action mapping and injection."""
+    print("\n" + "="*60)
+    print("💝 TESTING EMOTIONAL BEAT ACTION")
+    print("="*60)
+    
+    # Simulate emotional beat action
+    emotional_action = {
+        "action_type": "emotional",
+        "character_name": "Thalion",
+        "emotion_type": "compassion",
+        "target": "grieving villager",
+        "outcome": "villager feels comforted",
+        "success": True,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    print(f"💝 EMOTIONAL ACTION: {emotional_action['character_name']} comforts a {emotional_action['target']}")
+    
+    # MAPPING: Convert to TNE event
+    print("\n📝 MAPPING: Converting to TNE memory event...")
+    try:
+        tne_event = map_action_to_event(
+            character_id=emotional_action['character_name'],
+            action_type=emotional_action['action_type'],
+            description=f"{emotional_action['character_name']} comforts a {emotional_action['target']}",
+            memory_layer="emotional",
+            tags=["compassion", "loss", "trust"],
+            importance=0.9,
+            metadata={
+                "emotion_type": emotional_action['emotion_type'],
+                "target": emotional_action['target'],
+                "outcome": emotional_action['outcome'],
+                "success": emotional_action['success']
+            }
+        )
+        print("✅ Mapping successful")
+        print(f"📋 Generated event type: {tne_event.get('metadata', {}).get('action_type', 'unknown')}")
+        print(f"📋 Event description length: {len(tne_event.get('description', ''))} chars")
+        print(f"📋 Memory layer: {tne_event.get('layer', 'unknown')}")
+        print(f"📋 Tags: {tne_event.get('tags', [])}")
+    except Exception as e:
+        print(f"❌ Mapping failed: {e}")
+        return False
+    
+    # SENDING: Send to TNE
+    print("\n🚀 SENDING: Transmitting to TNE...")
+    try:
+        response = await send_event_to_tne(tne_event)
+        print("✅ Transmission successful")
+        return response
+    except Exception as e:
+        print(f"❌ Transmission failed: {e}")
+        return False
+
+
+async def test_level_up_action():
+    """Test level up action mapping and injection."""
+    print("\n" + "="*60)
+    print("⭐ TESTING LEVEL UP ACTION")
+    print("="*60)
+    
+    # Simulate level up action
+    level_up_action = {
+        "action_type": "progression",
+        "character_name": "Thalion",
+        "old_level": 2,
+        "new_level": 3,
+        "experience_gained": 300,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    print(f"⭐ LEVEL UP ACTION: {level_up_action['character_name']} reaches level {level_up_action['new_level']}")
+    
+    # MAPPING: Convert to TNE event
+    print("\n📝 MAPPING: Converting to TNE memory event...")
+    try:
+        tne_event = map_action_to_event(
+            character_id=level_up_action['character_name'],
+            action_type=level_up_action['action_type'],
+            description=f"{level_up_action['character_name']} reaches level {level_up_action['new_level']}",
+            memory_layer="procedural",
+            tags=["progression", "milestone"],
+            importance=0.8,
+            metadata={
+                "old_level": level_up_action['old_level'],
+                "new_level": level_up_action['new_level'],
+                "experience_gained": level_up_action['experience_gained']
+            }
+        )
+        print("✅ Mapping successful")
+        print(f"📋 Generated event type: {tne_event.get('metadata', {}).get('action_type', 'unknown')}")
+        print(f"📋 Event description length: {len(tne_event.get('description', ''))} chars")
+        print(f"📋 Memory layer: {tne_event.get('layer', 'unknown')}")
+        print(f"📋 Tags: {tne_event.get('tags', [])}")
+    except Exception as e:
+        print(f"❌ Mapping failed: {e}")
+        return False
+    
+    # SENDING: Send to TNE
+    print("\n🚀 SENDING: Transmitting to TNE...")
+    try:
+        response = await send_event_to_tne(tne_event)
+        print("✅ Transmission successful")
+        return response
+    except Exception as e:
+        print(f"❌ Transmission failed: {e}")
+        return False
+
+
 async def test_invalid_action():
     """Test handling of invalid action types."""
     print("\n" + "="*60)
@@ -215,7 +435,27 @@ async def run_all_tests():
     print_response_summary("Dialogue Action", dialogue_response)
     results['dialogue'] = dialogue_response is not False
     
-    # Test 3: Invalid Action
+    # Test 3: Exploration Action
+    exploration_response = await test_exploration_action()
+    print_response_summary("Exploration Action", exploration_response)
+    results['exploration'] = exploration_response is not False
+    
+    # Test 4: Puzzle Solving Action
+    puzzle_response = await test_puzzle_solving_action()
+    print_response_summary("Puzzle Solving Action", puzzle_response)
+    results['puzzle'] = puzzle_response is not False
+    
+    # Test 5: Emotional Beat Action
+    emotional_response = await test_emotional_beat_action()
+    print_response_summary("Emotional Beat Action", emotional_response)
+    results['emotional'] = emotional_response is not False
+    
+    # Test 6: Level Up Action
+    level_up_response = await test_level_up_action()
+    print_response_summary("Level Up Action", level_up_response)
+    results['level_up'] = level_up_response is not False
+    
+    # Test 7: Invalid Action
     invalid_response = await test_invalid_action()
     print_response_summary("Invalid Action", invalid_response)
     results['invalid'] = invalid_response is not False
@@ -230,7 +470,7 @@ async def run_all_tests():
     
     for test_name, success in results.items():
         status = "✅ PASS" if success else "❌ FAIL"
-        print(f"{status} {test_name.title()} Action")
+        print(f"{status} {test_name.replace('_', ' ').title()} Action")
     
     print(f"\n🎯 Overall: {passed}/{total} tests passed")
     

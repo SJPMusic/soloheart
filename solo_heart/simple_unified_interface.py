@@ -9,9 +9,20 @@ import json
 import logging
 import uuid
 import datetime
+import asyncio
 from typing import Dict, List, Optional, Any
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from ollama_llm_service import chat_completion
+
+# TNE Integration imports
+try:
+    from integrations.tne_event_mapper import map_action_to_event
+    from integrations.tne_bridge import send_event_to_tne
+    TNE_AVAILABLE = True
+except ImportError:
+    TNE_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("TNE integration modules not available - memory injection disabled")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1516,6 +1527,89 @@ class SimpleUnifiedGame:
 # Initialize game manager
 game = SimpleUnifiedGame()
 
+def inject_memory_event(character_name: str, player_input: str, dm_response: str, campaign_id: str):
+    """
+    Inject a memory event into TNE after a player action.
+    
+    Args:
+        character_name: Name of the player character
+        player_input: The player's action/input
+        dm_response: The DM's response
+        campaign_id: Current campaign ID
+    """
+    if not TNE_AVAILABLE:
+        return
+    
+    try:
+        # Determine action type based on player input
+        input_lower = player_input.lower()
+        
+        if any(word in input_lower for word in ['attack', 'fight', 'sword', 'bow', 'spell']):
+            action_type = "combat"
+            layer = "episodic"
+            tags = ["combat", "violence", "aggression"]
+            importance = 0.8
+        elif any(word in input_lower for word in ['talk', 'speak', 'ask', 'tell', 'negotiate', 'persuade']):
+            action_type = "dialogue"
+            layer = "episodic"
+            tags = ["dialogue", "social", "interaction"]
+            importance = 0.6
+        elif any(word in input_lower for word in ['search', 'look', 'examine', 'explore', 'investigate']):
+            action_type = "exploration"
+            layer = "episodic"
+            tags = ["discovery", "curiosity"]
+            importance = 0.5
+        elif any(word in input_lower for word in ['solve', 'puzzle', 'riddle', 'think', 'figure']):
+            action_type = "puzzle"
+            layer = "semantic"
+            tags = ["intelligence", "puzzle", "problem-solving"]
+            importance = 0.7
+        elif any(word in input_lower for word in ['help', 'comfort', 'save', 'protect', 'care']):
+            action_type = "emotional"
+            layer = "emotional"
+            tags = ["compassion", "empathy", "heroism"]
+            importance = 0.9
+        else:
+            action_type = "general"
+            layer = "episodic"
+            tags = ["action", "adventure"]
+            importance = 0.4
+        
+        # Create memory event
+        event = map_action_to_event(
+            character_id=character_name,
+            action_type=action_type,
+            description=f"{character_name}: {player_input}",
+            memory_layer=layer,
+            tags=tags,
+            importance=importance,
+            metadata={
+                "campaign_id": campaign_id,
+                "dm_response_length": len(dm_response),
+                "input_length": len(player_input)
+            }
+        )
+        
+        # Send to TNE asynchronously
+        def send_async():
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                response = loop.run_until_complete(send_event_to_tne(event))
+                logger.info(f"TNE memory injection successful: {response.get('success', False)}")
+                loop.close()
+            except Exception as e:
+                logger.error(f"TNE memory injection failed: {e}")
+        
+        # Run in background thread to avoid blocking
+        import threading
+        thread = threading.Thread(target=send_async)
+        thread.daemon = True
+        thread.start()
+        
+    except Exception as e:
+        logger.error(f"Error injecting memory event: {e}")
+
 @app.route('/')
 def start_screen():
     """Start screen - the only gamified portion of the UI."""
@@ -1851,8 +1945,15 @@ def process_game_action():
         if not campaign_id:
             return jsonify({'success': False, 'message': 'No active campaign'})
         
+        # Get character name from campaign data
+        campaign_data = game.narrative_bridge.get_campaign_data(campaign_id)
+        character_name = campaign_data.get('active_character', {}).get('name', 'Adventurer') if campaign_data else 'Adventurer'
+        
         # Process player input
         dm_response = game.narrative_bridge.process_player_input(player_input, campaign_id)
+        
+        # Inject memory event into TNE (non-blocking)
+        inject_memory_event(character_name, player_input, dm_response, campaign_id)
         
         # Save campaign
         game.narrative_bridge.save_campaign(campaign_id)
