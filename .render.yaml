@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: soloheart-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python simple_unified_interface.py
+    envVars:
+      - key: OPENROUTER_API_KEY
+        value: YOUR_API_KEY_HERE
+    autoDeploy: true
+
+  - type: web
+    name: soloheart-frontend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run dev
+    autoDeploy: true 
