@@ -1,12 +1,12 @@
 # Campaign Journal
 
-*Exported on 2025-07-17 21:35:18*
+*Exported on 2025-07-17 22:11:53*
 
 ## Memory Entries
 
 ### Test memory entry for MVP validation
 
-**Type**: memory | **Character**: mvp_test_char_001 | **Timestamp**: 2025-07-17T21:35:18.704414
+**Type**: memory | **Character**: mvp_test_char_001 | **Timestamp**: 2025-07-17T22:11:53.755988
 
 **Layer**: episodic | **Importance**: 0.70
 
@@ -23,7 +23,7 @@ Test memory entry for MVP validation
 
 ### Test dialogue entry for MVP validation
 
-**Type**: dialogue | **Character**: mvp_test_char_001 | **Timestamp**: 2025-07-17T21:35:18.704419
+**Type**: dialogue | **Character**: mvp_test_char_001 | **Timestamp**: 2025-07-17T22:11:53.755995
 
 Test dialogue entry for MVP validation
 
