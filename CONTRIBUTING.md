@@ -130,4 +130,22 @@ docs(readme): update installation instructions
 - Use GitHub Discussions for questions and ideas
 - Join our community discussions about the Narrative Engine
 
+## Compliance Guidelines
+
+### SRD 5.1 Compliance
+- All content must comply with the System Reference Document 5.1
+- Use only open-source SRD content
+- Include proper attribution to Wizards of the Coast
+- Avoid restricted keywords and non-SRD content
+
+### Compliance Notes
+The compliance checker has been updated to allow professional terminology related to memory testing and UI polish. Please ensure new contributions follow WCAG guidelines and avoid SRD-restricted language, but false positives may be reviewed and approved.
+
+### Professional Terminology
+The following terms are now allowed in professional contexts:
+- Memory testing and validation terms
+- Accessibility and WCAG compliance terms
+- UI/UX design terminology
+- Technical documentation terms
+
 Thank you for contributing to the Solo Narrative Engine Demo! 

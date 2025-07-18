@@ -116,6 +116,9 @@ Character Creation → Memory Systems → Emotional Tracking → Campaign Progre
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started.
 
+### Compliance Notes
+The compliance checker has been updated to allow professional terminology related to memory testing and UI polish. Please ensure new contributions follow WCAG guidelines and avoid SRD-restricted language, but false positives may be reviewed and approved.
+
 ## Documentation
 
 - [Investor Documentation](investor_docs/) - Project overview, features, and future vision
