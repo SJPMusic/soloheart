@@ -47,37 +47,38 @@ Character Creation → Memory Systems → Emotional Tracking → Campaign Progre
 
 ### Installation & Launch
 
-#### **Option 1: One-Command Setup (Recommended)**
+#### **🚀 Quick Launch (Recommended)**
 ```bash
-# On macOS/Linux:
-./install_and_launch.sh
-
-# On Windows:
-install_and_launch.bat
+# From anywhere - this script handles everything:
+./launch.sh
 ```
 
-#### **Option 2: Manual Setup**
-1. **Clone the repository**:
+#### **📦 First-Time Setup**
+```bash
+# Install SoloHeart (one-time setup):
+./install.sh
+
+# Then launch:
+./launch.sh
+```
+
+#### **🔧 Manual Setup (Advanced)**
+1. **Navigate to SoloHeart directory**:
    ```bash
-   git clone https://github.com/PianomanSJPM/solo-rp-game-demo.git
-   cd solo-rp-game-demo/SoloHeart
+   cd SoloHeart
    ```
 
-2. **Create virtual environment**:
+2. **Install dependencies**:
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ./install.sh
    ```
 
-3. **Install dependencies**:
+3. **Launch SoloHeart**:
    ```bash
-   pip install -r requirements.txt
+   ./launch.sh
    ```
 
-4. **Launch SoloHeart**:
-   ```bash
-   python launch_soloheart.py
-   ```
+**💡 Pro Tip**: The `./launch.sh` script works from any directory and automatically finds SoloHeart!
 
 ### LLM Setup (Optional)
 SoloHeart works completely offline, but you can enhance it with AI features:
@@ -95,8 +96,8 @@ SoloHeart works completely offline, but you can enhance it with AI features:
 ```
 
 ### Access the Game
-- **Game URL**: [http://localhost:5003](http://localhost:5003)
-- **Health Check**: [http://localhost:5003/health](http://localhost:5003/health)
+- **Game URL**: [http://localhost:5001](http://localhost:5001)
+- **Health Check**: [http://localhost:5001/health](http://localhost:5001/health)
 
 ## Demo Walkthrough
 
