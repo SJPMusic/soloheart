@@ -89,3 +89,6 @@ cli/compliance_check.py
 # MVP-tested files with professional terminology
 tests/test_longform_memory_persistence.py
 frontend/onboarding/onboarding_polish.md
+
+# Manual test files (contain test instructions, not SRD content)
+tests/manual/
