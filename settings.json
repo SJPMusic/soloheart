@@ -1,0 +1,25 @@
+{
+  "llm": {
+    "backend": "gemma",
+    "endpoint": "http://localhost:1234/v1",
+    "timeout": 60,
+    "temperature": 0.7,
+    "max_tokens": 2048
+  },
+  "game": {
+    "host": "0.0.0.0",
+    "port": 5001,
+    "debug": false,
+    "secret_key": "soloheart-secret-key-change-in-production"
+  },
+  "character_creation": {
+    "temperature": 0.7,
+    "max_tokens": 500,
+    "step_by_step": true
+  },
+  "narrative": {
+    "temperature": 0.8,
+    "max_tokens": 1000,
+    "system_prompt": "You are an experienced Dungeon Master running a solo D&D 5e campaign."
+  }
+} 

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoloHeart - Game Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+        .sidebar {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .main-content {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .character-info {
+            margin-bottom: 20px;
+        }
+        .character-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .character-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .stat-item {
+            background: rgba(255,255,255,0.1);
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+        .stat-value {
+            font-weight: bold;
+        }
+        .conversation {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .message.player {
+            background: rgba(76, 175, 80, 0.3);
+            margin-left: 20%;
+        }
+        .message.dm {
+            background: rgba(33, 150, 243, 0.3);
+            margin-right: 20%;
+        }
+        .message-header {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        .input-field {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+        }
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        .btn-secondary {
+            background: #2196F3;
+        }
+        .btn-secondary:hover {
+            background: #0b7dda;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .offline-banner {
+            background: #ff9800;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="character-info">
+                <div class="character-name" id="character-name">Adventurer</div>
+                <div class="character-stats" id="character-stats">
+                    <!-- Character stats will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button class="btn btn-secondary" onclick="saveCampaign()">💾 Save</button>
+                <button class="btn btn-secondary" onclick="goToStart()">🏠 Start Screen</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="offline-banner" id="offline-banner" style="display: none;">
+                ⚠️ Running in offline mode - AI features disabled
+            </div>
+            
+            <div class="conversation" id="conversation">
+                <div class="message dm">
+                    <div class="message-header">Dungeon Master</div>
+                    <div>Welcome to SoloHeart! You find yourself at the beginning of an adventure. What would you like to do?</div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <input type="text" id="player-input" class="input-field" 
+                       placeholder="Describe your action..." 
+                       onkeypress="handleKeyPress(event)">
+                <button class="btn" onclick="sendAction()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCampaign = null;
+        let isOffline = false;
+
+        // Load campaign data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCurrentCampaign();
+            checkOfflineMode();
+        });
+
+        function loadCurrentCampaign() {
+            fetch('/api/campaign/current')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        currentCampaign = data.campaign;
+                        updateCharacterInfo();
+                    } else {
+                        // No active campaign, redirect to start screen
+                        window.location.href = '/start';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading campaign:', error);
+                    window.location.href = '/start';
+                });
+        }
+
+        function updateCharacterInfo() {
+            if (currentCampaign && currentCampaign.active_character) {
+                const character = currentCampaign.active_character;
+                
+                // Update character name
+                document.getElementById('character-name').textContent = character.name;
+                
+                // Update character stats
+                const statsContainer = document.getElementById('character-stats');
+                statsContainer.innerHTML = `
+                    <div class="stat-item">
+                        <div class="stat-label">Class</div>
+                        <div class="stat-value">${character.class}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Level</div>
+                        <div class="stat-value">${character.level}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">HP</div>
+                        <div class="stat-value">${character.hit_points}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">AC</div>
+                        <div class="stat-value">${character.armor_class}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">STR</div>
+                        <div class="stat-value">${character.stats.strength}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">DEX</div>
+                        <div class="stat-value">${character.stats.dexterity}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">CON</div>
+                        <div class="stat-value">${character.stats.constitution}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">INT</div>
+                        <div class="stat-value">${character.stats.intelligence}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">WIS</div>
+                        <div class="stat-value">${character.stats.wisdom}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">CHA</div>
+                        <div class="stat-value">${character.stats.charisma}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function checkOfflineMode() {
+            // Check if we're in offline mode (no LLM service)
+            fetch('/health')
+                .then(response => response.json())
+                .then(data => {
+                    // For now, we'll show offline banner if no specific indicator
+                    // In a real implementation, this would check LLM service status
+                    isOffline = true; // Placeholder
+                    if (isOffline) {
+                        document.getElementById('offline-banner').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking health:', error);
+                    isOffline = true;
+                    document.getElementById('offline-banner').style.display = 'block';
+                });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendAction();
+            }
+        }
+
+        function sendAction() {
+            const input = document.getElementById('player-input');
+            const action = input.value.trim();
+            
+            if (!action) {
+                return;
+            }
+            
+            // Add player message to conversation
+            addMessage('player', action);
+            input.value = '';
+            
+            // Send action to server
+            fetch('/api/campaign/action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ action: action })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    addMessage('dm', data.dm_response);
+                } else {
+                    addMessage('dm', 'Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error sending action:', error);
+                addMessage('dm', 'Error: Could not process your action. Please try again.');
+            });
+        }
+
+        function addMessage(speaker, content) {
+            const conversation = document.getElementById('conversation');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${speaker}`;
+            
+            const header = speaker === 'player' ? 'You' : 'Dungeon Master';
+            const timestamp = new Date().toLocaleTimeString();
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">${header} - ${timestamp}</div>
+                <div>${content}</div>
+            `;
+            
+            conversation.appendChild(messageDiv);
+            conversation.scrollTop = conversation.scrollHeight;
+        }
+
+        function saveCampaign() {
+            fetch('/api/campaign/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Campaign saved successfully!');
+                } else {
+                    alert('Error saving campaign');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving campaign:', error);
+                alert('Error saving campaign');
+            });
+        }
+
+        function goToStart() {
+            window.location.href = '/start';
+        }
+    </script>
+</body>
+</html> 

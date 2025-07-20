@@ -1,0 +1,68 @@
+{
+  "test_start_time": "2025-07-17T23:46:18.923017",
+  "test_end_time": "2025-07-17T23:46:20.992104",
+  "total_entries": 5,
+  "successful_validations": 2,
+  "failed_validations": 3,
+  "average_context_retention": 0.6519676113360324,
+  "memory_decay_detected": true,
+  "goal_drift_detected": false,
+  "overall_success": false,
+  "entry_results": [
+    {
+      "entry_id": "entry_001",
+      "timestamp": "2025-07-17T23:46:18.984361",
+      "input_length": 1542,
+      "memory_keys_persisted": true,
+      "goal_alignment_maintained": true,
+      "context_retention_score": 1.0,
+      "continuity_issues": [],
+      "validation_passed": true
+    },
+    {
+      "entry_id": "entry_002",
+      "timestamp": "2025-07-17T23:46:19.486726",
+      "input_length": 1805,
+      "memory_keys_persisted": true,
+      "goal_alignment_maintained": true,
+      "context_retention_score": 0.5,
+      "continuity_issues": [],
+      "validation_passed": false
+    },
+    {
+      "entry_id": "entry_003",
+      "timestamp": "2025-07-17T23:46:19.987437",
+      "input_length": 1855,
+      "memory_keys_persisted": true,
+      "goal_alignment_maintained": true,
+      "context_retention_score": 0.8461538461538461,
+      "continuity_issues": [],
+      "validation_passed": true
+    },
+    {
+      "entry_id": "entry_004",
+      "timestamp": "2025-07-17T23:46:20.489784",
+      "input_length": 1658,
+      "memory_keys_persisted": true,
+      "goal_alignment_maintained": true,
+      "context_retention_score": 0.47368421052631576,
+      "continuity_issues": [],
+      "validation_passed": false
+    },
+    {
+      "entry_id": "entry_005",
+      "timestamp": "2025-07-17T23:46:20.992074",
+      "input_length": 1824,
+      "memory_keys_persisted": true,
+      "goal_alignment_maintained": true,
+      "context_retention_score": 0.44,
+      "continuity_issues": [],
+      "validation_passed": false
+    }
+  ],
+  "recommendations": [
+    "Implement memory reinforcement mechanisms",
+    "Improve context retention algorithms",
+    "Review failed validation entries for system improvements"
+  ]
+}

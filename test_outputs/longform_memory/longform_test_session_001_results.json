@@ -1,0 +1,498 @@
+{
+  "test_metadata": {
+    "test_start": "2025-07-17T23:33:06.420810",
+    "test_duration": 6.044544,
+    "turns_executed": 7,
+    "mock_mode": true
+  },
+  "memory_trace": [
+    {
+      "turn_number": 1,
+      "turn_type": "exploration",
+      "event": {
+        "character_id": "longform_test_char_001",
+        "timestamp": "2025-07-18T03:33:06.456607+00:00Z",
+        "description": "Thalion enters the ancient ruins, his sword hand trembling with anticipation. The weight of his past battles presses heavily on his mind as he steps into the darkness.",
+        "layer": "episodic",
+        "tags": [
+          "exploration",
+          "anticipation",
+          "past_burden"
+        ],
+        "importance": 0.8,
+        "metadata": {
+          "action_type": "exploration",
+          "location": "ancient_ruins",
+          "weapon": "sword",
+          "emotional_state": "apprehensive"
+        },
+        "turn_number": 1,
+        "expected_symbols": [
+          "hero",
+          "burden",
+          "darkness"
+        ],
+        "expected_emotions": [
+          "anticipation",
+          "apprehension",
+          "determination"
+        ]
+      },
+      "response": {
+        "success": true,
+        "message": "Memory turn 1 injected successfully (MOCK)",
+        "event_id": "longform_turn_1_1752809586",
+        "timestamp": "2025-07-17T23:33:06.420818",
+        "memory_layer": "episodic",
+        "importance": 0.8
+      },
+      "timestamp": "2025-07-17T23:33:06.420818"
+    },
+    {
+      "turn_number": 2,
+      "turn_type": "combat",
+      "event": {
+        "character_id": "longform_test_char_001",
+        "timestamp": "2025-07-18T03:33:07.457989+00:00Z",
+        "description": "Three skeletal warriors emerge from the shadows. Thalion's training takes over as he parries their rusted blades, each clash echoing his years of military service.",
+        "layer": "procedural",
+        "tags": [
+          "combat",
+          "training",
+          "military_past"
+        ],
+        "importance": 0.9,
+        "metadata": {
+          "action_type": "combat",
+          "enemies": "skeletal_warriors",
+          "combat_style": "defensive",
+          "weapon_used": "sword"
+        },
+        "turn_number": 2,
+        "expected_symbols": [
+          "warrior",
+          "training",
+          "defense"
+        ],
+        "expected_emotions": [
+          "focus",
+          "determination",
+          "military_pride"
+        ]
+      },
+      "response": {
+        "success": true,
+        "message": "Memory turn 2 injected successfully (MOCK)",
+        "event_id": "longform_turn_2_1752809587",
+        "timestamp": "2025-07-17T23:33:06.420821",
+        "memory_layer": "procedural",
+        "importance": 0.9
+      },
+      "timestamp": "2025-07-17T23:33:06.420821"
+    },
+    {
+      "turn_number": 3,
+      "turn_type": "puzzle",
+      "event": {
+        "character_id": "longform_test_char_001",
+        "timestamp": "2025-07-18T03:33:08.459323+00:00Z",
+        "description": "A complex mechanism blocks the path forward. Thalion studies the ancient runes, his analytical mind piecing together the puzzle like he once solved tactical problems on the battlefield.",
+        "layer": "semantic",
+        "tags": [
+          "puzzle",
+          "analysis",
+          "tactical_thinking"
+        ],
+        "importance": 0.7,
+        "metadata": {
+          "action_type": "puzzle",
+          "puzzle_type": "rune_mechanism",
+          "solution_method": "analytical",
+          "military_connection": "tactical_thinking"
+        },
+        "turn_number": 3,
+        "expected_symbols": [
+          "scholar",
+          "analyst",
+          "problem_solver"
+        ],
+        "expected_emotions": [
+          "curiosity",
+          "frustration",
+          "satisfaction"
+        ]
+      },
+      "response": {
+        "success": true,
+        "message": "Memory turn 3 injected successfully (MOCK)",
+        "event_id": "longform_turn_3_1752809588",
+        "timestamp": "2025-07-17T23:33:06.420823",
+        "memory_layer": "semantic",
+        "importance": 0.7
+      },
+      "timestamp": "2025-07-17T23:33:06.420823"
+    },
+    {
+      "turn_number": 4,
+      "turn_type": "dialogue",
+      "event": {
+        "character_id": "longform_test_char_001",
+        "timestamp": "2025-07-18T03:33:09.460209+00:00Z",
+        "description": "A ghostly figure appears, revealing that Thalion's past actions caused this ruin's destruction. The weight of guilt and the possibility of redemption war within his heart.",
+        "layer": "emotional",
+        "tags": [
+          "guilt",
+          "redemption",
+          "moral_conflict"
+        ],
+        "importance": 0.95,
+        "metadata": {
+          "action_type": "dialogue",
+          "speaker": "ghostly_figure",
+          "revelation": "past_guilt",
+          "moral_choice": "redemption"
+        },
+        "turn_number": 4,
+        "expected_symbols": [
+          "guilt",
+          "redemption",
+          "moral_conflict"
+        ],
+        "expected_emotions": [
+          "guilt",
+          "shame",
+          "hope",
+          "conflict"
+        ]
+      },
+      "response": {
+        "success": true,
+        "message": "Memory turn 4 injected successfully (MOCK)",
+        "event_id": "longform_turn_4_1752809589",
+        "timestamp": "2025-07-17T23:33:06.420824",
+        "memory_layer": "emotional",
+        "importance": 0.95
+      },
+      "timestamp": "2025-07-17T23:33:06.420824"
+    },
+    {
+      "turn_number": 5,
+      "turn_type": "rest",
+      "event": {
+        "character_id": "longform_test_char_001",
+        "timestamp": "2025-07-18T03:33:10.461572+00:00Z",
+        "description": "Exhausted from the revelations, Thalion finds a quiet chamber to rest. In the silence, he reflects on his past actions and the possibility of making amends.",
+        "layer": "emotional",
+        "tags": [
+          "rest",
+          "reflection",
+          "healing"
+        ],
+        "importance": 0.6,
+        "metadata": {
+          "action_type": "rest",
+          "activity": "rest",
+          "reflection_type": "moral_contemplation",
+          "healing_process": "emotional"
+        },
+        "turn_number": 5,
+        "expected_symbols": [
+          "healing",
+          "reflection",
+          "growth"
+        ],
+        "expected_emotions": [
+          "exhaustion",
+          "contemplation",
+          "hope"
+        ]
+      },
+      "response": {
+        "success": true,
+        "message": "Memory turn 5 injected successfully (MOCK)",
+        "event_id": "longform_turn_5_1752809590",
+        "timestamp": "2025-07-17T23:33:06.420825",
+        "memory_layer": "emotional",
+        "importance": 0.6
+      },
+      "timestamp": "2025-07-17T23:33:06.420825"
+    },
+    {
+      "turn_number": 6,
+      "turn_type": "flashback",
+      "event": {
+        "character_id": "longform_test_char_001",
+        "timestamp": "2025-07-18T03:33:11.463031+00:00Z",
+        "description": "A vivid memory surfaces: Thalion leading his troops into battle, the moment he made the decision that would haunt him. The memory is clearer now, colored by his recent revelations.",
+        "layer": "episodic",
+        "tags": [
+          "flashback",
+          "past_battle",
+          "decision_point"
+        ],
+        "importance": 0.85,
+        "metadata": {
+          "action_type": "flashback",
+          "memory_type": "battle_decision",
+          "emotional_impact": "haunting",
+          "clarity": "enhanced"
+        },
+        "turn_number": 6,
+        "expected_symbols": [
+          "leader",
+          "decision_maker",
+          "haunted"
+        ],
+        "expected_emotions": [
+          "regret",
+          "clarity",
+          "understanding"
+        ]
+      },
+      "response": {
+        "success": true,
+        "message": "Memory turn 6 injected successfully (MOCK)",
+        "event_id": "longform_turn_6_1752809591",
+        "timestamp": "2025-07-17T23:33:06.420826",
+        "memory_layer": "episodic",
+        "importance": 0.85
+      },
+      "timestamp": "2025-07-17T23:33:06.420826"
+    },
+    {
+      "turn_number": 7,
+      "turn_type": "resolution",
+      "event": {
+        "character_id": "longform_test_char_001",
+        "timestamp": "2025-07-18T03:33:12.464372+00:00Z",
+        "description": "With new understanding of his past, Thalion makes a conscious choice to move forward. He feels lighter, as if the burden of his past actions has been transformed into wisdom.",
+        "layer": "semantic",
+        "tags": [
+          "resolution",
+          "growth",
+          "transformation"
+        ],
+        "importance": 0.9,
+        "metadata": {
+          "action_type": "resolution",
+          "choice": "forward_movement",
+          "transformation": "burden_to_wisdom",
+          "emotional_state": "lighter"
+        },
+        "turn_number": 7,
+        "expected_symbols": [
+          "wisdom",
+          "transformation",
+          "growth"
+        ],
+        "expected_emotions": [
+          "relief",
+          "wisdom",
+          "determination"
+        ]
+      },
+      "response": {
+        "success": true,
+        "message": "Memory turn 7 injected successfully (MOCK)",
+        "event_id": "longform_turn_7_1752809592",
+        "timestamp": "2025-07-17T23:33:06.420827",
+        "memory_layer": "semantic",
+        "importance": 0.9
+      },
+      "timestamp": "2025-07-17T23:33:06.420827"
+    }
+  ],
+  "validation_results": {
+    "memory_references": {
+      "success": false,
+      "references_found": 2,
+      "reference_details": [
+        {
+          "current_turn": 2,
+          "referenced_turn": 1,
+          "reference_type": "emotional_continuity",
+          "overlap": [
+            "determination"
+          ]
+        },
+        {
+          "current_turn": 5,
+          "referenced_turn": 4,
+          "reference_type": "emotional_continuity",
+          "overlap": [
+            "hope"
+          ]
+        }
+      ],
+      "score": 0.4
+    },
+    "symbolic_continuity": {
+      "success": false,
+      "continuous_symbols": 1,
+      "symbol_details": [
+        {
+          "symbol": "growth",
+          "appearances": [
+            5,
+            7
+          ],
+          "continuity_score": 0.2857142857142857
+        }
+      ],
+      "score": 0.3333333333333333
+    },
+    "emotional_consistency": {
+      "success": false,
+      "consistency_score": 0.5,
+      "consistent_transitions": 3,
+      "total_transitions": 6,
+      "emotional_progression": [
+        {
+          "turn": 1,
+          "emotions": [
+            "anticipation",
+            "apprehension",
+            "determination"
+          ],
+          "turn_type": "exploration"
+        },
+        {
+          "turn": 2,
+          "emotions": [
+            "focus",
+            "determination",
+            "military_pride"
+          ],
+          "turn_type": "combat"
+        },
+        {
+          "turn": 3,
+          "emotions": [
+            "curiosity",
+            "frustration",
+            "satisfaction"
+          ],
+          "turn_type": "puzzle"
+        },
+        {
+          "turn": 4,
+          "emotions": [
+            "guilt",
+            "shame",
+            "hope",
+            "conflict"
+          ],
+          "turn_type": "dialogue"
+        },
+        {
+          "turn": 5,
+          "emotions": [
+            "exhaustion",
+            "contemplation",
+            "hope"
+          ],
+          "turn_type": "rest"
+        },
+        {
+          "turn": 6,
+          "emotions": [
+            "regret",
+            "clarity",
+            "understanding"
+          ],
+          "turn_type": "flashback"
+        },
+        {
+          "turn": 7,
+          "emotions": [
+            "relief",
+            "wisdom",
+            "determination"
+          ],
+          "turn_type": "resolution"
+        }
+      ],
+      "score": 0.5
+    },
+    "semantic_coherence": {
+      "success": false,
+      "coherence_score": 0.0,
+      "developed_themes": 0,
+      "theme_details": {
+        "redemption": 1,
+        "growth": 0,
+        "past_burden": 0,
+        "transformation": 0,
+        "wisdom": 1
+      },
+      "score": 0.0
+    },
+    "memory_decay": {
+      "success": true,
+      "has_variety": true,
+      "emotional_importance_avg": 0.8999999999999999,
+      "importance_distribution": {
+        "high": 5,
+        "medium": 2,
+        "low": 0
+      },
+      "score": 1.0
+    },
+    "reinforcement": {
+      "success": true,
+      "reinforcement_count": 5,
+      "reinforcement_events": [
+        {
+          "turn": 2,
+          "type": "emotional_reinforcement",
+          "elements": [
+            "determination"
+          ],
+          "source_turn": 1
+        },
+        {
+          "turn": 5,
+          "type": "emotional_reinforcement",
+          "elements": [
+            "hope"
+          ],
+          "source_turn": 4
+        },
+        {
+          "turn": 7,
+          "type": "emotional_reinforcement",
+          "elements": [
+            "determination"
+          ],
+          "source_turn": 1
+        },
+        {
+          "turn": 7,
+          "type": "emotional_reinforcement",
+          "elements": [
+            "determination"
+          ],
+          "source_turn": 2
+        },
+        {
+          "turn": 7,
+          "type": "symbol_reinforcement",
+          "elements": [
+            "growth"
+          ],
+          "source_turn": 5
+        }
+      ],
+      "score": 1.0
+    }
+  },
+  "summary_result": {
+    "success": true,
+    "summary_length": 2285,
+    "includes_multiple_turns": true,
+    "has_thematic_coherence": true,
+    "summary_file": "test_outputs/longform_memory/longform_test_session_001_summary.json",
+    "score": 1.0
+  },
+  "overall_score": 0.5388888888888889
+}

@@ -1,0 +1,134 @@
+{
+  "session_id": "longform_test_session_001",
+  "character_id": "longform_test_char_001",
+  "total_turns": 7,
+  "narrative_arc": "redemption_and_growth",
+  "key_themes": [
+    "redemption",
+    "growth",
+    "transformation",
+    "wisdom"
+  ],
+  "emotional_journey": "from_guilt_to_wisdom",
+  "symbolic_elements": [
+    "hero",
+    "burden",
+    "transformation",
+    "wisdom"
+  ],
+  "turns_summary": [
+    {
+      "turn": 1,
+      "type": "exploration",
+      "key_event": "Thalion enters the ancient ruins, his sword hand trembling with anticipation. The weight of his past...",
+      "symbols": [
+        "hero",
+        "burden",
+        "darkness"
+      ],
+      "emotions": [
+        "anticipation",
+        "apprehension",
+        "determination"
+      ],
+      "importance": 0.8
+    },
+    {
+      "turn": 2,
+      "type": "combat",
+      "key_event": "Three skeletal warriors emerge from the shadows. Thalion's training takes over as he parries their r...",
+      "symbols": [
+        "warrior",
+        "training",
+        "defense"
+      ],
+      "emotions": [
+        "focus",
+        "determination",
+        "military_pride"
+      ],
+      "importance": 0.9
+    },
+    {
+      "turn": 3,
+      "type": "puzzle",
+      "key_event": "A complex mechanism blocks the path forward. Thalion studies the ancient runes, his analytical mind ...",
+      "symbols": [
+        "scholar",
+        "analyst",
+        "problem_solver"
+      ],
+      "emotions": [
+        "curiosity",
+        "frustration",
+        "satisfaction"
+      ],
+      "importance": 0.7
+    },
+    {
+      "turn": 4,
+      "type": "dialogue",
+      "key_event": "A ghostly figure appears, revealing that Thalion's past actions caused this ruin's destruction. The ...",
+      "symbols": [
+        "guilt",
+        "redemption",
+        "moral_conflict"
+      ],
+      "emotions": [
+        "guilt",
+        "shame",
+        "hope",
+        "conflict"
+      ],
+      "importance": 0.95
+    },
+    {
+      "turn": 5,
+      "type": "rest",
+      "key_event": "Exhausted from the revelations, Thalion finds a quiet chamber to rest. In the silence, he reflects o...",
+      "symbols": [
+        "healing",
+        "reflection",
+        "growth"
+      ],
+      "emotions": [
+        "exhaustion",
+        "contemplation",
+        "hope"
+      ],
+      "importance": 0.6
+    },
+    {
+      "turn": 6,
+      "type": "flashback",
+      "key_event": "A vivid memory surfaces: Thalion leading his troops into battle, the moment he made the decision tha...",
+      "symbols": [
+        "leader",
+        "decision_maker",
+        "haunted"
+      ],
+      "emotions": [
+        "regret",
+        "clarity",
+        "understanding"
+      ],
+      "importance": 0.85
+    },
+    {
+      "turn": 7,
+      "type": "resolution",
+      "key_event": "With new understanding of his past, Thalion makes a conscious choice to move forward. He feels light...",
+      "symbols": [
+        "wisdom",
+        "transformation",
+        "growth"
+      ],
+      "emotions": [
+        "relief",
+        "wisdom",
+        "determination"
+      ],
+      "importance": 0.9
+    }
+  ]
+}

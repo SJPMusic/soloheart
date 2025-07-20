@@ -7,6 +7,8 @@ Creates a comprehensive test campaign with:
 - Simulated emotion log data for 2 characters
 - Character arcs and plot threads
 - Journal entries and memories
+
+PHASE 1 UPDATE: Now uses TNEClient instead of direct TNE imports.
 """
 
 import os
@@ -19,10 +21,57 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from narrative_bridge import NarrativeBridge
-from narrative_engine.memory.emotional_memory import EmotionType
-from narrative_engine.journaling.player_journal import JournalEntryType
-from narrative_engine.narrative_structure.character_arcs import ArcType, ArcStatus
-from narrative_engine.narrative_structure.plot_threads import ThreadType, ThreadStatus
+
+# Define string constants to replace TNE enums
+class EmotionType:
+    WONDER = "wonder"
+    FEAR = "fear"
+    JOY = "joy"
+    SADNESS = "sadness"
+    ANGER = "anger"
+    SURPRISE = "surprise"
+    DISGUST = "disgust"
+    TRUST = "trust"
+    ANTICIPATION = "anticipation"
+    CURIOSITY = "curiosity"
+
+class JournalEntryType:
+    SESSION = "session"
+    REFLECTION = "reflection"
+    QUEST = "quest"
+    COMBAT = "combat"
+    EXPLORATION = "exploration"
+    SOCIAL = "social"
+    PLAYER_WRITTEN = "player_written"
+
+class ArcType:
+    GROWTH = "growth"
+    REDEMPTION = "redemption"
+    TRAGEDY = "tragedy"
+    COMEDY = "comedy"
+    MYSTERY = "mystery"
+    ADVENTURE = "adventure"
+
+class ArcStatus:
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    PAUSED = "paused"
+
+class ThreadType:
+    MAIN = "main"
+    SIDE = "side"
+    PERSONAL = "personal"
+    WORLD = "world"
+    MYSTERY = "mystery"
+    CONFLICT = "conflict"
+    QUEST = "quest"
+
+class ThreadStatus:
+    ACTIVE = "active"
+    RESOLVED = "resolved"
+    ABANDONED = "abandoned"
+    PAUSED = "paused"
 
 
 class TestCampaignSeeder:
@@ -31,7 +80,7 @@ class TestCampaignSeeder:
     def __init__(self, campaign_id="test-campaign", data_dir=None):
         self.campaign_id = campaign_id
         self.data_dir = data_dir
-        self.bridge = NarrativeBridge(campaign_id, data_dir=data_dir)
+        self.bridge = NarrativeBridge(campaign_id)
         
         # Sample data templates
         self.lore_templates = {
@@ -259,7 +308,7 @@ class TestCampaignSeeder:
                     minutes=random.randint(0, 59)
                 )
                 
-                memory_id = self.bridge.store_dnd_memory(
+                success = self.bridge.store_solo_game_memory(
                     content=content,
                     memory_type=template["memory_type"],
                     metadata={
@@ -269,7 +318,8 @@ class TestCampaignSeeder:
                     },
                     tags=template["tags"] + [character_id],
                     primary_emotion=template["primary_emotion"],
-                    emotional_intensity=template["emotional_intensity"] + random.uniform(-0.2, 0.2)
+                    emotional_intensity=template["emotional_intensity"] + random.uniform(-0.2, 0.2),
+                    character_id=character_id
                 )
                 memory_count += 1
                 print(f"  Created memory for {character_id}: {content[:50]}...")

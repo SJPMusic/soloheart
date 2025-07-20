@@ -1,5 +1,7 @@
 # 🎲 SoloHeart Game Engine
 
+[![CI](https://github.com/SJPMusic/soloheart/workflows/SoloHeart%20CI/badge.svg)](https://github.com/SJPMusic/soloheart/actions/workflows/test.yml)
+
 > **Transform solo tabletop gaming with AI-powered storytelling that adapts to your choices and creates truly personalized adventures.**
 
 ![Demo Status](https://img.shields.io/badge/status-Demo%20Stage%20%E2%80%93%20Actively%20Developing-blue)
@@ -40,41 +42,61 @@ Character Creation → Memory Systems → Emotional Tracking → Campaign Progre
 ## Quick Start
 
 ### Prerequisites
-- Python 3.9+
-- OpenAI API key
+- Python 3.9+ (3.13 recommended)
+- Optional: Local LLM service for AI features
 
-### Installation
+### Installation & Launch
+
+#### **Option 1: One-Command Setup (Recommended)**
+```bash
+# On macOS/Linux:
+./install_and_launch.sh
+
+# On Windows:
+install_and_launch.bat
+```
+
+#### **Option 2: Manual Setup**
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/PianomanSJPM/solo-rp-game-demo.git
-   cd solo-rp-game-demo/solo_heart
+   cd solo-rp-game-demo/SoloHeart
    ```
 
-2. **Install dependencies**:
+2. **Create virtual environment**:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Set up your OpenAI API key**:
+4. **Launch SoloHeart**:
    ```bash
-   cp .env.template .env
-   # Add your OpenAI API key to .env
+   python launch_soloheart.py
    ```
 
-### Running the Demo
-1. **Start the start screen interface** (port 5001):
-   ```bash
-   python start_screen_interface.py
-   ```
+### LLM Setup (Optional)
+SoloHeart works completely offline, but you can enhance it with AI features:
 
-2. **In a new terminal, start the narrative interface** (port 5002):
-   ```bash
-   python narrative_focused_interface.py
-   ```
+```bash
+# Option 1: Use Gemma3 via LM Studio (recommended)
+# 1. Install LM Studio from https://lmstudio.ai
+# 2. Download and load a Gemma 3 model
+# 3. Start LM Studio server at http://localhost:1234/v1
 
-3. **Open your browser**:
-   - Start screen: [http://localhost:5001](http://localhost:5001)
-   - Narrative gameplay: [http://localhost:5002](http://localhost:5002)
+# Option 2: Use Ollama (alternative)
+# 1. Install Ollama from https://ollama.ai
+# 2. Run: ollama pull llama3
+# 3. The game will auto-detect and use Ollama
+```
+
+### Access the Game
+- **Game URL**: [http://localhost:5003](http://localhost:5003)
+- **Health Check**: [http://localhost:5003/health](http://localhost:5003/health)
 
 ## Demo Walkthrough
 
@@ -104,12 +126,56 @@ Character Creation → Memory Systems → Emotional Tracking → Campaign Progre
 
 > _Replace with actual screenshots of the start screen, character creation, and narrative interface_
 
+## LLM Configuration
+
+SoloHeart uses a pluggable LLM adapter system that supports multiple local LLM backends:
+
+### Supported Backends
+- **Gemma3 (LM Studio)** - Default, recommended for best performance
+- **Ollama** - Alternative with LLaMA 3 support
+- **llama.cpp** - Coming soon
+
+### Configuration
+The LLM backend is configured in `settings.json`:
+
+```json
+{
+  "llm": {
+    "backend": "gemma",
+    "endpoint": "http://localhost:1234/v1",
+    "temperature": 0.7,
+    "max_tokens": 2048
+  }
+}
+```
+
+### Switching Backends
+To use a different LLM backend:
+
+1. **Update settings.json**:
+   ```json
+   {
+     "llm": {
+       "backend": "ollama",
+       "endpoint": "http://localhost:11434"
+     }
+   }
+   ```
+
+2. **Or use environment variables**:
+   ```bash
+   export LLM_BACKEND=ollama
+   export LLM_ENDPOINT=http://localhost:11434
+   ```
+
+3. **Restart the game** to apply changes
+
 ## Technology Stack
 
-- **Backend**: Python, Flask, OpenAI API
+- **Backend**: Python, Flask, Narrative Engine LLM adapters
 - **Frontend**: HTML5, CSS3, JavaScript
 - **Character System**: SRD 5.1-compliant JSON schema
-- **AI Integration**: GPT-4o-mini for natural language processing
+- **AI Integration**: Pluggable LLM adapter system (Gemma3, Ollama, etc.)
 - **Storage**: Local file-based persistence
 
 ## Contributing
@@ -118,6 +184,17 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details on 
 
 ### Compliance Notes
 The compliance checker has been updated to allow professional terminology related to memory testing and UI polish. Please ensure new contributions follow WCAG guidelines and avoid SRD-restricted language, but false positives may be reviewed and approved.
+
+## Governance
+
+This repository follows strict governance principles to maintain game development standards, SRD compliance, and architectural integrity:
+
+- **[IMPLEMENTATION_GOVERNANCE.md](IMPLEMENTATION_GOVERNANCE.md)** - Complete governance documentation and constraints
+- **[docs/GOVERNANCE.md](docs/GOVERNANCE.md)** - Summary of governance expectations
+- **[docs/dev_onboarding.md](docs/dev_onboarding.md)** - Developer onboarding guide
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
+
+All contributions must pass governance enforcement tests and comply with SRD 5.1 requirements.
 
 ## Documentation
 
@@ -132,7 +209,6 @@ This project uses content from the Systems Reference Document 5.1 (SRD 5.1) by W
 - License: https://creativecommons.org/licenses/by/4.0/
 
 This project uses the OpenAI API for natural language processing and LLM-driven gameplay.
-- https://openai.com/
 
 ## License
 

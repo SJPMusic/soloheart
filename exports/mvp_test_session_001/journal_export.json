@@ -2,7 +2,7 @@
   {
     "type": "memory",
     "character_id": "mvp_test_char_001",
-    "timestamp": "2025-07-17T22:11:53.755988",
+    "timestamp": "2025-07-17T23:37:25.427542",
     "content": "Test memory entry for MVP validation",
     "layer": "episodic",
     "importance": 0.7,
@@ -17,7 +17,7 @@
   {
     "type": "dialogue",
     "character_id": "mvp_test_char_001",
-    "timestamp": "2025-07-17T22:11:53.755995",
+    "timestamp": "2025-07-17T23:37:25.427548",
     "content": "Test dialogue entry for MVP validation",
     "metadata": {
       "test_type": "mvp_validation"

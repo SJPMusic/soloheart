@@ -21,6 +21,18 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Run governance enforcement tests
+        run: |
+          echo "🔍 Running governance enforcement tests..."
+          pytest tests/test_import_isolation.py -v -s || (echo "❌ Import isolation test failed!"; exit 1)
+          pytest tests/test_onboarding_integrity.py -v -s || (echo "❌ Onboarding integrity test failed!"; exit 1)
+
+      - name: Regenerate documentation if requested
+        if: hashFiles('.regen_docs') != ''
+        run: |
+          echo "📚 Regenerating documentation..."
+          python scripts/generate_docs.py
+
       - name: Run MVP integration tests
         run: |
           python tests/full_mvp_integration_test.py --mode mock 

@@ -22,7 +22,18 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lore_manager import LoreManager
-from narrative_engine.memory.emotional_memory import EmotionType
+
+# Define string constants to replace TNE enums
+class EmotionType:
+    WONDER = "wonder"
+    FEAR = "fear"
+    JOY = "joy"
+    SADNESS = "sadness"
+    ANGER = "anger"
+    SURPRISE = "surprise"
+    DISGUST = "disgust"
+    TRUST = "trust"
+    ANTICIPATION = "anticipation"
 
 
 class TestLoreManager(unittest.TestCase):
