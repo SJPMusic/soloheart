@@ -1,17 +1,19 @@
-# System Reference Document 5.1 Attribution
+# System Reference Document 5.2 Attribution
 
-This directory contains game mechanics, rules, and content derived from the System Reference Document 5.1.
+This directory contains game mechanics, rules, and content derived from the System Reference Document 5.2.
 
 ## Required Attribution
 
-**This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License.**
+**This work includes material from the System Reference Document 5.2 and is licensed under the Creative Commons Attribution 4.0 International License.**
 
 ## License Details
 
-- **Source**: System Reference Document 5.1
+- **Source**: System Reference Document 5.2
 - **License**: Creative Commons Attribution 4.0 International License
 - **License URL**: https://creativecommons.org/licenses/by/4.0/legalcode
 - **Copyright**: SRD publisher
+
+**This work includes material from the System Reference Document 5.2 and is licensed under the Creative Commons Attribution 4.0 International License.**
 
 ## Content Included
 
@@ -23,7 +25,7 @@ This directory contains SRD-derived content including:
 
 ## Compliance Notes
 
-- All content is derived exclusively from the SRD 5.1
+- All content is derived exclusively from the SRD 5.2
 - No content from non-SRD books is included
 - No proprietary system-neutral roleplaying framework characters, places, or storylines are referenced
 - Custom content is clearly separated from SRD-derived systems

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Creation - SoloHeart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .mode-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .mode-card.selected {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Header -->
+    <div class="glass p-6 mb-8">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <button onclick="goBack()" class="mr-6 text-2xl hover:text-yellow-400 transition-colors">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-3xl font-bold mb-2">
+                            <i class="fas fa-user-plus text-purple-400 mr-3"></i>
+                            Character Creation
+                        </h1>
+                        <p class="text-blue-200 text-lg">Choose your preferred creation method</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-blue-200">SoloHeart</div>
+                    <div class="text-xs text-blue-300">D&D 5e Character Creator</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-6xl mx-auto px-4">
+        <!-- Introduction -->
+        <div class="glass p-6 mb-8 rounded-xl fade-in">
+            <h2 class="text-2xl font-bold mb-4 text-yellow-400">
+                <i class="fas fa-magic mr-2"></i>
+                Choose Your Creation Style
+            </h2>
+            <p class="text-lg mb-4">
+                SoloHeart offers two different approaches to character creation. Both methods will help you create a complete D&D 5e character, but they differ in their interaction style.
+            </p>
+            <div class="grid md:grid-cols-2 gap-6 mt-6">
+                <div class="bg-blue-900 bg-opacity-30 p-4 rounded-lg">
+                    <h3 class="font-bold text-yellow-400 mb-2">🎭 Natural Conversation</h3>
+                    <p class="text-sm">Describe your character concept in natural language and let the AI guide the conversation to flesh out details.</p>
+                </div>
+                <div class="bg-blue-900 bg-opacity-30 p-4 rounded-lg">
+                    <h3 class="font-bold text-yellow-400 mb-2">🪜 Guided Questions</h3>
+                    <p class="text-sm">Answer specific questions one at a time, with AI assistance to interpret your responses and suggest options.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Creation Modes -->
+        <div class="grid md:grid-cols-2 gap-8 mb-8">
+            <!-- Vibe Code Mode -->
+            <div class="mode-card glass p-6 rounded-xl fade-in" style="animation-delay: 0.1s;" onclick="selectMode('vibe-code')">
+                <div class="text-center mb-6">
+                    <div class="text-4xl mb-4">🎭</div>
+                    <h3 class="text-2xl font-bold mb-2">Vibe Code Mode</h3>
+                    <p class="text-blue-200 mb-4">Natural conversation, AI-guided</p>
+                </div>
+                
+                <div class="space-y-4 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-semibold">Natural Language Input</h4>
+                            <p class="text-sm text-blue-200">Describe your character concept in your own words</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-semibold">Conversational Flow</h4>
+                            <p class="text-sm text-blue-200">AI asks follow-up questions based on your descriptions</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-semibold">Creative Freedom</h4>
+                            <p class="text-sm text-blue-200">Express complex character concepts and backstories</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-900 bg-opacity-30 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold text-yellow-400 mb-2">Perfect for:</h4>
+                    <ul class="text-sm space-y-1">
+                        <li>• Players with a clear character vision</li>
+                        <li>• Complex backstories and motivations</li>
+                        <li>• Natural, flowing conversation</li>
+                    </ul>
+                </div>
+                
+                <button class="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all transform hover:scale-105">
+                    <i class="fas fa-magic mr-2"></i>
+                    Start Vibe Code Creation
+                </button>
+            </div>
+
+            <!-- Step-by-Step Mode -->
+            <div class="mode-card glass p-6 rounded-xl fade-in" style="animation-delay: 0.2s;" onclick="selectMode('step-by-step')">
+                <div class="text-center mb-6">
+                    <div class="text-4xl mb-4">🪜</div>
+                    <h3 class="text-2xl font-bold mb-2">Step-by-Step Mode</h3>
+                    <p class="text-blue-200 mb-4">One question at a time, AI-guided</p>
+                </div>
+                
+                <div class="space-y-4 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-semibold">Guided Questions</h4>
+                            <p class="text-sm text-blue-200">One field at a time with clear prompts and hints</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-semibold">User Control</h4>
+                            <p class="text-sm text-blue-200">Commands like 'summary', 'edit', 'skip' for full control</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <i class="fas fa-check text-green-400 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-semibold">Structured Approach</h4>
+                            <p class="text-sm text-blue-200">Systematic character building with clear progress</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-900 bg-opacity-30 p-4 rounded-lg mb-4">
+                    <h4 class="font-semibold text-yellow-400 mb-2">Perfect for:</h4>
+                    <ul class="text-sm space-y-1">
+                        <li>• New players learning character creation</li>
+                        <li>• Players who prefer structured guidance</li>
+                        <li>• Step-by-step character development</li>
+                    </ul>
+                </div>
+                
+                <button class="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all transform hover:scale-105">
+                    <i class="fas fa-list-ol mr-2"></i>
+                    Start Step-by-Step Creation
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Start Examples -->
+        <div class="glass p-6 rounded-xl fade-in" style="animation-delay: 0.3s;">
+            <h3 class="text-xl font-bold mb-4 text-yellow-400">
+                <i class="fas fa-lightbulb mr-2"></i>
+                Quick Start Examples
+            </h3>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-semibold mb-2 text-purple-400">Vibe Code Examples:</h4>
+                    <ul class="text-sm space-y-1 text-blue-200">
+                        <li>• "A wise old wizard who's seen too many wars"</li>
+                        <li>• "A young rogue who grew up on the streets"</li>
+                        <li>• "A fierce barbarian woman from the northern tribes"</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-2 text-cyan-400">Step-by-Step Flow:</h4>
+                    <ul class="text-sm space-y-1 text-blue-200">
+                        <li>• Race → Class → Gender → Age → Background</li>
+                        <li>• Personality → Level → Alignment → Name</li>
+                        <li>• Use commands: summary, edit, skip, help</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function goBack() {
+            window.location.href = '/';
+        }
+
+        function selectMode(mode) {
+            // Add visual feedback
+            const cards = document.querySelectorAll('.mode-card');
+            cards.forEach(card => card.classList.remove('selected'));
+            
+            const selectedCard = event.currentTarget;
+            selectedCard.classList.add('selected');
+            
+            // Navigate to the appropriate creation mode
+            setTimeout(() => {
+                if (mode === 'vibe-code') {
+                    window.location.href = '/vibe-code-creation';
+                } else if (mode === 'step-by-step') {
+                    window.location.href = '/step-by-step-creation';
+                }
+            }, 300);
+        }
+
+        // Add hover effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.mode-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

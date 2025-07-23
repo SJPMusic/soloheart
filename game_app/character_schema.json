@@ -1,0 +1,204 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SoloHeart Character Schema",
+  "description": "A simplified character data model for SoloHeart",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "default": "1.0.0"
+        },
+        "created_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "creation_method": {
+          "type": "string",
+          "enum": ["step_by_step", "vibe_code", "manual"]
+        }
+      },
+      "required": ["version", "created_date"]
+    },
+    "basic_info": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "race": {
+          "type": "string",
+          "enum": [
+            "Human", "Elf", "Dwarf", "Halfling", "Dragonborn", 
+            "Gnome", "Half-Elf", "Half-Orc", "Tiefling"
+          ]
+        },
+        "class": {
+          "type": "string",
+          "enum": [
+            "Barbarian", "Bard", "Cleric", "Druid", "Fighter",
+            "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer",
+            "Warlock", "Wizard"
+          ]
+        },
+        "background": {
+          "type": "string",
+          "enum": [
+            "Acolyte", "Criminal", "Folk Hero", "Haunted One", "Noble",
+            "Sage", "Soldier", "Urchin"
+          ]
+        },
+        "alignment": {
+          "type": "string",
+          "enum": [
+            "Lawful Good", "Neutral Good", "Chaotic Good",
+            "Lawful Neutral", "True Neutral", "Chaotic Neutral",
+            "Lawful Evil", "Neutral Evil", "Chaotic Evil"
+          ]
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "default": 1
+        }
+      },
+      "required": ["name", "race", "class", "level"]
+    },
+    "ability_scores": {
+      "type": "object",
+      "properties": {
+        "strength": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "default": 10
+        },
+        "dexterity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "default": 10
+        },
+        "constitution": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "default": 10
+        },
+        "intelligence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "default": 10
+        },
+        "wisdom": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "default": 10
+        },
+        "charisma": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "default": 10
+        }
+      },
+      "required": ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"]
+    },
+    "combat_stats": {
+      "type": "object",
+      "properties": {
+        "hit_points": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 10
+        },
+        "armor_class": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 10
+        },
+        "initiative": {
+          "type": "integer",
+          "default": 0
+        },
+        "speed": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 30
+        }
+      },
+      "required": ["hit_points", "armor_class", "initiative", "speed"]
+    },
+    "personality": {
+      "type": "object",
+      "properties": {
+        "traits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ideals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "bonds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "flaws": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "equipment": {
+      "type": "object",
+      "properties": {
+        "weapons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "armor": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "background_info": {
+      "type": "object",
+      "properties": {
+        "backstory": {
+          "type": "string"
+        },
+        "appearance": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": ["metadata", "basic_info", "ability_scores", "combat_stats"]
+} 

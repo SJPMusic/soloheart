@@ -35,25 +35,21 @@ def main():
     print("🎲 SoloHeart - AI Adventure Game")
     print("=" * 40)
     
-    # Check if .env exists and configure Ollama
+    # Check if .env exists and configure Gemma3
     if not os.path.exists('.env'):
-        print("🔧 First time setup - configuring Ollama LLM service")
-        print("Make sure Ollama is running with LLaMA 3 model available")
-        print("Install Ollama from: https://ollama.ai")
-        print("Then run: ollama pull llama3")
+        print("🔧 First time setup - configuring Gemma3 LLM service")
+        print("Make sure LM Studio is running with Gemma3 model available")
+        print("Install LM Studio from: https://lmstudio.ai")
+        print("Then load a Gemma3 model in LM Studio")
         
-        # Create .env file with Ollama configuration
+        # Create .env file with Gemma3 configuration
         with open('.env', 'w') as f:
-            f.write("OLLAMA_MODEL=llama3\n")
-            f.write("OLLAMA_BASE_URL=http://localhost:11434\n")
-            f.write("FLASK_SECRET_KEY=your_secret_key_here\n")
-            f.write("FLASK_ENV=production\n")
-            f.write("DEBUG=False\n")
-            f.write("HOST=0.0.0.0\n")
-            f.write("PORT=5001\n")
+            f.write("GEMMA3_MODEL=gemma3\n")
+            f.write("GEMMA3_BASE_URL=http://localhost:1234/v1\n")
+            f.write("GEMMA3_ENDPOINT=http://localhost:1234/v1/chat/completions\n")
         
-        print("✅ Ollama configuration complete!")
-        print("💡 Make sure Ollama is running before starting the game")
+        print("✅ Gemma3 configuration complete!")
+        print("💡 Make sure LM Studio is running before starting the game")
     
     print("🚀 Starting game servers...")
     

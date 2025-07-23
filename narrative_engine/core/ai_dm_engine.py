@@ -20,18 +20,15 @@ class AIDMEngine:
     """AI DM Engine that dynamically interprets DnD 5e rules"""
     
     def __init__(self, api_key: str = None):
+        # Import the Gemma3 service from the solo_heart module
         try:
-            # Import the Ollama service from the solo_heart module
-            import sys
-            import os
-            sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'SoloHeart'))
-            from ollama_llm_service import get_ollama_service
-            self.ollama_service = get_ollama_service()
-            logger.info("Ollama LLM service initialized successfully")
+            from gemma3_llm_service import get_gemma3_service
+            self.gemma3_service = get_gemma3_service()
+            logger.info("Gemma3 LLM service initialized successfully")
         except Exception as e:
-            logger.error(f"Failed to initialize Ollama LLM service: {e}")
-            self.ollama_service = None
-            logger.warning("Using fallback responses due to Ollama service failure")
+            logger.error(f"Failed to initialize Gemma3 LLM service: {e}")
+            self.gemma3_service = None
+            logger.warning("Using fallback responses due to Gemma3 service failure")
         
         # Core DnD 5e knowledge base for context
         self.dnd_context = """
@@ -216,17 +213,17 @@ Explain your reasoning and provide a clear ruling.
         return "\n".join(parts)
     
     def _get_ai_response(self, prompt: str) -> str:
-        """Get response from Ollama LLM service"""
-        if not self.ollama_service:
+        """Get response from Gemma3 LLM service"""
+        if not self.gemma3_service:
             # Fallback response without API
-            logger.warning("No Ollama service available - using fallback response")
+            logger.warning("No Gemma3 service available - using fallback response")
             return self._fallback_response(prompt)
         
         try:
             # Create a system message for the DM role
             system_message = "You are an expert DnD 5e Dungeon Master. Respond as the DM, being helpful, engaging, and mechanically accurate."
             
-            response = self.ollama_service.generate_response(
+            response = self.gemma3_service.generate_response(
                 prompt=prompt,
                 system_message=system_message,
                 max_tokens=500,
@@ -236,7 +233,7 @@ Explain your reasoning and provide a clear ruling.
             return response.strip()
             
         except Exception as e:
-            logger.error(f"Ollama API error: {e}")
+            logger.error(f"Gemma3 API error: {e}")
             return self._fallback_response(prompt)
     
     def _parse_dice_roll(self, message: str) -> Optional[str]:

@@ -16,7 +16,7 @@ from pathlib import Path
 # Add the current directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from solo_heart.narrative_bridge import NarrativeBridge
+from game_app.narrative_bridge import NarrativeBridge
 
 # Define string constants to replace TNE enums
 class EmotionType:

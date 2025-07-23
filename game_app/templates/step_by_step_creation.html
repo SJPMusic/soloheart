@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Creation - Step by Step</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .chat-container {
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        
+        /* Responsive design for side-by-side layout */
+        @media (max-width: 1024px) {
+            .flex.gap-4 {
+                flex-direction: column;
+            }
+            .w-1\/3 {
+                width: 100%;
+                min-width: auto;
+            }
+            .sticky {
+                position: relative;
+                top: auto;
+            }
+        }
+        .message {
+            margin-bottom: 1rem;
+            animation: fadeIn 0.3s ease-in;
+        }
+        .message.ai {
+            text-align: left;
+        }
+        .message.player {
+            text-align: right;
+        }
+        .message-content {
+            display: inline-block;
+            max-width: 80%;
+            padding: 1rem;
+            border-radius: 1rem;
+            word-wrap: break-word;
+        }
+        .message.ai .message-content {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .message.player .message-content {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        .input-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: rgba(30, 58, 138, 0.9);
+            backdrop-filter: blur(10px);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .typing-indicator {
+            display: none;
+            padding: 1rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
+        .typing-indicator.show {
+            display: block;
+        }
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+            height: 8px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Character sheet field update animation */
+        .character-field-updated {
+            animation: fieldUpdate 0.5s ease-out;
+        }
+        
+        @keyframes fieldUpdate {
+            0% { background-color: rgba(245, 158, 11, 0.3); }
+            100% { background-color: rgba(255, 255, 255, 0.1); }
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Header -->
+    <div class="glass p-4 mb-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <button onclick="goBack()" class="mr-4 text-2xl hover:text-yellow-400 transition-colors">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="text-2xl font-bold">
+                    <i class="fas fa-list-ol text-blue-400 mr-2"></i>
+                    Step-by-Step Character Creation
+                </h1>
+            </div>
+            <div class="text-sm text-blue-200">
+                Guided questions, one at a time
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area - Side by Side Layout -->
+    <div class="flex gap-4 px-4 mb-20">
+        <!-- Left Side - Character Sheet -->
+        <div class="w-1/3 min-w-80">
+            <!-- Character Sheet -->
+            <div class="glass p-4 rounded-xl sticky top-4">
+                <h3 class="text-lg font-bold mb-3 text-yellow-400">
+                    <i class="fas fa-user-circle mr-2"></i>Character Sheet
+                </h3>
+                
+                <!-- Progress Bar -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-semibold text-yellow-400">Progress</span>
+                        <span class="text-sm text-blue-200" id="progressText">0/9</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Character Details -->
+                <div id="characterDetails" class="space-y-3">
+                    <div class="bg-white bg-opacity-10 p-3 rounded-lg">
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-user text-blue-400 mr-2"></i>
+                            <span class="font-semibold text-blue-200">Name</span>
+                        </div>
+                        <div class="text-white">Not set</div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 p-3 rounded-lg">
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-dragon text-blue-400 mr-2"></i>
+                            <span class="font-semibold text-blue-200">Race</span>
+                        </div>
+                        <div class="text-white">Not set</div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 p-3 rounded-lg">
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-sword text-blue-400 mr-2"></i>
+                            <span class="font-semibold text-blue-200">Class</span>
+                        </div>
+                        <div class="text-white">Not set</div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 p-3 rounded-lg">
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-star text-blue-400 mr-2"></i>
+                            <span class="font-semibold text-blue-200">Level</span>
+                        </div>
+                        <div class="text-white">1</div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 p-3 rounded-lg">
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-book text-blue-400 mr-2"></i>
+                            <span class="font-semibold text-blue-200">Background</span>
+                        </div>
+                        <div class="text-white">Not set</div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 p-3 rounded-lg">
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-heart text-blue-400 mr-2"></i>
+                            <span class="font-semibold text-blue-200">Personality</span>
+                        </div>
+                        <div class="text-white">Not set</div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 p-3 rounded-lg">
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-birthday-cake text-blue-400 mr-2"></i>
+                            <span class="font-semibold text-blue-200">Age</span>
+                        </div>
+                        <div class="text-white">Not set</div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 p-3 rounded-lg">
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-venus-mars text-blue-400 mr-2"></i>
+                            <span class="font-semibold text-blue-200">Gender</span>
+                        </div>
+                        <div class="text-white">Not set</div>
+                    </div>
+                    <div class="bg-white bg-opacity-10 p-3 rounded-lg">
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-balance-scale text-blue-400 mr-2"></i>
+                            <span class="font-semibold text-blue-200">Alignment</span>
+                        </div>
+                        <div class="text-white">Not set</div>
+                    </div>
+                    
+                    <!-- Ability Scores Section -->
+                    <div class="bg-white bg-opacity-10 p-3 rounded-lg">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-dumbbell text-blue-400 mr-2"></i>
+                            <span class="font-semibold text-blue-200">Ability Scores</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-blue-200">STR:</span>
+                                <span class="text-white">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-200">DEX:</span>
+                                <span class="text-white">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-200">CON:</span>
+                                <span class="text-white">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-200">INT:</span>
+                                <span class="text-white">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-200">WIS:</span>
+                                <span class="text-white">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-200">CHA:</span>
+                                <span class="text-white">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Chat Interface -->
+        <div class="flex-1">
+            <!-- Chat Container -->
+            <div class="chat-container" id="chatContainer">
+                <div class="message ai">
+                    <div class="message-content">
+                        <p><strong>Welcome to Step-by-Step Character Creation!</strong></p>
+                        <p>I'll guide you through creating your D&D 5e character by asking one question at a time. This method is perfect if you prefer a structured approach.</p>
+                        <p class="mt-4"><strong>Available Commands:</strong></p>
+                        <ul class="list-disc list-inside mt-2 space-y-1 text-sm">
+                            <li><code>summary</code> - See your current character details</li>
+                            <li><code>edit [field]</code> - Edit a specific field (e.g., "edit race")</li>
+                            <li><code>help</code> - Show available commands</li>
+                            <li><code>skip</code> - Skip optional fields</li>
+                        </ul>
+                        <p class="mt-4">Ready to begin? Let's start with your character's race!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div class="typing-indicator" id="typingIndicator">
+        <i class="fas fa-spinner fa-spin mr-2"></i>
+        AI is thinking...
+    </div>
+
+    <!-- Input Container -->
+    <div class="input-container">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex items-center space-x-4">
+                <div class="flex-1">
+                    <input type="text" id="playerInput" placeholder="Enter your answer..." 
+                           class="w-full px-4 py-3 rounded-xl bg-white bg-opacity-10 border border-white border-opacity-30 text-white placeholder-blue-200 focus:outline-none focus:border-yellow-400"
+                           onkeypress="handleKeyPress(event)">
+                </div>
+                <button onclick="sendMessage()" id="sendButton" 
+                        class="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isComplete = false;
+        let isProcessing = false;
+        let hasStarted = false;
+        let currentProgress = 0;
+        const totalFields = 9;
+
+        function goBack() {
+            if (confirm('Are you sure you want to go back? Your character creation progress will be lost.')) {
+                window.location.href = '/character-creation-select';
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            if (isProcessing || isComplete) return;
+
+            const input = document.getElementById('playerInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Show typing indicator
+            showTypingIndicator();
+            isProcessing = true;
+            disableInput();
+
+            try {
+                let endpoint = '/api/character/step-by-step/';
+                let data = {};
+
+                if (!hasStarted) {
+                    // First message - start character creation (don't send user input)
+                    endpoint += 'start';
+                    data = { user_input: '' };
+                    hasStarted = true;
+                    
+                    // Don't add the user message to chat yet - wait for the first question
+                } else {
+                    // Continue conversation
+                    endpoint += 'continue';
+                    data = { user_input: message };
+                    
+                    // Add player message to chat
+                    addMessage(message, 'player');
+                    input.value = '';
+                }
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    addMessage(result.message, 'ai');
+                    
+                    // Update progress if available
+                    if (result.progress) {
+                        updateProgress(result.progress);
+                    }
+                    
+                    // Update character summary if data is available
+                    if (result.character_data) {
+                        updateCharacterSummary(result.character_data);
+                    }
+                    
+                    if (result.is_complete) {
+                        isComplete = true;
+                        
+                        // Check if campaign was started
+                        if (result.campaign_started) {
+                            showCampaignLaunchOptions(result.campaign_id);
+                        } else {
+                            showCompletionOptions();
+                        }
+                    }
+                } else {
+                    addMessage('Sorry, there was an error. Please try again.', 'ai');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error connecting to the server. Please try again.', 'ai');
+            } finally {
+                hideTypingIndicator();
+                isProcessing = false;
+                enableInput();
+            }
+        }
+
+        function addMessage(content, sender) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = content;
+            
+            messageDiv.appendChild(contentDiv);
+            container.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').classList.add('show');
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').classList.remove('show');
+        }
+
+        function disableInput() {
+            document.getElementById('playerInput').disabled = true;
+            document.getElementById('sendButton').disabled = true;
+        }
+
+        function enableInput() {
+            document.getElementById('playerInput').disabled = false;
+            document.getElementById('sendButton').disabled = false;
+            document.getElementById('playerInput').focus();
+        }
+
+        function updateProgress(progress) {
+            currentProgress = progress;
+            const percentage = (progress / totalFields) * 100;
+            
+            document.getElementById('progressFill').style.width = `${percentage}%`;
+            document.getElementById('progressText').textContent = `${progress}/${totalFields}`;
+        }
+
+        function updateCharacterSummary(characterData) {
+            const detailsDiv = document.getElementById('characterDetails');
+            
+            // Update individual character detail elements
+            const fieldMappings = {
+                'name': { selector: 'div:nth-child(1) .text-white', value: characterData.name || characterData.basic_info?.name || 'Not set' },
+                'race': { selector: 'div:nth-child(2) .text-white', value: characterData.race || characterData.basic_info?.race || 'Not set' },
+                'class': { selector: 'div:nth-child(3) .text-white', value: characterData.class || characterData.basic_info?.class || 'Not set' },
+                'level': { selector: 'div:nth-child(4) .text-white', value: characterData.level || characterData.basic_info?.level || '1' },
+                'background': { selector: 'div:nth-child(5) .text-white', value: characterData.background || characterData.basic_info?.background || 'Not set' },
+                'personality': { selector: 'div:nth-child(6) .text-white', value: characterData.personality ? characterData.personality.substring(0, 30) + '...' : 'Not set' },
+                'age': { selector: 'div:nth-child(7) .text-white', value: characterData.age || 'Not set' },
+                'gender': { selector: 'div:nth-child(8) .text-white', value: characterData.gender || 'Not set' },
+                'alignment': { selector: 'div:nth-child(9) .text-white', value: characterData.alignment || characterData.basic_info?.alignment || 'Not set' }
+            };
+            
+            // Update ability scores if available
+            const abilityScores = characterData.ability_scores || characterData.basic_info?.ability_scores;
+            if (abilityScores) {
+                // Get the ability scores container
+                const abilityContainer = detailsDiv.querySelector('.grid.grid-cols-2');
+                if (abilityContainer) {
+                    const abilityElements = abilityContainer.querySelectorAll('.flex.justify-between');
+                    
+                    // Update each ability score
+                    const abilities = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+                    const abilityKeys = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+                    
+                    abilities.forEach((ability, index) => {
+                        if (abilityElements[index]) {
+                            const scoreElement = abilityElements[index].querySelector('.text-white');
+                            const score = abilityScores[abilityKeys[index]];
+                            if (scoreElement && score !== undefined) {
+                                scoreElement.textContent = score;
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Update each field
+            Object.entries(fieldMappings).forEach(([field, mapping]) => {
+                const element = detailsDiv.querySelector(mapping.selector);
+                if (element) {
+                    const oldValue = element.textContent;
+                    element.textContent = mapping.value;
+                    
+                    // Add animation if value changed
+                    if (oldValue !== mapping.value && mapping.value !== 'Not set') {
+                        const parentDiv = element.closest('.bg-white');
+                        if (parentDiv) {
+                            parentDiv.classList.add('character-field-updated');
+                            setTimeout(() => {
+                                parentDiv.classList.remove('character-field-updated');
+                            }, 500);
+                        }
+                    }
+                }
+            });
+        }
+
+        function showCampaignLaunchOptions(campaignId) {
+            const container = document.getElementById('chatContainer');
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'message ai';
+            optionsDiv.innerHTML = `
+                <div class="message-content">
+                    <p><strong>🎉 Character creation complete!</strong></p>
+                    <p>Your character is ready and a new campaign has been started! You can begin your adventure immediately.</p>
+                    <div class="mt-4 space-y-2">
+                        <button onclick="startAdventure('${campaignId}')" 
+                                class="w-full py-3 px-6 bg-gradient-to-r from-green-500 to-green-600 rounded-xl font-semibold hover:from-green-600 hover:to-green-700 transition-all">
+                            <i class="fas fa-play mr-2"></i>Start Adventure Now
+                        </button>
+                        <button onclick="continueChatting()" 
+                                class="w-full py-2 px-6 bg-white bg-opacity-10 rounded-xl font-semibold hover:bg-opacity-20 transition-all">
+                            <i class="fas fa-comments mr-2"></i>Continue Chatting
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(optionsDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showCompletionOptions() {
+            const container = document.getElementById('chatContainer');
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'message ai';
+            optionsDiv.innerHTML = `
+                <div class="message-content">
+                    <p><strong>🎉 Character creation complete!</strong></p>
+                    <p>Your character is ready for adventure! You can continue chatting to add more details, or start your campaign.</p>
+                    <div class="mt-4 space-y-2">
+                        <button onclick="startAdventure()" 
+                                class="w-full py-3 px-6 bg-gradient-to-r from-green-500 to-green-600 rounded-xl font-semibold hover:from-green-600 hover:to-green-700 transition-all">
+                            <i class="fas fa-play mr-2"></i>Start Adventure
+                        </button>
+                        <button onclick="continueChatting()" 
+                                class="w-full py-2 px-6 bg-white bg-opacity-10 rounded-xl font-semibold hover:bg-opacity-20 transition-all">
+                            <i class="fas fa-comments mr-2"></i>Continue Chatting
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(optionsDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function startAdventure(campaignId = null) {
+            // Start the campaign with the created character
+            if (campaignId) {
+                window.location.href = `/game?campaign=${campaignId}`;
+            } else {
+                window.location.href = '/game';
+            }
+        }
+
+        function continueChatting() {
+            // Remove the completion options and allow continued conversation
+            isComplete = false;
+            const completionDiv = document.querySelector('.message.ai:last-child');
+            if (completionDiv) {
+                completionDiv.remove();
+            }
+            enableInput();
+        }
+
+        // Focus input on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('playerInput').focus();
+        });
+    </script>
+</body>
+</html> 

@@ -1,6 +1,6 @@
-# SRD 5.1 Compliance Summary
+# SRD 5.2 Compliance Summary
 
-This document summarizes the compliance measures implemented to ensure adherence to the System Reference Document 5.1 license and content restrictions.
+This document summarizes the compliance measures implemented to ensure adherence to the System Reference Document 5.2 license and content restrictions.
 
 ## Overview
 
@@ -14,7 +14,7 @@ The project is designed to be 5E-compatible while strictly adhering to the Creat
 - **Attribution**: All SRD-derived files include required attribution text
 
 ### 2. Attribution Requirements
-**Required Text**: "This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License."
+**Required Text**: "This work includes material from the System Reference Document 5.2 and is licensed under the Creative Commons Attribution 4.0 International License."
 
 **Files Requiring Attribution**:
 - All files in `srd_data/` directory

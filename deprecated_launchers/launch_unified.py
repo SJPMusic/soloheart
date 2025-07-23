@@ -22,27 +22,31 @@ def check_dependencies():
         print("pip install flask requests")
         return False
 
-def check_ollama_service():
-    """Check if Ollama service is available."""
+def check_gemma3_service():
+    """Check if Gemma3 service is available."""
     try:
         import requests
-        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        response = requests.get("http://localhost:1234/v1/models", timeout=5)
         if response.status_code == 200:
-            models = response.json().get('models', [])
-            model_names = [model.get('name', '') for model in models]
-            if 'llama3' in model_names:
-                print("✅ Ollama service found with LLaMA 3 model")
+            models = response.json().get('data', [])
+            model_names = [model.get('id', '') for model in models]
+            if any('gemma' in name.lower() for name in model_names):
+                print("✅ Gemma3 service found with Gemma3 model")
                 return True
             else:
-                print("⚠️  Ollama service found but LLaMA 3 model not available")
-                print("Please run: ollama pull llama3")
+                print("⚠️  Gemma3 service found but Gemma3 model not available")
+                print("Please load a Gemma3 model in LM Studio")
                 return False
         else:
-            print("❌ Ollama service not responding")
+            print("❌ Gemma3 service not responding")
             return False
+    except requests.exceptions.ConnectionError:
+        print(f"❌ Cannot connect to Gemma3 service: {e}")
+        print("Please make sure LM Studio is running: https://lmstudio.ai")
+        return False
     except Exception as e:
-        print(f"❌ Cannot connect to Ollama service: {e}")
-        print("Please make sure Ollama is running: https://ollama.ai")
+        print(f"❌ Cannot connect to Gemma3 service: {e}")
+        print("Please make sure LM Studio is running: https://lmstudio.ai")
         return False
 
 def main():
@@ -54,13 +58,12 @@ def main():
     if not check_dependencies():
         sys.exit(1)
     
-    # Check Ollama service
-    if not check_ollama_service():
-        print("\nOllama service is required for AI features. Please start Ollama first.")
-        return
+    # Check Gemma3 service
+    if not check_gemma3_service():
+        print("\nGemma3 service is required for AI features. Please start LM Studio first.")
         response = input("Continue anyway? (y/n): ")
         if response.lower() != 'y':
-            sys.exit(1)
+            return
     
     print("\n🚀 Starting the game server...")
     

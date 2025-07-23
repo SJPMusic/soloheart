@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoloHeart - Start Screen</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .header {
+            margin-bottom: 40px;
+        }
+        .title {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .campaign-list {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .campaign-item {
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        .btn-danger {
+            background: #f44336;
+        }
+        .btn-danger:hover {
+            background: #da190b;
+        }
+        .btn-primary {
+            background: #2196F3;
+        }
+        .btn-primary:hover {
+            background: #0b7dda;
+        }
+        .btn-secondary {
+            background: #FF9800;
+        }
+        .btn-secondary:hover {
+            background: #e68900;
+        }
+        .no-campaigns {
+            font-style: italic;
+            opacity: 0.7;
+        }
+        .creation-options {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .creation-option {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            min-width: 200px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .creation-option:hover {
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+        }
+        .creation-option h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .creation-option p {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🎲 SoloHeart</h1>
+            <p class="subtitle">Your Solo D&D Adventure Awaits</p>
+        </div>
+
+        <div class="campaign-list">
+            <h2>📚 Your Campaigns</h2>
+            <div id="campaigns-container">
+                <p class="no-campaigns">Loading campaigns...</p>
+            </div>
+        </div>
+
+        <div>
+            <h2>🚀 Start New Adventure</h2>
+            <p>Create your character through natural conversation with AI:</p>
+            
+            <div class="creation-options">
+                <div class="creation-option">
+                    <h3>✨ Create Character</h3>
+                    <p>Describe your character concept and let AI help you build them through conversation.</p>
+                    <button class="btn btn-primary" onclick="startCharacterCreation()">Begin Creation</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load campaigns on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCampaigns();
+        });
+
+        function loadCampaigns() {
+            fetch('/api/campaigns')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('campaigns-container');
+                    
+                    if (data.success && data.campaigns.length > 0) {
+                        container.innerHTML = data.campaigns.map(campaign => `
+                            <div class="campaign-item">
+                                <span>${campaign.name}</span>
+                                <div>
+                                    <button class="btn btn-primary" onclick="loadCampaign('${campaign.id}')">Load</button>
+                                    <button class="btn btn-danger" onclick="deleteCampaign('${campaign.id}')">Delete</button>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = '<p class="no-campaigns">No saved campaigns found. Start a new adventure!</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading campaigns:', error);
+                    document.getElementById('campaigns-container').innerHTML = 
+                        '<p class="no-campaigns">Error loading campaigns. Please try again.</p>';
+                });
+        }
+
+        function startCharacterCreation() {
+            window.location.href = '/character-creation';
+        }
+
+        function loadCampaign(campaignId) {
+            fetch(`/api/campaigns/${campaignId}/load`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    alert('Error loading campaign: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading campaign:', error);
+                alert('Error loading campaign. Please try again.');
+            });
+        }
+
+        function deleteCampaign(campaignId) {
+            if (confirm('Are you sure you want to delete this campaign? This action cannot be undone.')) {
+                fetch(`/api/campaigns/${campaignId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadCampaigns(); // Reload the list
+                    } else {
+                        alert('Error deleting campaign: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting campaign:', error);
+                    alert('Error deleting campaign. Please try again.');
+                });
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-SRD 5.1 Compliance Audit Tool
+SRD 5.2 Compliance Audit Tool
 
 This script performs a comprehensive audit of the project to ensure
-compliance with the System Reference Document 5.1 license and content restrictions.
+compliance with the System Reference Document 5.2 license and content restrictions.
 
 Usage:
     python cli/compliance_check.py [--verbose] [--fix-attribution]
@@ -22,7 +22,7 @@ from typing import List, Dict, Tuple, Set
 import re
 
 # Required SRD attribution text
-REQUIRED_ATTRIBUTION = "This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License."
+REQUIRED_ATTRIBUTION = "This work includes material from the System Reference Document 5.2 and is licensed under the Creative Commons Attribution 4.0 International License."
 
 # Restricted keywords that indicate non-SRD content
 RESTRICTED_KEYWORDS = [

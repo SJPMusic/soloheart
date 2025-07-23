@@ -1,3 +1,5 @@
+This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License.
+
 # 📢 SoloHeart MVP Public Launch Announcement
 
 We're excited to officially launch **SoloHeart**, a solo roleplaying experience powered by memory-aware AI.

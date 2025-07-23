@@ -1,35 +1,32 @@
 #!/bin/bash
+
 # SoloHeart Launch Script
-# This script launches SoloHeart from anywhere
+# Simple one-command launcher for SoloHeart
 
-set -e  # Exit on any error
+echo "🎮 Launching SoloHeart..."
+echo "================================"
 
-echo "🎲 SoloHeart Launcher"
-echo "===================="
-
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-echo "📍 SoloHeart directory: $SCRIPT_DIR"
-
-# Change to SoloHeart directory
-cd "$SCRIPT_DIR"
-
-# Check if virtual environment exists
-if [ ! -d "venv" ]; then
-    echo "❌ Virtual environment not found"
-    echo "💡 Please run: ./install.sh"
+# Check if Python is available
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Python 3 is not installed or not in PATH"
+    echo "   Please install Python 3.8 or higher"
     exit 1
 fi
 
-# Check if Python exists in venv
-if [ ! -f "venv/bin/python" ]; then
-    echo "❌ Python not found in virtual environment"
-    echo "💡 Please run: ./install.sh"
+# Run the Python launcher
+python3 launch_soloheart.py
+
+# If the launcher exits with an error, show helpful message
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ SoloHeart failed to launch"
+    echo ""
+    echo "🔧 Troubleshooting:"
+    echo "   1. Make sure you're in the SoloHeart directory"
+    echo "   2. Check that Python 3.8+ is installed"
+    echo "   3. Try running: python3 launch_soloheart.py"
+    echo "   4. Check the error messages above for specific issues"
+    echo ""
+    echo "📞 If problems persist, check the documentation or create an issue"
     exit 1
-fi
-
-echo "✅ Virtual environment found"
-echo "🚀 Starting SoloHeart..."
-
-# Launch SoloHeart
-venv/bin/python run.py 
+fi 

@@ -1,3 +1,5 @@
+This work includes material from the System Reference Document 5.1 and is licensed under the Creative Commons Attribution 4.0 International License.
+
 # 📈 SoloHeart Phase 2 Planning
 
 With MVP complete and launch artifacts published, we now move into Phase 2 planning for enhanced features and expanded capabilities.

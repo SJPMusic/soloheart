@@ -1,217 +1,269 @@
 #!/usr/bin/env python3
 """
-SoloHeart - Single Entry Point Launcher
-=======================================
-
-This is the ONLY way to launch SoloHeart. All other launcher scripts should be removed.
-
-Features:
-- Health checks before launch
-- Graceful error handling
-- Automatic browser opening
-- Clear error messages
-- Port conflict detection
+SoloHeart Launch Script
+Comprehensive launcher that handles setup, dependencies, and server startup.
 """
 
 import os
 import sys
-import json
-import time
-import socket
-import webbrowser
 import subprocess
+import time
+import requests
+import webbrowser
 from pathlib import Path
-from typing import Optional, Dict, Any
 
-def check_python_version() -> bool:
-    """Check if Python version is compatible."""
-    if sys.version_info < (3, 9):
-        print("❌ Python 3.9 or higher is required")
-        print(f"   Current version: {sys.version}")
-        return False
-    print(f"✅ Python version: {sys.version.split()[0]}")
-    return True
-
-def check_dependencies() -> bool:
-    """Check if required dependencies are installed."""
-    required_packages = ['flask', 'jsonschema', 'dotenv', 'requests']
-    missing_packages = []
-    
-    for package in required_packages:
-        try:
-            __import__(package.replace('-', '_'))
-        except ImportError:
-            missing_packages.append(package)
-    
-    if missing_packages:
-        print("❌ Missing required dependencies:")
-        for package in missing_packages:
-            print(f"   - {package}")
-        print("\n💡 Install with: pip install -r requirements.txt")
-        return False
-    
-    print("✅ All required dependencies installed")
-    return True
-
-def check_data_files() -> bool:
-    """Check if required data files exist and are valid."""
-    data_files = [
-        'solo_heart/character_schema.json',
-        'srd_data/classes.json',
-        'srd_data/monsters.json',
-        'srd_data/rules.json'
-    ]
-    
-    for file_path in data_files:
-        if not os.path.exists(file_path):
-            print(f"❌ Missing data file: {file_path}")
-            return False
+class SoloHeartLauncher:
+    def __init__(self):
+        self.project_root = Path(__file__).parent
+        self.venv_path = self.project_root / "venv"
+        self.game_app_path = self.project_root / "game_app"
+        self.server_url = "http://localhost:5002"
+        self.server_process = None
         
-        try:
-            with open(file_path, 'r') as f:
-                json.load(f)
-        except json.JSONDecodeError as e:
-            print(f"❌ Invalid JSON in {file_path}: {e}")
-            return False
+    def print_banner(self):
+        """Print the SoloHeart banner."""
+        print("=" * 60)
+        print("🎮 SOLOHEART - D&D 5E Character Creation & Adventure")
+        print("=" * 60)
+        print("Launching your D&D adventure...")
+        print()
     
-    print("✅ All data files valid")
-    return True
-
-def check_port_available(port: int) -> bool:
-    """Check if a port is available."""
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('localhost', port))
+    def check_python_version(self):
+        """Check if Python version is compatible."""
+        print("🐍 Checking Python version...")
+        if sys.version_info < (3, 8):
+            print("❌ Python 3.8 or higher is required")
+            print(f"   Current version: {sys.version}")
+            return False
+        print(f"✅ Python {sys.version.split()[0]} detected")
+        return True
+    
+    def check_virtual_environment(self):
+        """Check if virtual environment exists and is activated."""
+        print("🔧 Checking virtual environment...")
+        
+        # Check if we're in a virtual environment
+        if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix):
+            print("✅ Virtual environment is active")
             return True
-    except OSError:
-        return False
-
-def check_ports() -> bool:
-    """Check if required ports are available."""
-    ports = [5003, 5004]  # Use different ports for testing
+        
+        # Check if venv directory exists
+        if self.venv_path.exists():
+            print("⚠️  Virtual environment exists but not activated")
+            print("   Activating virtual environment...")
+            return self.activate_venv()
+        else:
+            print("❌ Virtual environment not found")
+            return self.create_venv()
     
-    for port in ports:
-        if not check_port_available(port):
-            print(f"❌ Port {port} is already in use")
-            print(f"   Please stop any other services using port {port}")
+    def create_venv(self):
+        """Create a new virtual environment."""
+        print("🔧 Creating virtual environment...")
+        try:
+            subprocess.run([sys.executable, "-m", "venv", str(self.venv_path)], check=True)
+            print("✅ Virtual environment created")
+            return self.activate_venv()
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Failed to create virtual environment: {e}")
             return False
     
-    print("✅ All required ports available")
-    return True
-
-def check_llm_service() -> Optional[Dict[str, Any]]:
-    """Check if LLM service is available (optional)."""
-    try:
-        import requests
-        response = requests.get('http://localhost:11434/api/tags', timeout=2)
-        if response.status_code == 200:
-            data = response.json()
-            models = data.get('models', [])
-            print("✅ Ollama service available")
-            print(f"   Available models: {[m['name'] for m in models]}")
-            return {'type': 'ollama', 'models': models}
-    except Exception:
-        pass
-    
-    try:
-        response = requests.get('http://localhost:1234/v1/models', timeout=2)
-        if response.status_code == 200:
-            print("✅ LM Studio service available")
-            return {'type': 'lm_studio'}
-    except Exception:
-        pass
-    
-    print("⚠️  No LLM service detected")
-    print("   SoloHeart will run in offline mode")
-    print("   Install Ollama or LM Studio for AI features")
-    return None
-
-def create_directories() -> None:
-    """Create necessary directories if they don't exist."""
-    directories = [
-        'campaign_saves',
-        'character_saves',
-        'logs'
-    ]
-    
-    for directory in directories:
-        os.makedirs(directory, exist_ok=True)
-
-def start_server() -> bool:
-    """Start the SoloHeart server."""
-    try:
-        print("\n🚀 Starting SoloHeart...")
+    def activate_venv(self):
+        """Activate the virtual environment."""
+        if os.name == 'nt':  # Windows
+            activate_script = self.venv_path / "Scripts" / "activate.bat"
+            python_path = self.venv_path / "Scripts" / "python.exe"
+        else:  # Unix/Linux/macOS
+            activate_script = self.venv_path / "bin" / "activate"
+            python_path = self.venv_path / "bin" / "python"
         
-        # Import and start the Flask app
-        import sys
-        sys.path.insert(0, 'solo_heart')
-        from main_app import app
+        if not python_path.exists():
+            print(f"❌ Python not found in virtual environment: {python_path}")
+            return False
         
-        # Open browser after a short delay
-        def open_browser():
-            time.sleep(2)
+        # Update sys.executable to use venv python
+        sys.executable = str(python_path)
+        print("✅ Virtual environment activated")
+        return True
+    
+    def install_dependencies(self):
+        """Install required dependencies."""
+        print("📦 Installing dependencies...")
+        requirements_file = self.project_root / "requirements.txt"
+        
+        if not requirements_file.exists():
+            print("❌ requirements.txt not found")
+            return False
+        
+        try:
+            subprocess.run([
+                sys.executable, "-m", "pip", "install", "-r", str(requirements_file)
+            ], check=True)
+            print("✅ Dependencies installed")
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Failed to install dependencies: {e}")
+            return False
+    
+    def check_port_availability(self):
+        """Check if port 5002 is available."""
+        print("🔌 Checking port availability...")
+        try:
+            response = requests.get(f"{self.server_url}/health", timeout=1)
+            if response.status_code == 200:
+                print("⚠️  Server already running on port 5002")
+                return True
+        except requests.exceptions.RequestException:
+            pass
+        
+        # Check if port is in use by another process
+        try:
+            import socket
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('localhost', 5002))
+                print("✅ Port 5002 is available")
+                return True
+        except OSError:
+            print("❌ Port 5002 is in use by another process")
+            return False
+    
+    def start_server(self):
+        """Start the SoloHeart server."""
+        print("🚀 Starting SoloHeart server...")
+        
+        main_app_path = self.game_app_path / "main_app.py"
+        if not main_app_path.exists():
+            print(f"❌ Server file not found: {main_app_path}")
+            return False
+        
+        try:
+            # Start server in background
+            self.server_process = subprocess.Popen([
+                sys.executable, str(main_app_path)
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            # Wait for server to start
+            print("⏳ Waiting for server to start...")
+            for i in range(30):  # Wait up to 30 seconds
+                time.sleep(1)
+                try:
+                    response = requests.get(f"{self.server_url}/health", timeout=1)
+                    if response.status_code == 200:
+                        print("✅ Server started successfully")
+                        return True
+                except requests.exceptions.RequestException:
+                    pass
+                print(f"   Attempt {i+1}/30...")
+            
+            print("❌ Server failed to start within 30 seconds")
+            return False
+            
+        except Exception as e:
+            print(f"❌ Failed to start server: {e}")
+            return False
+    
+    def open_browser(self):
+        """Open the browser to the SoloHeart interface."""
+        print("🌐 Opening browser...")
+        try:
+            webbrowser.open(f"{self.server_url}/vibe-code-creation")
+            print("✅ Browser opened to character creation page")
+            return True
+        except Exception as e:
+            print(f"⚠️  Failed to open browser automatically: {e}")
+            print(f"   Please manually open: {self.server_url}/vibe-code-creation")
+            return False
+    
+    def show_status(self):
+        """Show current server status."""
+        print("\n" + "=" * 60)
+        print("🎮 SOLOHEART STATUS")
+        print("=" * 60)
+        print(f"🌐 Server URL: {self.server_url}")
+        print(f"🎭 Character Creation: {self.server_url}/vibe-code-creation")
+        print(f"🏠 Main Page: {self.server_url}/")
+        print(f"🏥 Health Check: {self.server_url}/health")
+        print()
+        print("🎯 Next Steps:")
+        print("   1. Go to the character creation page")
+        print("   2. Describe your character in natural language")
+        print("   3. Follow the guided creation process")
+        print("   4. Start your D&D adventure!")
+        print()
+        print("💡 Tips:")
+        print("   - Try: 'My name is Elira. I'm an elven druid who survived a forest fire.'")
+        print("   - Be descriptive about your character's personality and background")
+        print("   - The AI will guide you through the rest of character creation")
+        print()
+        print("🛑 To stop the server, press Ctrl+C")
+        print("=" * 60)
+    
+    def cleanup(self):
+        """Cleanup on exit."""
+        if self.server_process:
+            print("\n🛑 Stopping server...")
+            self.server_process.terminate()
             try:
-                webbrowser.open('http://localhost:5003')
-                print("🌐 Opening SoloHeart in your browser...")
-            except Exception as e:
-                print(f"⚠️  Could not open browser automatically: {e}")
-                print("   Please open: http://localhost:5003")
-        
-        import threading
-        browser_thread = threading.Thread(target=open_browser)
-        browser_thread.daemon = True
-        browser_thread.start()
-        
-        print("✅ SoloHeart started successfully!")
-        print("🎮 Access the game at: http://localhost:5003")
-        print("🛑 Press Ctrl+C to stop")
-        
-        # Run the Flask app
-        app.run(debug=False, host='0.0.0.0', port=5003)
+                self.server_process.wait(timeout=5)
+                print("✅ Server stopped")
+            except subprocess.TimeoutExpired:
+                print("⚠️  Server didn't stop gracefully, forcing...")
+                self.server_process.kill()
+    
+    def launch(self):
+        """Main launch sequence."""
+        try:
+            self.print_banner()
+            
+            # Check Python version
+            if not self.check_python_version():
+                return False
+            
+            # Check virtual environment
+            if not self.check_virtual_environment():
+                return False
+            
+            # Install dependencies
+            if not self.install_dependencies():
+                return False
+            
+            # Check port availability
+            if not self.check_port_availability():
+                return False
+            
+            # Start server
+            if not self.start_server():
+                return False
+            
+            # Open browser
+            self.open_browser()
+            
+            # Show status
+            self.show_status()
+            
+            # Keep running until interrupted
+            try:
+                while True:
+                    time.sleep(1)
+                    # Check if server is still running
+                    if self.server_process and self.server_process.poll() is not None:
+                        print("❌ Server process has stopped unexpectedly")
+                        break
+            except KeyboardInterrupt:
+                print("\n👋 Shutting down SoloHeart...")
+            
+        except Exception as e:
+            print(f"❌ Launch failed: {e}")
+            return False
+        finally:
+            self.cleanup()
         
         return True
-        
-    except KeyboardInterrupt:
-        print("\n🛑 SoloHeart stopped by user")
-        return True
-    except Exception as e:
-        print(f"❌ Error starting SoloHeart: {e}")
-        return False
 
 def main():
-    """Main launcher function."""
-    print("🎲 SoloHeart Launcher")
-    print("=" * 50)
-    
-    # Run health checks
-    checks = [
-        ("Python Version", check_python_version),
-        ("Dependencies", check_dependencies),
-        # ("Data Files", check_data_files),  # Temporarily disabled
-        ("Ports", check_ports),
-    ]
-    
-    for check_name, check_func in checks:
-        print(f"\n🔍 Checking {check_name}...")
-        if not check_func():
-            print(f"\n❌ {check_name} check failed")
-            print("   Please fix the issue and try again")
-            sys.exit(1)
-    
-    # Check LLM service (optional)
-    print(f"\n🔍 Checking LLM Service...")
-    llm_service = check_llm_service()
-    
-    # Create directories
-    print(f"\n📁 Creating directories...")
-    create_directories()
-    
-    # Start the server
-    success = start_server()
-    
-    if not success:
-        print("\n❌ Failed to start SoloHeart")
-        sys.exit(1)
+    """Main entry point."""
+    launcher = SoloHeartLauncher()
+    success = launcher.launch()
+    sys.exit(0 if success else 1)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main() 
